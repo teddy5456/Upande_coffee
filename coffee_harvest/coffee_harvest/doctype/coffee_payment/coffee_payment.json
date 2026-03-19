@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-03-12 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "date",
+  "harvester_id",
+  "total_buckets",
+  "column_break_1",
+  "rate",
+  "total_payment",
+  "remark"
+ ],
+ "fields": [
+  {
+   "default": "CP-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "CP-.YYYY.-"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "harvester_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Harvester",
+   "options": "Harvester",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_buckets",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Total Buckets",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "100",
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Rate per Bucket (KES)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_payment",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Payment (KES)",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Small Text",
+   "label": "Remark"
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-12 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Coffee Payment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest Manager",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "date",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

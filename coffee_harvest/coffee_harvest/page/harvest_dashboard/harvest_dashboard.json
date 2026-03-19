@@ -1,0 +1,18 @@
+{
+ "creation": "2026-03-16 08:00:00.000000",
+ "doctype": "Page",
+ "modified": "2026-03-16 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "harvest-dashboard",
+ "owner": "Administrator",
+ "page_name": "harvest-dashboard",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Coffee Harvest Manager"},
+  {"role": "Coffee Harvest User"}
+ ],
+ "standard": "Yes",
+ "system_page": 0,
+ "title": "Harvest Dashboard"
+}

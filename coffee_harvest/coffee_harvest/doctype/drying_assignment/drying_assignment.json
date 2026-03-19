@@ -1,0 +1,300 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-03-12 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "batch_tab",
+  "batch_section",
+  "batch",
+  "batch_qty",
+  "start_date",
+  "column_break_batch",
+  "drying_status",
+  "completed_drying",
+  "end_date",
+  "notes",
+  "tables_tab",
+  "tables_section",
+  "table_assignments",
+  "totals_section",
+  "total_debes",
+  "total_initial_weight_kg",
+  "column_break_totals",
+  "total_final_weight_kg",
+  "yield_percentage",
+  "removal_tab",
+  "removal_section",
+  "removal_mode",
+  "full_batch_final_weight",
+  "full_batch_target_bin",
+  "column_break_removal",
+  "table_removals",
+  "type_removals",
+  "stock_tab",
+  "stock_section",
+  "repack_created",
+  "linked_repack_entry",
+  "column_break_stock",
+  "milling_loss_kg",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "DA-.YYYY.-.MM.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "DA-.YYYY.-.MM.-"
+  },
+  {
+   "fieldname": "batch_tab",
+   "fieldtype": "Tab Break",
+   "label": "Batch Info"
+  },
+  {
+   "fieldname": "batch_section",
+   "fieldtype": "Section Break",
+   "label": "Coffee Batch"
+  },
+  {
+   "fieldname": "batch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Coffee Batch",
+   "options": "Batch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "batch_qty",
+   "fieldtype": "Float",
+   "label": "Batch Quantity (kg)",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_batch",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "In Progress",
+   "fieldname": "drying_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "In Progress\nCompleted",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.drying_status == 'Completed'",
+   "fieldname": "completed_drying",
+   "fieldtype": "Check",
+   "label": "Drying Completed"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "tables_tab",
+   "fieldtype": "Tab Break",
+   "label": "Table Assignments"
+  },
+  {
+   "fieldname": "tables_section",
+   "fieldtype": "Section Break",
+   "label": "Drying Tables"
+  },
+  {
+   "fieldname": "table_assignments",
+   "fieldtype": "Table",
+   "label": "Table Assignments",
+   "options": "Drying Table Entry",
+   "reqd": 1
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "total_debes",
+   "fieldtype": "Int",
+   "label": "Total Debes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_initial_weight_kg",
+   "fieldtype": "Float",
+   "label": "Total Initial Weight (kg)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_final_weight_kg",
+   "fieldtype": "Float",
+   "label": "Total Final Weight (kg)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "yield_percentage",
+   "fieldtype": "Percent",
+   "label": "Yield %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "removal_tab",
+   "fieldtype": "Tab Break",
+   "label": "Remove Batch"
+  },
+  {
+   "fieldname": "removal_section",
+   "fieldtype": "Section Break",
+   "label": "Batch Removal"
+  },
+  {
+   "fieldname": "removal_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Removal Mode",
+   "options": "\nFull Batch\nPer Table\nPer Coffee Type"
+  },
+  {
+   "depends_on": "eval:doc.removal_mode == 'Full Batch'",
+   "fieldname": "full_batch_final_weight",
+   "fieldtype": "Float",
+   "label": "Final Weight (kg)"
+  },
+  {
+   "depends_on": "eval:doc.removal_mode == 'Full Batch'",
+   "fieldname": "full_batch_target_bin",
+   "fieldtype": "Link",
+   "label": "Target Bin",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "column_break_removal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.removal_mode == 'Per Table'",
+   "fieldname": "table_removals",
+   "fieldtype": "Table",
+   "label": "Per-Table Removal",
+   "options": "Drying Table Removal"
+  },
+  {
+   "depends_on": "eval:doc.removal_mode == 'Per Coffee Type'",
+   "fieldname": "type_removals",
+   "fieldtype": "Table",
+   "label": "Per-Coffee-Type Removal",
+   "options": "Drying Type Removal"
+  },
+  {
+   "fieldname": "stock_tab",
+   "fieldtype": "Tab Break",
+   "label": "Stock Movement"
+  },
+  {
+   "fieldname": "stock_section",
+   "fieldtype": "Section Break",
+   "label": "Repack Entry"
+  },
+  {
+   "default": "0",
+   "fieldname": "repack_created",
+   "fieldtype": "Check",
+   "label": "Repack Entry Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "linked_repack_entry",
+   "fieldtype": "Link",
+   "label": "Linked Repack Entry",
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_stock",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "milling_loss_kg",
+   "fieldtype": "Float",
+   "label": "Drying Loss (kg)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Drying Assignment",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-13 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Drying Assignment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest Manager",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Coffee Harvest User",
+   "write": 1
+  }
+ ],
+ "sort_field": "start_date",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

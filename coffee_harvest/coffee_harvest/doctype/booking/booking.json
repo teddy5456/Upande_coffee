@@ -1,0 +1,247 @@
+{
+ "actions": [],
+ "autoname": "field:outturn_number",
+ "creation": "2026-03-12 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "booking_tab",
+  "booking_section",
+  "outturn_number",
+  "grower",
+  "grower_code",
+  "is_internal",
+  "column_break_booking",
+  "parchment_type",
+  "booking_date",
+  "expected_delivery_date",
+  "status",
+  "flags_section",
+  "cafe",
+  "ra",
+  "transfer_tab",
+  "transfer_section",
+  "transfer_date",
+  "source_bin",
+  "column_break_transfer",
+  "no_of_bags",
+  "bag_weight",
+  "moisture_",
+  "weight_section",
+  "gross_weight",
+  "net_weight",
+  "current_bin_stock",
+  "stock_section",
+  "transfer_stock_entry",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "booking_tab",
+   "fieldtype": "Tab Break",
+   "label": "Booking"
+  },
+  {
+   "fieldname": "booking_section",
+   "fieldtype": "Section Break",
+   "label": "Booking Details"
+  },
+  {
+   "fieldname": "outturn_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Outturn Number",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "grower",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Grower",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "grower_code",
+   "fieldtype": "Data",
+   "label": "Grower Code",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_internal",
+   "fieldtype": "Check",
+   "label": "Internal (Endebess Estate)",
+   "description": "Check if this is Endebess estate coffee — stock is in the system and Delivery Note will move stock."
+  },
+  {
+   "fieldname": "column_break_booking",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parchment_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Parchment Type",
+   "options": "P1\nP2\nP3\nPL\nMbuni\nNaturals\nEstate Cured",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "booking_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Booking Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Expected Delivery Date"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nBooked\nTransferred\nMilling\nCompleted",
+   "default": "Draft"
+  },
+  {
+   "fieldname": "flags_section",
+   "fieldtype": "Section Break",
+   "label": "Certification Flags"
+  },
+  {
+   "default": "0",
+   "fieldname": "cafe",
+   "fieldtype": "Check",
+   "label": "CAFE"
+  },
+  {
+   "default": "0",
+   "fieldname": "ra",
+   "fieldtype": "Check",
+   "label": "RA"
+  },
+  {
+   "fieldname": "transfer_tab",
+   "fieldtype": "Tab Break",
+   "label": "Transfer to Mill"
+  },
+  {
+   "fieldname": "transfer_section",
+   "fieldtype": "Section Break",
+   "label": "Transfer Details"
+  },
+  {
+   "default": "Today",
+   "fieldname": "transfer_date",
+   "fieldtype": "Date",
+   "label": "Transfer Date"
+  },
+  {
+   "fieldname": "source_bin",
+   "fieldtype": "Link",
+   "label": "Source Bin",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "column_break_transfer",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "no_of_bags",
+   "fieldtype": "Int",
+   "label": "No. of Bags"
+  },
+  {
+   "fieldname": "bag_weight",
+   "fieldtype": "Float",
+   "label": "Bag Weight (kg)"
+  },
+  {
+   "fieldname": "moisture_",
+   "fieldtype": "Float",
+   "label": "Moisture %"
+  },
+  {
+   "fieldname": "weight_section",
+   "fieldtype": "Section Break",
+   "label": "Weight Summary"
+  },
+  {
+   "fieldname": "gross_weight",
+   "fieldtype": "Float",
+   "label": "Gross Weight (kg)"
+  },
+  {
+   "fieldname": "net_weight",
+   "fieldtype": "Float",
+   "label": "Net Weight (kg)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_bin_stock",
+   "fieldtype": "Float",
+   "label": "Current Bin Stock (kg)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_section",
+   "fieldtype": "Section Break",
+   "label": "Stock Movement"
+  },
+  {
+   "fieldname": "transfer_stock_entry",
+   "fieldtype": "Link",
+   "label": "Transfer Stock Entry",
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Booking",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-12 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Booking",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest Manager",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "booking_date",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

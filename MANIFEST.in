@@ -1,0 +1,2 @@
+include coffee_harvest/templates/*
+include coffee_harvest/public/*

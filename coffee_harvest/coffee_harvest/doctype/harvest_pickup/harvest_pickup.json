@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-03-12 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "date",
+  "tractor",
+  "status",
+  "column_break_1",
+  "total_buckets",
+  "total_weight_kg",
+  "moved_stock",
+  "stock_entry",
+  "section_break_blocks",
+  "block_pickups",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "HP-.DDMMYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HP-.DDMMYY.-"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tractor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tractor",
+   "options": "Asset"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pending Weighbridge\nWeighed\nCancelled"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_buckets",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Total Buckets",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_weight_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Total Weight (kg)",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "moved_stock",
+   "fieldtype": "Check",
+   "label": "Stock Moved",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_entry",
+   "fieldtype": "Link",
+   "label": "Stock Entry",
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_blocks",
+   "fieldtype": "Section Break",
+   "label": "Block Pickups"
+  },
+  {
+   "fieldname": "block_pickups",
+   "fieldtype": "Table",
+   "label": "Block Pickups",
+   "options": "Harvest Pickup Detail"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Harvest Pickup",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-12 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Harvest Pickup",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest Manager",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "date",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

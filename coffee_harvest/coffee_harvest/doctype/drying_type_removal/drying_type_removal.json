@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "creation": "2026-03-16 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "coffee_type",
+  "final_weight_kg",
+  "target_bin"
+ ],
+ "fields": [
+  {
+   "fieldname": "coffee_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Coffee Type",
+   "options": "P1\nP2\nP3\nP4\nP-Lite\nHoney\nMbuni\nNaturals",
+   "reqd": 1
+  },
+  {
+   "fieldname": "final_weight_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Final Weight (kg)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_bin",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Target Bin",
+   "options": "Warehouse",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-16 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Drying Type Removal",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

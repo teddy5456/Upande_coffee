@@ -1,0 +1,74 @@
+{
+ "actions": [],
+ "creation": "2026-03-12 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "grade",
+  "no_of_bags",
+  "no_of_pockets",
+  "net_weight",
+  "column_break_1",
+  "mill_class",
+  "item_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "grade",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Grade",
+   "options": "AA\nAB\nPB\nC\nTT\nT\nHE\nE\nUG1\nUG2\nUG3\nSB\nMH\nML\nNH\nNL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "no_of_bags",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Bags (60 kg)"
+  },
+  {
+   "fieldname": "no_of_pockets",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Pockets (kg)"
+  },
+  {
+   "fieldname": "net_weight",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Net Weight (kg)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mill_class",
+   "fieldtype": "Select",
+   "label": "Mill Class",
+   "options": "1-\n1\n1/+\n2-\n2\n2/+\n3-\n3\n3/+\n4-\n4\n4/+\n5-\n5\n5/+\n6-\n6+\n6/+"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item Code",
+   "options": "Item",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-12 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Outturn Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-03-12 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "drying_table",
+  "batch",
+  "reading_date",
+  "moisture_percentage",
+  "column_break_1",
+  "read_by",
+  "debes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "DMR-.YYYY.-.MM.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "DMR-.YYYY.-.MM.-"
+  },
+  {
+   "fieldname": "drying_table",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Drying Table",
+   "options": "Drying Table",
+   "reqd": 1
+  },
+  {
+   "fieldname": "batch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Batch",
+   "options": "Batch",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "reading_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Reading Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "moisture_percentage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Moisture %",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "read_by",
+   "fieldtype": "Link",
+   "label": "Read By",
+   "options": "User"
+  },
+  {
+   "fieldname": "debes",
+   "fieldtype": "Int",
+   "label": "Debes on Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-03-12 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Daily Moisture Reading",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Coffee Harvest User",
+   "write": 1
+  }
+ ],
+ "sort_field": "reading_date",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

@@ -1,0 +1,65 @@
+{
+ "actions": [],
+ "creation": "2026-03-12 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "block",
+  "available_buckets",
+  "bucket_count",
+  "column_break_1",
+  "weight_kg",
+  "picked_log_ids"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Block",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "available_buckets",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Available Buckets",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bucket_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Buckets to Collect"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "weight_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Weight (kg)"
+  },
+  {
+   "fieldname": "picked_log_ids",
+   "fieldtype": "Small Text",
+   "label": "Picked Log IDs",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-12 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Harvest Pickup Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

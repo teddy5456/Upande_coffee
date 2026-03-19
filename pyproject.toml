@@ -1,0 +1,16 @@
+[project]
+name = "coffee_harvest"
+authors = [
+    {name = "Upande", email = "dev@upande.com"}
+]
+description = "Endebess Coffee Estate Harvest & Processing System"
+requires-python = ">=3.10"
+readme = "README.md"
+dynamic = ["version"]
+
+[build-system]
+requires = ["flit_core >=3.4.0,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.bench.dev-dependencies]
+frappe = "https://github.com/frappe/frappe"

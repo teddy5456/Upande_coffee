@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "autoname": "field:table_id",
+ "creation": "2026-03-12 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "table_id",
+  "status",
+  "current_batch",
+  "column_break_1",
+  "current_coffee_type",
+  "current_debes",
+  "date_loaded"
+ ],
+ "fields": [
+  {
+   "fieldname": "table_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Table ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Available\nOccupied\nUnder Maintenance"
+  },
+  {
+   "fieldname": "current_batch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Current Batch",
+   "options": "Batch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_coffee_type",
+   "fieldtype": "Data",
+   "label": "Coffee Type on Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_debes",
+   "fieldtype": "Int",
+   "label": "Debes on Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_loaded",
+   "fieldtype": "Date",
+   "label": "Date Loaded",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-03-12 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Drying Table",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Coffee Harvest User"
+  }
+ ],
+ "sort_field": "table_id",
+ "sort_order": "ASC",
+ "track_changes": 0
+}
