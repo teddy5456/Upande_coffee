@@ -1,5 +1,21 @@
 frappe.ui.form.on("Outturn Statement", {
 	refresh(frm) {
+		if (frm.doc.docstatus === 1) {
+			frm.add_custom_button(__("Outgrower Invoice"), function () {
+				frappe.call({
+					method: "coffee_harvest.coffee_harvest.doctype.outturn_statement.outturn_statement.create_outgrower_invoice",
+					args: { outturn_name: frm.doc.name },
+					freeze: true,
+					callback(r) {
+						if (r.message) {
+							frm.reload_doc();
+							frappe.set_route("Form", "Sales Invoice", r.message);
+						}
+					},
+				});
+			}, __("Create"));
+		}
+
 		if (frm.doc.docstatus === 1 && !frm.doc.linked_delivery_note) {
 			const label =
 				frm.doc._booking_is_internal

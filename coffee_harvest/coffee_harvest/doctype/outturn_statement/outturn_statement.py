@@ -274,8 +274,6 @@ def create_delivery_note(outturn_name):
 
     is_internal = cint(booking.is_internal)
 
-    _ensure_usd_party_account(booking.grower)
-
     dn = frappe.new_doc("Delivery Note")
     dn.customer = booking.grower
     dn.company = COMPANY
@@ -283,14 +281,22 @@ def create_delivery_note(outturn_name):
     dn.posting_date = frappe.utils.today()
     dn.custom_outturn_references = doc.outturn_number or doc.name
 
+    # Both internal and outgrower invoices are processed at Endebess mill
+    dn.custom_farm = "Endebess"
+    dn.custom_business_unit = "Endebess Coffee"
+    dn.custom_location = "Endebess"
+    dn.custom_delivery_type = "Coffee Dispatch"
+
+    # Override the fetch_from on set_warehouse — the Coffee Dispatch delivery type
+    # record has the wrong source_warehouse ("Yogurt Coldroom - KR")
+    dn.set_warehouse = MILLED_STORE_WH
+
     if is_internal:
         # Endebess: Coffee Dispatch header — items added manually via the DN form
-        dn.custom_farm = "Endebess"
-        dn.custom_business_unit = "Endebess Coffee"
-        dn.custom_delivery_type = "Coffee Dispatch"
-        dn.custom_location = "Endebess"
-        dn.set_warehouse = MILLED_STORE_WH
+        pass
     else:
+        # Ensure service charge item UOMs allow decimals before inserting
+        _ensure_service_item_uoms()
         # Outgrower: service charges only — no stock items, no warehouse
         _add_outgrower_charge_items(dn, doc)
 
@@ -302,45 +308,150 @@ def create_delivery_note(outturn_name):
 
 
 def _add_outgrower_charge_items(dn, outturn_doc):
-    """Append service charge items to an outgrower Delivery Note."""
-    charges = [
-        ("COFFEE-MILLING", "Milling Charges"),
-        ("COFFEE-HANDLING", "Handling Charges"),
-        ("COFFEE-EXPORT-BAGS", "Export Bags"),
-    ]
-    if outturn_doc.transport_expenses:
-        charges.append(("COFFEE-TRANSPORT", "Transport"))
+    """Append service charge items to an outgrower Delivery Note.
 
+    Quantities and rates mirror the Outturn Statement print format:
+      Milling:      parchment_weight / 1000 tonnes  × $45/tonne
+      Handling:     parchment_weight / 60   bags    × $1.50/bag
+      Export Bags:  export_qty              bags    × $3.50/bag + 16% VAT
+      Transport:    output_weight / 60      bags    × $3.00/bag
+    """
+    parchment = outturn_doc.parchment_weight or 0
+    output = outturn_doc.output_weight or 0
     outturn_ref = outturn_doc.outturn_number or outturn_doc.name
 
-    for item_code, label in charges:
+    # Export bag qty: each grade row = no_of_bags + 1 if it has a pocket
+    export_qty = sum(
+        (row.no_of_bags or 0) + (1 if (row.no_of_pockets or 0) > 0 else 0)
+        for row in outturn_doc.table_cyvh
+    )
+
+    charges = [
+        (
+            "COFFEE-MILLING",
+            "Milling Charges",
+            round(parchment / 1000, 3),
+            45.00,
+            "Tonne",
+        ),
+        (
+            "COFFEE-HANDLING",
+            "Handling Charges",
+            round(parchment / 60, 2),
+            1.50,
+            "Bags",
+        ),
+        (
+            "COFFEE-EXPORT-BAGS",
+            "Export Bags + VAT (16%)",
+            export_qty,
+            3.50,
+            "Bags",
+        ),
+    ]
+
+    if outturn_doc.transport_expenses:
+        charges.append((
+            "COFFEE-TRANSPORT",
+            "Transport",
+            round(output / 60, 2),
+            3.00,
+            "Bags",
+        ))
+
+    for item_code, label, qty, rate, uom in charges:
         dn.append(
             "items",
             {
                 "item_code": item_code,
                 "item_name": label,
-                "qty": 1,
-                "uom": "Unit",
-                "rate": 0,
+                "qty": qty,
+                "uom": uom,
+                "rate": rate,
                 "description": f"{label} — outturn {outturn_ref} ({outturn_doc.grower})",
             },
         )
 
 
-def _ensure_usd_party_account(customer):
-    """Ensure the customer has a USD receivable account for Kaitet Ltd."""
-    USD_DEBTORS = "101002010401 - Trade Debtors USD - KL"
-    exists = frappe.db.exists(
-        "Party Account", {"parent": customer, "company": COMPANY, "account": USD_DEBTORS}
+_SERVICE_ITEM_UOMS = {
+    "COFFEE-MILLING": "Tonne",
+    "COFFEE-HANDLING": "Bags",
+    "COFFEE-EXPORT-BAGS": "Bags",
+    "COFFEE-TRANSPORT": "Bags",
+}
+
+
+def _ensure_service_item_uoms():
+    """Ensure service charge items have a UOM that allows decimal quantities.
+    Run inline at DN creation so it doesn't depend on migrate having been run.
+    """
+    for uom_name in ("Tonne", "Bags"):
+        if not frappe.db.exists("UOM", uom_name):
+            frappe.get_doc({
+                "doctype": "UOM",
+                "uom_name": uom_name,
+                "must_be_whole_number": 0,
+            }).insert(ignore_permissions=True)
+        else:
+            frappe.db.set_value("UOM", uom_name, "must_be_whole_number", 0, update_modified=False)
+
+    for item_code, target_uom in _SERVICE_ITEM_UOMS.items():
+        if not frappe.db.exists("Item", item_code):
+            continue
+        frappe.db.set_value("Item", item_code, {
+            "stock_uom": target_uom,
+            "disabled": 0,
+            "is_stock_item": 0,
+        }, update_modified=False)
+        if not frappe.db.exists("UOM Conversion Detail", {"parent": item_code, "uom": target_uom}):
+            item = frappe.get_doc("Item", item_code)
+            item.append("uoms", {"uom": target_uom, "conversion_factor": 1})
+            item.save(ignore_permissions=True)
+
+    frappe.db.commit()
+
+
+@frappe.whitelist()
+def create_outgrower_invoice(outturn_name):
+    """Create a draft Sales Invoice with outgrower charge items (Milling, Handling, etc.)."""
+    doc = frappe.get_doc("Outturn Statement", outturn_name)
+    if doc.docstatus != 1:
+        frappe.throw(_("Outturn Statement must be submitted first."))
+
+    booking = frappe.get_value("Booking", doc.outturn_number, ["grower", "is_internal"], as_dict=True)
+    if not booking or not booking.grower:
+        frappe.throw(_("No grower found on Booking {0}.").format(doc.outturn_number))
+
+    # Ensure customer has default_currency = USD so ERPNext initialises the SI in USD.
+    # Outgrowers always transact in USD; set this once if missing.
+    if not frappe.db.get_value("Customer", booking.grower, "default_currency"):
+        frappe.db.set_value("Customer", booking.grower, "default_currency", "USD", update_modified=False)
+
+    si = frappe.new_doc("Sales Invoice")
+    si.customer = booking.grower
+    si.company = COMPANY
+    si.currency = "USD"
+    si.selling_price_list = "USD Price List"
+    si.party_account_currency = "USD"
+    si.posting_date = frappe.utils.today()
+    si.custom_farm = "Endebess"
+    si.custom_business_unit = "Endebess Coffee"
+    si.update_stock = 0
+    si.custom_outturn_number = doc.outturn_number
+
+    _add_outgrower_charge_items(si, doc)
+
+    # Explicitly set USD debit_to account so set_missing_values doesn't pick up KES default
+    usd_receivable = frappe.db.get_value(
+        "Party Account",
+        {"parent": booking.grower, "parenttype": "Customer", "company": COMPANY},
+        "account",
     )
-    if not exists:
-        frappe.db.sql(
-            """INSERT INTO `tabParty Account`
-               (name, creation, modified, modified_by, owner, docstatus, idx, company, account, parent, parentfield, parenttype)
-               VALUES (%s, NOW(), NOW(), 'Administrator', 'Administrator', 0, 1, %s, %s, %s, 'accounts', 'Customer')""",
-            (frappe.generate_hash(length=10), COMPANY, USD_DEBTORS, customer),
-        )
-        frappe.db.commit()
+    if usd_receivable:
+        si.debit_to = usd_receivable
+
+    si.insert(ignore_permissions=True, ignore_mandatory=True)
+    return si.name
 
 
 def _get_warehouse_stock(item_code, warehouse):

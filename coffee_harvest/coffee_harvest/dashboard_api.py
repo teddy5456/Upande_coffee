@@ -39,7 +39,7 @@ def get_harvest_block_summary(start_date, end_date):
         LEFT JOIN (
             SELECT harvester_id, date, AVG(rate) AS rate
             FROM `tabCoffee Payment`
-            WHERE docstatus = 1
+            WHERE docstatus != 2
             GROUP BY harvester_id, date
         ) cp_rate ON cp_rate.harvester_id = hl.harvester_id
                  AND cp_rate.date = hl.date

@@ -1,0 +1,48 @@
+{
+ "actions": [],
+ "creation": "2026-04-10 00:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Child Table",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "target_bin",
+  "weight_kg",
+  "coffee_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "target_bin",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Target Bin",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "weight_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Weight (kg)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "coffee_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Coffee Type",
+   "options": "\nAA\nAB\nPB\nC\nE\nT\nTT\nUG\nMixed"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Full Batch Bin Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

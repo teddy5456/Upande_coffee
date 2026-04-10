@@ -6,7 +6,9 @@ def execute(filters=None):
     filters = frappe._dict(filters or {})
     columns = get_columns()
     data = get_data(filters)
-    return columns, data
+    chart = _get_chart(data)
+    summary = _get_summary(data)
+    return columns, data, None, chart, summary
 
 
 def get_columns():
@@ -114,6 +116,8 @@ def get_data(filters):
         as_dict=True,
     )
 
+    # Use docstatus != 2 so draft AND submitted Coffee Payments are included.
+    # (Payments are rarely submitted in this workflow — draft is the live state.)
     cost_rows = frappe.db.sql(
         f"""
         SELECT
@@ -123,7 +127,7 @@ def get_data(filters):
         LEFT JOIN (
             SELECT harvester_id, date, AVG(rate) AS rate
             FROM `tabCoffee Payment`
-            WHERE docstatus = 1
+            WHERE docstatus != 2
             GROUP BY harvester_id, date
         ) cp_rate ON cp_rate.harvester_id = hl.harvester_id
                  AND cp_rate.date = hl.date
@@ -155,6 +159,42 @@ def get_data(filters):
             }
         )
     return result
+
+
+def _get_chart(data):
+    if not data:
+        return None
+    labels = [r["block"] for r in data]
+    return {
+        "data": {
+            "labels": labels,
+            "datasets": [
+                {"name": "Cherry (kg)", "values": [r["total_cherry_kg"] for r in data]},
+                {"name": "Labour Cost (KES)", "values": [r["estimated_cost"] for r in data]},
+            ],
+        },
+        "type": "bar",
+        "height": 300,
+        "colors": ["#2d6a3f", "#e67e22"],
+        "fieldtype": "Float",
+        "barOptions": {"stacked": 0},
+    }
+
+
+def _get_summary(data):
+    if not data:
+        return []
+    total_cherry = sum(r["total_cherry_kg"] for r in data)
+    total_cost = sum(r["estimated_cost"] for r in data)
+    total_days = sum(r["harvest_days"] for r in data)
+    avg_cost_per_kg = round(total_cost / total_cherry, 1) if total_cherry else 0
+    return [
+        {"value": len(data), "label": "Blocks", "datatype": "Int", "indicator": "Blue"},
+        {"value": round(total_cherry, 1), "label": "Total Cherry (kg)", "datatype": "Float", "indicator": "Green"},
+        {"value": total_days, "label": "Total Harvest Days", "datatype": "Int", "indicator": "Blue"},
+        {"value": round(total_cost, 0), "label": "Total Labour Cost (KES)", "datatype": "Currency", "indicator": "Orange"},
+        {"value": avg_cost_per_kg, "label": "Avg KES / kg Cherry", "datatype": "Float", "indicator": "Blue"},
+    ]
 
 
 def get_filters():

@@ -31,10 +31,19 @@ class DryingAssignment(Document):
         if not self.removal_mode:
             frappe.throw(_("Please select a Removal Mode on the 'Remove Batch' tab before marking as Completed."))
         if self.removal_mode == "Full Batch":
-            if not self.full_batch_final_weight or self.full_batch_final_weight <= 0:
-                frappe.throw(_("Final Weight is required for Full Batch removal."))
-            if not self.full_batch_target_bin:
-                frappe.throw(_("Target Bin is required for Full Batch removal."))
+            if self.full_batch_bin_entries:
+                # Multi-bin mode: validate each row
+                for row in self.full_batch_bin_entries:
+                    if not row.weight_kg or row.weight_kg <= 0:
+                        frappe.throw(_("Bin Destinations row {0}: Weight (kg) is required.").format(row.idx))
+                    if not row.target_bin:
+                        frappe.throw(_("Bin Destinations row {0}: Target Bin is required.").format(row.idx))
+            else:
+                # Single-bin mode
+                if not self.full_batch_final_weight or self.full_batch_final_weight <= 0:
+                    frappe.throw(_("Final Weight is required for Full Batch removal."))
+                if not self.full_batch_target_bin:
+                    frappe.throw(_("Target Bin is required for Full Batch removal."))
         elif self.removal_mode == "Per Table":
             if not self.table_removals:
                 frappe.throw(_("Please add at least one row in Per-Table Removal."))
@@ -63,7 +72,10 @@ class DryingAssignment(Document):
         self.total_initial_weight_kg = sum(row.initial_weight_kg or 0 for row in self.table_assignments)
 
         if self.removal_mode == "Full Batch":
-            self.total_final_weight_kg = self.full_batch_final_weight or 0
+            if self.full_batch_bin_entries:
+                self.total_final_weight_kg = sum(row.weight_kg or 0 for row in self.full_batch_bin_entries)
+            else:
+                self.total_final_weight_kg = self.full_batch_final_weight or 0
         elif self.removal_mode == "Per Table":
             self.total_final_weight_kg = sum(row.final_weight_kg or 0 for row in (self.table_removals or []))
         elif self.removal_mode == "Per Coffee Type":
@@ -143,7 +155,12 @@ def on_submit_create_repack(doc, method):
     # Build bin_weights from removal mode
     bin_weights = {}
     if doc.removal_mode == "Full Batch":
-        if doc.full_batch_target_bin and doc.full_batch_final_weight:
+        if doc.full_batch_bin_entries:
+            # Multi-bin entries take precedence
+            for row in doc.full_batch_bin_entries:
+                if row.weight_kg and row.weight_kg > 0 and row.target_bin:
+                    bin_weights[row.target_bin] = bin_weights.get(row.target_bin, 0) + row.weight_kg
+        elif doc.full_batch_target_bin and doc.full_batch_final_weight:
             bin_weights[doc.full_batch_target_bin] = doc.full_batch_final_weight
     elif doc.removal_mode == "Per Table":
         for row in doc.table_removals:

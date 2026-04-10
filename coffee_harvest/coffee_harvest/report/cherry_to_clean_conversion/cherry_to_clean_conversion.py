@@ -17,7 +17,9 @@ def execute(filters=None):
     filters = frappe._dict(filters or {})
     columns = get_columns()
     data = get_data(filters)
-    return columns, data
+    chart = _get_chart(data)
+    summary = _get_summary(data)
+    return columns, data, None, chart, summary
 
 
 def get_columns():
@@ -287,5 +289,66 @@ def get_filters():
             "fieldtype": "Date",
             "reqd": 0,
             "default": frappe.utils.today(),
+        },
+    ]
+
+
+def _get_chart(data):
+    """Bar chart: Cherry → Parchment → Clean conversion funnel."""
+    # Extract totals from the 3 funnel header rows
+    funnel = {}
+    for r in data:
+        stage = r.get("stage", "")
+        if stage.startswith("1. Cherry"):
+            funnel["Cherry"] = r.get("weight_out", 0) or 0
+        elif stage.startswith("2. Parchment"):
+            funnel["Parchment"] = r.get("weight_out", 0) or 0
+        elif stage.startswith("3. Clean"):
+            funnel["Clean Coffee"] = r.get("weight_out", 0) or 0
+
+    if not funnel:
+        return None
+
+    return {
+        "data": {
+            "labels": list(funnel.keys()),
+            "datasets": [
+                {"name": "Weight (kg)", "values": [round(v, 1) for v in funnel.values()]}
+            ],
+        },
+        "type": "bar",
+        "height": 260,
+        "colors": ["#2d6a3f"],
+        "fieldtype": "Float",
+    }
+
+
+def _get_summary(data):
+    funnel = {}
+    for r in data:
+        stage = r.get("stage", "")
+        if stage.startswith("1. Cherry"):
+            funnel["cherry"] = r.get("weight_out", 0) or 0
+        elif stage.startswith("2. Parchment"):
+            funnel["parch"] = r.get("weight_out", 0) or 0
+        elif stage.startswith("3. Clean"):
+            funnel["clean"] = r.get("weight_out", 0) or 0
+
+    if not funnel:
+        return []
+
+    cherry = funnel.get("cherry", 0)
+    parch = funnel.get("parch", 0)
+    clean = funnel.get("clean", 0)
+
+    return [
+        {"value": round(cherry, 1), "label": "Cherry Harvested (kg)", "datatype": "Float", "indicator": "Blue"},
+        {"value": round(parch, 1), "label": "Parchment Produced (kg)", "datatype": "Float", "indicator": "Blue"},
+        {"value": round(clean, 1), "label": "Clean Coffee Milled (kg)", "datatype": "Float", "indicator": "Green"},
+        {
+            "value": round(clean / cherry * 100, 1) if cherry else 0,
+            "label": "Overall Yield %",
+            "datatype": "Percent",
+            "indicator": "Green",
         },
     ]

@@ -33,6 +33,7 @@
   "removal_mode",
   "full_batch_final_weight",
   "full_batch_target_bin",
+  "full_batch_bin_entries",
   "column_break_removal",
   "table_removals",
   "type_removals",
@@ -191,8 +192,16 @@
    "depends_on": "eval:doc.removal_mode == 'Full Batch'",
    "fieldname": "full_batch_target_bin",
    "fieldtype": "Link",
-   "label": "Target Bin",
+   "label": "Target Bin (Single)",
    "options": "Warehouse"
+  },
+  {
+   "depends_on": "eval:doc.removal_mode == 'Full Batch'",
+   "description": "Optional: split parchment across multiple bins. Leave empty to use the single Target Bin above.",
+   "fieldname": "full_batch_bin_entries",
+   "fieldtype": "Table",
+   "label": "Bin Destinations",
+   "options": "Full Batch Bin Entry"
   },
   {
    "fieldname": "column_break_removal",

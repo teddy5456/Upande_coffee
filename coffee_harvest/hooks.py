@@ -6,6 +6,7 @@ app_email = "dev@upande.com"
 app_license = "mit"
 
 after_install = "coffee_harvest.coffee_harvest.setup.after_install"
+after_migrate = "coffee_harvest.coffee_harvest.custom_fields.create_coffee_custom_fields"
 
 doctype_js = {
     "Delivery Note": "public/js/delivery_note.js",
@@ -38,7 +39,11 @@ doc_events = {
         "on_cancel": "coffee_harvest.coffee_harvest.doctype.outturn_statement.outturn_statement.on_cancel_reverse_milled_stock",
     },
     "Delivery Note": {
-        "validate": "coffee_harvest.coffee_harvest.delivery_note.calculate_item_weights",
+        "before_validate": "coffee_harvest.coffee_harvest.delivery_note.calculate_item_weights",
+        "before_save": "coffee_harvest.coffee_harvest.delivery_note.fix_coffee_dispatch_warehouse",
+    },
+    "Sales Invoice": {
+        "before_insert": "coffee_harvest.coffee_harvest.sales_invoice.copy_farm_from_delivery_note",
     },
 }
 
