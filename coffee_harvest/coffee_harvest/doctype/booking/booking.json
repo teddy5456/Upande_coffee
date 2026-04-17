@@ -76,7 +76,7 @@
    "fieldname": "is_internal",
    "fieldtype": "Check",
    "label": "Internal (Endebess Estate)",
-   "description": "Check if this is Endebess estate coffee — stock is in the system and Delivery Note will move stock."
+   "description": "Check if this is Endebess estate coffee \u2014 stock is in the system and Delivery Note will move stock."
   },
   {
    "fieldname": "column_break_booking",
@@ -213,7 +213,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-12 08:00:00.000000",
+ "modified": "2026-04-17 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Coffee Harvest",
  "name": "Booking",
