@@ -32,7 +32,7 @@ CUSTOM_FIELDS = {
 			"fieldtype": "Section Break",
 			"label": "Coffee Transport Details",
 			"insert_after": "custom_is_coffee_dispatch",
-			"depends_on": "eval:doc.custom_delivery_type=='Coffee Dispatch'",
+			"depends_on": "eval:doc.custom_is_coffee_dispatch == 1",
 			"module": "Coffee Harvest",
 		},
 		{
@@ -40,7 +40,7 @@ CUSTOM_FIELDS = {
 			"fieldtype": "Data",
 			"label": "Driver Name",
 			"insert_after": "custom_coffee_transport_section",
-			"depends_on": "eval:doc.custom_delivery_type=='Coffee Dispatch'",
+			"depends_on": "eval:doc.custom_is_coffee_dispatch == 1",
 			"module": "Coffee Harvest",
 		},
 		{
@@ -48,13 +48,14 @@ CUSTOM_FIELDS = {
 			"fieldtype": "Data",
 			"label": "Number Plate",
 			"insert_after": "custom_coffee_driver_name",
-			"depends_on": "eval:doc.custom_delivery_type=='Coffee Dispatch'",
+			"depends_on": "eval:doc.custom_is_coffee_dispatch == 1",
 			"module": "Coffee Harvest",
 		},
 		{
 			"fieldname": "custom_coffee_col_break",
 			"fieldtype": "Column Break",
 			"insert_after": "custom_coffee_number_plate",
+			"depends_on": "eval:doc.custom_is_coffee_dispatch == 1",
 			"module": "Coffee Harvest",
 		},
 		{
@@ -62,7 +63,7 @@ CUSTOM_FIELDS = {
 			"fieldtype": "Data",
 			"label": "Transporter",
 			"insert_after": "custom_coffee_col_break",
-			"depends_on": "eval:doc.custom_delivery_type=='Coffee Dispatch'",
+			"depends_on": "eval:doc.custom_is_coffee_dispatch == 1",
 			"module": "Coffee Harvest",
 		},
 		{
@@ -70,7 +71,7 @@ CUSTOM_FIELDS = {
 			"fieldtype": "Data",
 			"label": "Seal / Container No.",
 			"insert_after": "custom_coffee_transporter",
-			"depends_on": "eval:doc.custom_delivery_type=='Coffee Dispatch'",
+			"depends_on": "eval:doc.custom_is_coffee_dispatch == 1",
 			"module": "Coffee Harvest",
 		},
 	],

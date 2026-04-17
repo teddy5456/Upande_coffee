@@ -1,0 +1,1 @@
+coffee_harvest.patches.v1_0.fix_booking_bin_stock_datatype
