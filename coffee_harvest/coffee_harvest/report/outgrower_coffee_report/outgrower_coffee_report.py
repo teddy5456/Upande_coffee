@@ -121,6 +121,11 @@ def get_data(filters):
         "os.docstatus = 1",
         # outgrower = has a grower set and booking is non-internal
         "(os.grower IS NOT NULL AND os.grower != '')",
+        # Endebess coffee is internal stock, not an outgrower — exclude it.
+        # Exclude both via the booking's is_internal flag and via grower name
+        # to catch legacy rows where is_internal wasn't set correctly.
+        "COALESCE(b.is_internal, 0) = 0",
+        "UPPER(os.grower) NOT LIKE '%%ENDEBESS%%'",
     ]
     params = {}
 
@@ -155,6 +160,8 @@ def get_data(filters):
             si.currency                  AS invoice_currency,
             si.docstatus                 AS si_docstatus
         FROM `tabOutturn Statement` os
+        LEFT JOIN `tabBooking` b
+            ON b.name = os.outturn_number
         LEFT JOIN `tabDelivery Note` dn
             ON dn.name = os.linked_delivery_note
         LEFT JOIN `tabSales Invoice` si
