@@ -1,0 +1,20 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2026-04-22 00:00:00.000000",
+ "disabled": 0,
+ "doctype": "Report",
+ "filters": [],
+ "is_standard": "Yes",
+ "letter_head": null,
+ "module": "Coffee Harvest",
+ "name": "Coffee Dispatch Summary",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "",
+ "ref_doctype": "Delivery Note",
+ "report_name": "Coffee Dispatch Summary",
+ "report_type": "Script Report",
+ "roles": [],
+ "timeout": 0
+}
