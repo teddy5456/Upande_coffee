@@ -10,8 +10,10 @@ COMPANY = "Kaitet Ltd."
 
 class HarvestPickup(Document):
     def validate(self):
-        self._validate_weighbridge()
+        # Totals first: weighbridge validation reads total_weight_kg, which is
+        # stale (often 0) when weights arrive via an API round-trip save.
         self._calculate_totals()
+        self._validate_weighbridge()
 
     def _validate_weighbridge(self):
         if self.status == "Weighed":
