@@ -19,6 +19,10 @@
   "stock_entry",
   "section_break_blocks",
   "block_pickups",
+  "section_break_receiving",
+  "received",
+  "received_by",
+  "received_at",
   "amended_from"
  ],
  "fields": [
@@ -100,6 +104,32 @@
    "label": "Amended From",
    "options": "Harvest Pickup",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_receiving",
+   "fieldtype": "Section Break",
+   "label": "Wet Mill Receiving",
+   "collapsible": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "received",
+   "fieldtype": "Check",
+   "label": "Received at Wet Mill",
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "received_by",
+   "fieldtype": "Data",
+   "label": "Received By",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received At",
+   "allow_on_submit": 1
   }
  ],
  "is_submittable": 1,
