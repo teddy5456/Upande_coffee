@@ -27,11 +27,11 @@
  ],
  "fields": [
   {
-   "default": "HP-.DDMMYY.-",
+   "default": "HP-.DD.MM.YY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HP-.DDMMYY.-"
+   "options": "HP-.DD.MM.YY.-"
   },
   {
    "default": "Today",
