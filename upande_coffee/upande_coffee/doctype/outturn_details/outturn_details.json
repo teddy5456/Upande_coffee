@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "grade",
+  "grade_display",
   "no_of_bags",
   "no_of_pockets",
   "net_weight",
@@ -18,11 +19,19 @@
  "fields": [
   {
    "fieldname": "grade",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Grade",
-   "options": "AA\nAB\nPB\nC\nTT\nT\nHE\nE\nUG1\nUG2\nUG3\nSB\nMH\nML\nNH\nNL",
-   "reqd": 1
+   "options": "Item",
+   "reqd": 1,
+   "description": "Pick the grade Item directly (e.g. AA, AB, PB…). item_code below auto-copies from this."
+  },
+  {
+   "fieldname": "grade_display",
+   "fieldtype": "Data",
+   "label": "Grade Name",
+   "fetch_from": "grade.item_name",
+   "read_only": 1
   },
   {
    "fieldname": "no_of_bags",

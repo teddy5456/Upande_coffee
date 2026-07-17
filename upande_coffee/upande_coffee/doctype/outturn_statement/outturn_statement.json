@@ -52,11 +52,13 @@
   {
    "depends_on": "eval:doc.outturn_type === 'Normal'",
    "fieldname": "outturn_number",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Booking (Outturn Number)",
+   "label": "Outturn Number",
    "mandatory_depends_on": "eval:doc.outturn_type === 'Normal'",
-   "options": "Booking"
+   "fetch_from": "custom_source_sales_order.custom_outturn_number",
+   "read_only_depends_on": "eval:!!doc.custom_source_sales_order",
+   "description": "Auto-fetches from the linked Sales Order's outturn number. Editable only when no Source Sales Order is set (legacy migrations)."
   },
   {
    "depends_on": "eval:doc.outturn_type === 'Super Outturn'",

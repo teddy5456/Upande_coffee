@@ -17,6 +17,70 @@ def _settings():
 def _bag_kg():
     return frappe.get_cached_doc("Coffee Settings").bag_weight_kg or 60
 
+
+def _booking_exists():
+    """The Booking doctype has been retired in favour of Sales Order. Many
+    legacy code paths in this file still reference it — they're only
+    executed if the doctype is still present in the DB (transitional
+    installs). Sites on the current version return False here and the
+    Booking-related work is silently skipped."""
+    try:
+        return bool(frappe.db.exists("DocType", "Booking"))
+    except Exception:
+        return False
+
+
+# ── Helpers previously in booking.py — inlined here so the file survives the
+#    Booking doctype removal. Same semantics.
+def parchment_item_for(parchment_type=None):
+    """Item a parchment type is stored as: Parchment Type.item, else an item
+    named like the type, else the Coffee Settings default."""
+    if parchment_type:
+        item = frappe.db.get_value("Parchment Type", parchment_type, "item")
+        if item:
+            return item
+        if frappe.db.exists("Item", parchment_type):
+            return parchment_type
+    return frappe.get_cached_doc("Coffee Settings").parchment_item
+
+
+def _allocate_batches(item_code, warehouse, required_qty, prefer_batch=None):
+    """FIFO batch allocation for a batched item in one warehouse, optionally
+    consuming prefer_batch first. Returns [(batch_no, qty)] covering
+    required_qty; for non-batched items a single unbatched row."""
+    if not frappe.db.get_value("Item", item_code, "has_batch_no"):
+        return [(None, flt(required_qty))]
+
+    rows = frappe.db.sql(
+        """SELECT COALESCE(sbe.batch_no, sle.batch_no) AS batch_no,
+                SUM(COALESCE(sbe.qty, sle.actual_qty)) AS qty, MIN(sle.posting_date) first_seen
+        FROM `tabStock Ledger Entry` sle
+        LEFT JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sle.serial_and_batch_bundle
+        WHERE sle.warehouse = %s AND sle.item_code = %s AND sle.is_cancelled = 0
+        GROUP BY COALESCE(sbe.batch_no, sle.batch_no)
+        HAVING batch_no IS NOT NULL AND qty > 0
+        ORDER BY first_seen, batch_no""",
+        (warehouse, item_code),
+        as_dict=True,
+    )
+    if prefer_batch:
+        rows.sort(key=lambda r: 0 if r.batch_no == prefer_batch else 1)
+    remaining = flt(required_qty)
+    alloc = []
+    for r in rows:
+        if remaining <= 0:
+            break
+        take = min(flt(r.qty), remaining)
+        alloc.append((r.batch_no, take))
+        remaining -= take
+    if remaining > 0.01:
+        frappe.throw(
+            _("Insufficient batched stock of {0} in {1}: need {2} kg, found {3} kg.").format(
+                item_code, warehouse, flt(required_qty), flt(required_qty) - remaining
+            )
+        )
+    return alloc
+
 # Map grade codes to item codes
 GRADE_ITEM_MAP = {
     "AA": "AA",
@@ -57,20 +121,72 @@ class OutturnStatement(Document):
         self._map_grade_items()
 
     def _fetch_parchment_weight(self):
+        # SO-based auto-fill (current flow):
+        #   Super Outturn → sum row.parchment_weight across component rows;
+        #                   grower is the join of all component customers.
+        #   Normal        → parchment_weight sums the SO's parchment types;
+        #                   grower = SO.customer.
+        # Legacy Booking fallback runs only if the Booking doctype is still
+        # present in the DB (transitional installs).
         if self.outturn_type == "Super Outturn":
             total = 0
             growers = []
             for row in (self.component_bookings or []):
-                booking = frappe.get_value(
-                    "Booking", row.booking_outturn, ["net_weight", "grower"], as_dict=True
-                )
-                if booking:
-                    total += booking.net_weight or 0
-                    if booking.grower and booking.grower not in growers:
-                        growers.append(booking.grower)
+                # Prefer the new Sales Order link; fall back to legacy row.grower.
+                if row.get("sales_order"):
+                    if not row.get("parchment_weight"):
+                        # Derive parchment weight from the SO's parchment types.
+                        types = frappe.get_all(
+                            "Endebess Parchment Type",
+                            filters={"parent": row.sales_order, "parenttype": "Sales Order"},
+                            fields=["expected_weight_kg"],
+                        )
+                        row.parchment_weight = sum(flt(t.expected_weight_kg) for t in types)
+                    if not row.get("grower"):
+                        row.grower = frappe.db.get_value("Sales Order", row.sales_order, "customer")
+                total += flt(row.get("parchment_weight"))
+                if row.get("grower") and row.grower not in growers:
+                    growers.append(row.grower)
+
+            # Legacy Booking hydration for any pre-existing rows without SO.
+            if _booking_exists():
+                for row in (self.component_bookings or []):
+                    if row.get("sales_order") or not row.get("booking_outturn"):
+                        continue
+                    booking = frappe.get_value(
+                        "Booking", row.booking_outturn, ["net_weight", "grower"], as_dict=True
+                    )
+                    if booking:
+                        total += booking.net_weight or 0
+                        if booking.grower and booking.grower not in growers:
+                            growers.append(booking.grower)
+
             self.parchment_weight = total
             self.grower = ", ".join(growers) if growers else self.grower
-        elif self.outturn_number:
+            return
+
+        # Normal outturn — SO-based path first.
+        if self.get("custom_source_sales_order"):
+            so = frappe.db.get_value(
+                "Sales Order", self.custom_source_sales_order,
+                ["customer", "custom_outturn_number"], as_dict=True,
+            )
+            if so:
+                if not self.outturn_number:
+                    self.outturn_number = so.custom_outturn_number
+                if not self.grower:
+                    self.grower = so.customer
+                if not self.parchment_weight:
+                    types = frappe.get_all(
+                        "Endebess Parchment Type",
+                        filters={"parent": self.custom_source_sales_order, "parenttype": "Sales Order"},
+                        fields=["expected_weight_kg"],
+                    )
+                    self.parchment_weight = sum(flt(t.expected_weight_kg) for t in types)
+                return
+
+        # Legacy Booking fallback for Normal outturns.
+        if _booking_exists() and self.outturn_number:
             booking = frappe.get_value(
                 "Booking", self.outturn_number, ["net_weight", "grower"], as_dict=True
             )
@@ -88,6 +204,10 @@ class OutturnStatement(Document):
             self.milling_loss = ((self.parchment_weight - self.output_weight) / self.parchment_weight) * 100
 
     def _map_grade_items(self):
+        # `grade` is now a direct Link → Item, so item_code equals grade.
+        # GRADE_ITEM_MAP is still consulted as a fallback for any legacy
+        # rows whose grade was persisted as a bare code (AA / AB / …)
+        # before the Select → Link migration.
         for row in self.table_cyvh:
             row.item_code = GRADE_ITEM_MAP.get(row.grade, row.grade)
 
@@ -156,10 +276,13 @@ def on_submit_create_milled_stock(doc, method):
     """Create Repack Stock Entry: Parchment -> Graded Coffee items.
     Consumes the INPUT parchment weight (milling loss is inherent: output
     weighs less); prefers the outturn's own batch, then FIFO."""
-    from upande_coffee.upande_coffee.doctype.booking.booking import _allocate_batches, parchment_item_for
-
     settings = _settings()
-    ptype = frappe.db.get_value("Booking", doc.outturn_number, "parchment_type") if doc.outturn_number else None
+    # Legacy: parchment_type used to live on Booking. If Booking is gone the
+    # lookup returns None and we fall back to Coffee Settings' default
+    # parchment item.
+    ptype = None
+    if doc.outturn_number and _booking_exists():
+        ptype = frappe.db.get_value("Booking", doc.outturn_number, "parchment_type")
     parchment_item = parchment_item_for(ptype)
     consume_qty = doc.parchment_weight or doc.output_weight
     dry_mill_stock = _get_warehouse_stock(parchment_item, settings.dry_mill_warehouse)
@@ -241,17 +364,18 @@ def on_submit_create_milled_stock(doc, method):
     se.insert(ignore_permissions=True)
     se.submit()
 
-    # Update booking status
-    if doc.outturn_type == "Super Outturn":
-        for row in (doc.component_bookings or []):
-            if frappe.db.exists("Booking", row.booking_outturn):
-                frappe.db.set_value(
-                    "Booking", row.booking_outturn, "status", "Completed", update_modified=False
-                )
-    elif doc.outturn_number and frappe.db.exists("Booking", doc.outturn_number):
-        frappe.db.set_value(
-            "Booking", doc.outturn_number, "status", "Completed", update_modified=False
-        )
+    # Update legacy Booking status (skip entirely if Booking is gone).
+    if _booking_exists():
+        if doc.outturn_type == "Super Outturn":
+            for row in (doc.component_bookings or []):
+                if frappe.db.exists("Booking", row.booking_outturn):
+                    frappe.db.set_value(
+                        "Booking", row.booking_outturn, "status", "Completed", update_modified=False
+                    )
+        elif doc.outturn_number and frappe.db.exists("Booking", doc.outturn_number):
+            frappe.db.set_value(
+                "Booking", doc.outturn_number, "status", "Completed", update_modified=False
+            )
 
     frappe.msgprint(
         _("Milled stock entry {0} created. {1} kg graded coffee moved to {2}.").format(
@@ -284,17 +408,18 @@ def on_cancel_reverse_milled_stock(doc, method):
         se = frappe.get_doc("Stock Entry", se_name)
         se.cancel()
 
-    # Reset booking statuses
-    if doc.outturn_type == "Super Outturn":
-        for row in (doc.component_bookings or []):
-            if frappe.db.exists("Booking", row.booking_outturn):
-                frappe.db.set_value(
-                    "Booking", row.booking_outturn, "status", "Transferred", update_modified=False
-                )
-    elif doc.outturn_number and frappe.db.exists("Booking", doc.outturn_number):
-        frappe.db.set_value(
-            "Booking", doc.outturn_number, "status", "Transferred", update_modified=False
-        )
+    # Reset legacy Booking statuses (skip if Booking is gone).
+    if _booking_exists():
+        if doc.outturn_type == "Super Outturn":
+            for row in (doc.component_bookings or []):
+                if frappe.db.exists("Booking", row.booking_outturn):
+                    frappe.db.set_value(
+                        "Booking", row.booking_outturn, "status", "Transferred", update_modified=False
+                    )
+        elif doc.outturn_number and frappe.db.exists("Booking", doc.outturn_number):
+            frappe.db.set_value(
+                "Booking", doc.outturn_number, "status", "Transferred", update_modified=False
+            )
 
 
 @frappe.whitelist()
@@ -310,22 +435,39 @@ def create_delivery_note(outturn_name):
     if doc.docstatus != 1:
         frappe.throw(_("Outturn Statement must be submitted before creating a Delivery Note."))
 
-    # Determine customer and is_internal from booking
-    if doc.outturn_type == "Super Outturn":
-        # For super outturn use the first component booking to get customer
-        first = doc.component_bookings[0] if doc.component_bookings else None
-        if not first:
-            frappe.throw(_("No component bookings found on this Super Outturn."))
-        booking = frappe.get_value(
-            "Booking", first.booking_outturn, ["grower", "is_internal"], as_dict=True
+    # Determine customer and is_internal.
+    # Preferred source (current): the linked Sales Order on custom_source_sales_order.
+    # Legacy fallback: read grower/is_internal from Booking if it's still present.
+    booking = None
+    if doc.get("custom_source_sales_order"):
+        so_row = frappe.db.get_value(
+            "Sales Order", doc.custom_source_sales_order,
+            ["customer as grower"], as_dict=True,
         )
-    else:
-        booking = frappe.get_value(
-            "Booking", doc.outturn_number, ["grower", "is_internal"], as_dict=True
-        )
+        if so_row and so_row.grower:
+            is_internal_flag = frappe.db.get_value(
+                "Customer", so_row.grower, "is_internal_customer"
+            )
+            booking = frappe._dict({"grower": so_row.grower, "is_internal": is_internal_flag or 0})
+
+    if not booking and _booking_exists():
+        if doc.outturn_type == "Super Outturn":
+            first = doc.component_bookings[0] if doc.component_bookings else None
+            if not first:
+                frappe.throw(_("No component bookings found on this Super Outturn."))
+            booking = frappe.get_value(
+                "Booking", first.booking_outturn, ["grower", "is_internal"], as_dict=True
+            )
+        else:
+            booking = frappe.get_value(
+                "Booking", doc.outturn_number, ["grower", "is_internal"], as_dict=True
+            )
 
     if not booking or not booking.grower:
-        frappe.throw(_("No grower linked on the Booking for this outturn."))
+        frappe.throw(_(
+            "No grower could be resolved for this outturn — link a Sales Order via "
+            "<b>Source Sales Order</b> or (legacy) a Booking."
+        ))
 
     is_internal = cint(booking.is_internal)
 
@@ -473,9 +615,26 @@ def create_outgrower_invoice(outturn_name):
     if doc.docstatus != 1:
         frappe.throw(_("Outturn Statement must be submitted first."))
 
-    booking = frappe.get_value("Booking", doc.outturn_number, ["grower", "is_internal"], as_dict=True)
+    # Preferred source (current): the linked Sales Order. Legacy fallback: Booking.
+    booking = None
+    if doc.get("custom_source_sales_order"):
+        so_row = frappe.db.get_value(
+            "Sales Order", doc.custom_source_sales_order, ["customer as grower"], as_dict=True,
+        )
+        if so_row and so_row.grower:
+            is_internal_flag = frappe.db.get_value(
+                "Customer", so_row.grower, "is_internal_customer"
+            )
+            booking = frappe._dict({"grower": so_row.grower, "is_internal": is_internal_flag or 0})
+    if not booking and _booking_exists() and doc.outturn_number:
+        booking = frappe.get_value(
+            "Booking", doc.outturn_number, ["grower", "is_internal"], as_dict=True,
+        )
     if not booking or not booking.grower:
-        frappe.throw(_("No grower found on Booking {0}.").format(doc.outturn_number))
+        frappe.throw(_(
+            "No grower could be resolved for this outturn — link a Sales Order via "
+            "<b>Source Sales Order</b> or (legacy) a Booking."
+        ))
 
     # Ensure customer has default_currency = USD so ERPNext initialises the SI in USD.
     # Outgrowers always transact in USD; set this once if missing.

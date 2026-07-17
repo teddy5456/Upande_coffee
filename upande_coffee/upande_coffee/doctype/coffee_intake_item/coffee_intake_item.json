@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "creation": "2026-07-17 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "parchment_type",
+  "qty_kg",
+  "source_warehouse"
+ ],
+ "fields": [
+  {
+   "fieldname": "parchment_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Parchment Type",
+   "options": "Item",
+   "description": "Same Item as the parchment_type on the source SO. Drives the intake Stock Entry's item_code."
+  },
+  {
+   "fieldname": "qty_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty (kg)",
+   "non_negative": 1,
+   "precision": 2,
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Source Warehouse",
+   "options": "Warehouse",
+   "description": "Required for internal customers (Material Transfer). Leave blank for outgrowers (Material Receipt — no source)."
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Coffee Intake Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC"
+}

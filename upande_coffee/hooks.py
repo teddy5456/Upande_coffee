@@ -30,13 +30,24 @@ fixtures = [
 # Installation / migration
 # ------------------------
 after_install = "upande_coffee.setup.after_install"
+# Only custom fields auto-run on migrate. Endebess service items, price list,
+# tax template, Grower Type attribute, and -OG grade variants are all created
+# manually in the UI. Point Coffee Settings at whatever names you use; the
+# code reads from there — nothing is hardcoded. Optional one-shot installers
+# still exist (upande_coffee.endebess_setup.run, endebess_variants.run) for
+# sites that want a scripted seed.
 after_migrate = "upande_coffee.custom_fields.create_coffee_custom_fields"
 
-# DocType JS shipped from the app (no site Client Scripts)
+# DocType JS shipped from the app (no site Client Scripts).
+# sales_order.js is loaded on every SO but every handler bails immediately
+# when business_unit doesn't contain "endebess" — no side effects for other
+# tenants. First action on refresh is to force-hide the Endebess tab so
+# non-Endebess users see zero UI change.
 app_include_js = "/assets/upande_coffee/js/coffee_selling.js?v=3"
 doctype_js = {
 	"Delivery Note": "public/js/delivery_note.js",
 	"Sales Invoice": "public/js/sales_invoice.js",
+	"Sales Order":   "public/js/sales_order.js",
 }
 
 # Document Events
@@ -50,10 +61,7 @@ doc_events = {
 		"on_submit": "upande_coffee.upande_coffee.doctype.drying_assignment.drying_assignment.on_submit_create_repack",
 		"on_cancel": "upande_coffee.upande_coffee.doctype.drying_assignment.drying_assignment.on_cancel_reverse_repack",
 	},
-	"Booking": {
-		"on_submit": "upande_coffee.upande_coffee.doctype.booking.booking.on_submit_transfer_to_mill",
-		"on_cancel": "upande_coffee.upande_coffee.doctype.booking.booking.on_cancel_reverse_transfer",
-	},
+	# Booking doctype was removed — outgrowers now go through Sales Order.
 	"Outturn Statement": {
 		"on_submit": "upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement.on_submit_create_milled_stock",
 		"on_cancel": "upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement.on_cancel_reverse_milled_stock",
@@ -66,6 +74,13 @@ doc_events = {
 		"before_validate": "upande_coffee.selling_hooks.calculate_item_weights",
 		"validate": "upande_coffee.selling_hooks.validate_outturn_limits",
 	},
+	"Sales Order": {
+		# Strict early-return in the hook for non-Endebess SOs — see
+		# sync_endebess_service_items() in selling_hooks.py.
+		"before_validate": "upande_coffee.selling_hooks.sync_endebess_service_items",
+	},
+	# Pick List has no coffee hook — parchment intake runs through the
+	# dedicated Coffee Intake doctype.
 }
 
 # Apps

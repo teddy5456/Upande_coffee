@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-07-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "naming_series",
+  "section_break_header",
+  "sales_order",
+  "outturn_number",
+  "posting_date",
+  "column_break_header",
+  "customer",
+  "is_internal",
+  "company",
+  "section_break_items",
+  "items",
+  "section_break_result",
+  "intake_stock_entry",
+  "column_break_result",
+  "amended_from",
+  "section_break_notes",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "COI-.YYYY.-",
+   "default": "COI-.YYYY.-"
+  },
+  {
+   "fieldname": "section_break_header",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order (Coffee)",
+   "options": "Sales Order",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Pick the Coffee SO this intake is for. On selection, customer + outturn number auto-fill and the items table pre-populates from the SO's parchment types."
+  },
+  {
+   "fetch_from": "sales_order.custom_outturn_number",
+   "fieldname": "outturn_number",
+   "fieldtype": "Data",
+   "label": "Outturn Number",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "default": "Today",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "sales_order.customer",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fetch_from": "customer.is_internal_customer",
+   "fieldname": "is_internal",
+   "fieldtype": "Check",
+   "label": "Internal Customer",
+   "read_only": 1,
+   "description": "Auto-set from the customer. Determines whether the Stock Entry is a Material Transfer (internal) or Material Receipt (outgrower)."
+  },
+  {
+   "fetch_from": "sales_order.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_items",
+   "fieldtype": "Section Break",
+   "label": "Parchment Received"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Coffee Intake Item",
+   "reqd": 1,
+   "description": "One row per parchment type. Auto-populated from the SO's parchment types on Sales Order selection — adjust actual qty received before submit."
+  },
+  {
+   "fieldname": "section_break_result",
+   "fieldtype": "Section Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "intake_stock_entry",
+   "fieldtype": "Link",
+   "label": "Intake Stock Entry",
+   "options": "Stock Entry",
+   "read_only": 1,
+   "description": "Populated on submit — the Material Receipt (outgrower) or Material Transfer (internal) that moved parchment into the dry mill."
+  },
+  {
+   "fieldname": "column_break_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Coffee Intake",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {"link_doctype": "Sales Order", "link_fieldname": "name", "parent_doctype": null, "label": "Sales Order"},
+  {"link_doctype": "Stock Entry", "link_fieldname": "name", "parent_doctype": null, "label": "Stock Entry"}
+ ],
+ "modified": "2026-07-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Coffee Intake",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "cancel": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock User",
+   "share": 1,
+   "submit": 1,
+   "cancel": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -308,14 +308,19 @@ def get_milling(from_date=None, to_date=None, season=None, grower=None, parchmen
 		b_f["grower"] = grower
 	if parchment_type:
 		b_f["parchment_type"] = parchment_type
-	bookings = frappe.get_all(
-		"Booking",
-		filters=b_f,
-		fields=["name", "outturn_number", "grower", "grower_code", "parchment_type",
-				"no_of_bags", "net_weight", "booking_date", "status"],
-		order_by="booking_date desc",
-		limit_page_length=150,
-	)
+	# Booking is retired; dashboards now show an empty bookings list when
+	# the doctype isn't installed. Consumers should migrate to reading
+	# Sales Order.custom_outturn_number for equivalent data.
+	bookings = []
+	if frappe.db.exists("DocType", "Booking"):
+		bookings = frappe.get_all(
+			"Booking",
+			filters=b_f,
+			fields=["name", "outturn_number", "grower", "grower_code", "parchment_type",
+					"no_of_bags", "net_weight", "booking_date", "status"],
+			order_by="booking_date desc",
+			limit_page_length=150,
+		)
 	o_f = {"docstatus": 1}
 	outturns = frappe.get_all(
 		"Outturn Statement",

@@ -7,21 +7,39 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "sales_order",
+  "outturn_number",
   "booking_outturn",
   "grower",
   "parchment_weight"
  ],
  "fields": [
   {
-   "fieldname": "booking_outturn",
+   "fieldname": "sales_order",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Booking (Outturn)",
-   "options": "Booking",
-   "reqd": 1
+   "label": "Sales Order",
+   "options": "Sales Order",
+   "description": "Coffee Sales Order making up this component of a Super Outturn."
   },
   {
-   "fetch_from": "booking_outturn.grower",
+   "fieldname": "outturn_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Outturn Number",
+   "fetch_from": "sales_order.custom_outturn_number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "booking_outturn",
+   "fieldtype": "Data",
+   "in_list_view": 0,
+   "label": "Outturn Number (legacy)",
+   "description": "Legacy free-text identifier from the retired Booking flow. New rows use Sales Order + Outturn Number.",
+   "hidden": 1
+  },
+  {
+   "fetch_from": "sales_order.customer",
    "fieldname": "grower",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -29,12 +47,11 @@
    "read_only": 1
   },
   {
-   "fetch_from": "booking_outturn.net_weight",
    "fieldname": "parchment_weight",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Parchment (kg)",
-   "read_only": 1
+   "description": "Enter the parchment weight this SO contributed to the super outturn."
   }
  ],
  "istable": 1,

@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "creation": "2026-07-17 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "parchment_type",
+  "expected_bags",
+  "expected_weight_kg",
+  "source_warehouse"
+ ],
+ "fields": [
+  {
+   "fieldname": "parchment_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Parchment Type",
+   "options": "Item",
+   "reqd": 1,
+   "description": "Pick the parchment Item directly (e.g. P1: Coffee Parchment). Everything downstream keys off this Item code."
+  },
+  {
+   "fieldname": "expected_bags",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Expected Bags",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "expected_weight_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Expected Weight (kg)",
+   "non_negative": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "source_warehouse",
+   "fieldtype": "Link",
+   "label": "Source Warehouse",
+   "options": "Warehouse",
+   "in_list_view": 1,
+   "description": "Internal only. Bin/warehouse holding this parchment. Used by the Pick List to build the Material Transfer to the dry mill. Leave blank for outgrower SOs — they use Material Receipt (no source)."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Endebess Parchment Type",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

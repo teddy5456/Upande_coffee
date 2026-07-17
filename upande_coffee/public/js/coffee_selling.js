@@ -47,6 +47,8 @@ upande_coffee.selling = {
 				item_code: row.item_code,
 				doctype: frm.doc.doctype,
 				exclude_doc: frm.doc.name,
+				business_unit: frm.doc.business_unit || frm.doc.custom_business_unit || null,
+				customer: frm.doc.customer || null,
 			},
 			callback: (r) => {
 				const g = r.message || {};
@@ -158,7 +160,16 @@ upande_coffee.selling = {
 		const self = this;
 		frappe.call({
 			method: "upande_coffee.api.deliverynoteapi.get_outturn_items",
-			args: { outturn_name: outturn, doctype: frm.doc.doctype, exclude_doc: frm.doc.name },
+			args: {
+				outturn_name: outturn,
+				doctype: frm.doc.doctype,
+				exclude_doc: frm.doc.name,
+				// Endebess + grower-coded customer → server returns -OG variant
+				// codes in place of the base grade items so the DN/SI rows
+				// land on the zero-valuation companion.
+				business_unit: frm.doc.business_unit || frm.doc.custom_business_unit || null,
+				customer: frm.doc.customer || null,
+			},
 			callback(r) {
 				const rows = r.message || [];
 				if (rows.length && rows[0].bag_kg) self.bag_kg = rows[0].bag_kg;

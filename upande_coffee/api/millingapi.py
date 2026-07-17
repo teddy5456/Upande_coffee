@@ -18,19 +18,22 @@ def get_defaults():
 	from upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement import GRADE_ITEM_MAP
 
 	settings = frappe.get_cached_doc("Coffee Settings")
-	# bookings at the mill without a submitted outturn statement yet
+	# Legacy Booking-based selector — the Booking doctype has been retired.
+	# Empty list keeps the API contract stable for any old caller.
 	used = set(
 		frappe.get_all("Outturn Statement", filters={"docstatus": 1}, pluck="outturn_number")
 	)
-	bookings = [
-		b for b in frappe.get_all(
-			"Booking",
-			filters={"docstatus": 1, "status": "Transferred"},
-			fields=["name", "grower", "parchment_type", "net_weight", "booking_date"],
-			order_by="booking_date asc",
-		)
-		if b.name not in used
-	]
+	bookings = []
+	if frappe.db.exists("DocType", "Booking"):
+		bookings = [
+			b for b in frappe.get_all(
+				"Booking",
+				filters={"docstatus": 1, "status": "Transferred"},
+				fields=["name", "grower", "parchment_type", "net_weight", "booking_date"],
+				order_by="booking_date asc",
+			)
+			if b.name not in used
+		]
 	return {
 		"bookings": bookings,
 		"grades": [g for g in GRADE_ITEM_MAP if frappe.db.exists("Item", GRADE_ITEM_MAP[g])],

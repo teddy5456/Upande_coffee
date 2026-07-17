@@ -13,7 +13,14 @@
   "milling_section",
   "parchment_item",
   "column_break_ms",
-  "dry_mill_warehouse"
+  "dry_mill_warehouse",
+  "endebess_section",
+  "endebess_price_list",
+  "endebess_milling_item",
+  "endebess_handling_item",
+  "column_break_endebess",
+  "endebess_transport_item",
+  "endebess_og_suffix"
  ],
  "fields": [
   {
@@ -76,6 +83,51 @@
    "fieldtype": "Link",
    "label": "Dry Mill Warehouse",
    "options": "Warehouse"
+  },
+  {
+   "fieldname": "endebess_section",
+   "fieldtype": "Section Break",
+   "label": "Endebess (Outgrower)",
+   "description": "Point these at whatever names you used when creating the service Items, Price List, and Grower Type attribute in the UI. Leave blank to disable auto-populate — the SO items table then stays fully manual."
+  },
+  {
+   "description": "Price List rates are pulled from when auto-populating the SO items table. Falls back to the SO's own selling_price_list.",
+   "fieldname": "endebess_price_list",
+   "fieldtype": "Link",
+   "label": "Endebess Price List",
+   "options": "Price List"
+  },
+  {
+   "description": "Service item billed per tonne of parchment received.",
+   "fieldname": "endebess_milling_item",
+   "fieldtype": "Link",
+   "label": "Milling Service Item",
+   "options": "Item"
+  },
+  {
+   "description": "Service item billed per 60-kg bag of parchment received.",
+   "fieldname": "endebess_handling_item",
+   "fieldtype": "Link",
+   "label": "Handling Service Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "column_break_endebess",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Service item billed per 60-kg bag of output, added when the SO Transport toggle is on.",
+   "fieldname": "endebess_transport_item",
+   "fieldtype": "Link",
+   "label": "Transport Service Item",
+   "options": "Item"
+  },
+  {
+   "default": "-OG",
+   "description": "Suffix appended to a grade item_code to resolve its Outgrower variant (e.g. 'AA' + '-OG' = 'AA-OG').",
+   "fieldname": "endebess_og_suffix",
+   "fieldtype": "Data",
+   "label": "Outgrower Variant Suffix"
   }
  ],
  "issingle": 1,

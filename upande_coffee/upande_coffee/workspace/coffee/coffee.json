@@ -1,7 +1,8 @@
 {
+ "app": "upande_coffee",
  "charts": [],
- "content": "[{\"id\":\"coffee_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Coffee</b></span>\",\"col\":12}},{\"id\":\"sc_harvest_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Harvest Log\",\"col\":3}},{\"id\":\"sc_harvest_pickup\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Harvest Pickup\",\"col\":3}},{\"id\":\"sc_drying\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Drying Assignment\",\"col\":3}},{\"id\":\"sc_outturn\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Outturn Statement\",\"col\":3}},{\"id\":\"spacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_harvest\",\"type\":\"card\",\"data\":{\"card_name\":\"Harvest\",\"col\":4}},{\"id\":\"card_drying\",\"type\":\"card\",\"data\":{\"card_name\":\"Drying\",\"col\":4}},{\"id\":\"card_milling\",\"type\":\"card\",\"data\":{\"card_name\":\"Milling & Dispatch\",\"col\":4}},{\"id\":\"card_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"card_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Setup\",\"col\":4}}]",
- "creation": "2026-07-16 09:00:00.000000",
+ "content": "[{\"id\":\"coffee_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Coffee</b></span>\",\"col\":12}},{\"id\":\"sc_harvest_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Harvest Log\",\"col\":3}},{\"id\":\"sc_harvest_pickup\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Harvest Pickup\",\"col\":3}},{\"id\":\"sc_drying\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Drying Assignment\",\"col\":3}},{\"id\":\"sc_outturn\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Outturn Statement\",\"col\":3}},{\"id\":\"GCpBpk4RQ8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":3}},{\"id\":\"spacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_harvest\",\"type\":\"card\",\"data\":{\"card_name\":\"Harvest\",\"col\":4}},{\"id\":\"card_drying\",\"type\":\"card\",\"data\":{\"card_name\":\"Drying\",\"col\":4}},{\"id\":\"card_milling\",\"type\":\"card\",\"data\":{\"card_name\":\"Milling & Dispatch\",\"col\":4}},{\"id\":\"card_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"card_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Setup\",\"col\":4}}]",
+ "creation": "2026-07-16 09:00:00",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -115,16 +116,6 @@
    "link_count": 4,
    "onboard": 0,
    "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Booking",
-   "link_count": 0,
-   "link_to": "Booking",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
   },
   {
    "hidden": 0,
@@ -253,7 +244,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-16 09:00:00.000000",
+ "modified": "2026-07-17 10:49:24.215543",
  "modified_by": "Administrator",
  "module": "Upande Coffee",
  "name": "Coffee",
@@ -265,6 +256,13 @@
  "roles": [],
  "sequence_id": 30.0,
  "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Dashboard",
+   "type": "URL",
+   "url": "/coffee-dashboard"
+  },
   {
    "color": "Green",
    "doc_view": "List",
@@ -294,5 +292,6 @@
    "type": "DocType"
   }
  ],
- "title": "Coffee"
+ "title": "Coffee",
+ "type": "Workspace"
 }
