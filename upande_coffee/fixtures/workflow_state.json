@@ -1,0 +1,23 @@
+[
+ {
+  "doctype": "Workflow State",
+  "name": "Pending Weigh Approval",
+  "workflow_state_name": "Pending Weigh Approval",
+  "style": "Warning",
+  "modified": "2026-07-16 12:00:00"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Weighed",
+  "workflow_state_name": "Weighed",
+  "style": "Primary",
+  "modified": "2026-07-16 12:00:00"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Received",
+  "workflow_state_name": "Received",
+  "style": "Success",
+  "modified": "2026-07-16 12:00:00"
+ }
+]

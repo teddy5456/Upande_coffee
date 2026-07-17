@@ -4,6 +4,69 @@ app_publisher = "Upande"
 app_description = "Coffee farm operations: harvest, drying, outturn and payments"
 app_email = "teddy@upande.com"
 app_license = "mit"
+required_apps = ["erpnext", "upande_core"]
+
+# Fixtures
+# --------
+fixtures = [
+	{
+		"doctype": "Parchment Type",
+		"filters": [["name", "in", ["P1", "P2", "P3", "PL", "Mbuni", "Naturals", "Estate Cured"]]],
+	},
+	{
+		"doctype": "Workflow State",
+		"filters": [["name", "in", ["Pending Weigh Approval", "Weighed", "Received"]]],
+	},
+	{
+		"doctype": "Workflow Action Master",
+		"filters": [["name", "in", ["Submit for Weighing", "Approve Weight", "Send Back", "Receive"]]],
+	},
+	{
+		"doctype": "Workflow",
+		"filters": [["name", "in", ["Harvest Pickup Flow"]]],
+	},
+]
+
+# Installation / migration
+# ------------------------
+after_install = "upande_coffee.setup.after_install"
+after_migrate = "upande_coffee.custom_fields.create_coffee_custom_fields"
+
+# DocType JS shipped from the app (no site Client Scripts)
+app_include_js = "/assets/upande_coffee/js/coffee_selling.js?v=3"
+doctype_js = {
+	"Delivery Note": "public/js/delivery_note.js",
+	"Sales Invoice": "public/js/sales_invoice.js",
+}
+
+# Document Events
+# ---------------
+doc_events = {
+	"Harvest Pickup": {
+		"on_submit": "upande_coffee.upande_coffee.doctype.harvest_pickup.harvest_pickup.on_submit_create_stock_entry",
+		"on_cancel": "upande_coffee.upande_coffee.doctype.harvest_pickup.harvest_pickup.on_cancel_reverse_stock_entry",
+	},
+	"Drying Assignment": {
+		"on_submit": "upande_coffee.upande_coffee.doctype.drying_assignment.drying_assignment.on_submit_create_repack",
+		"on_cancel": "upande_coffee.upande_coffee.doctype.drying_assignment.drying_assignment.on_cancel_reverse_repack",
+	},
+	"Booking": {
+		"on_submit": "upande_coffee.upande_coffee.doctype.booking.booking.on_submit_transfer_to_mill",
+		"on_cancel": "upande_coffee.upande_coffee.doctype.booking.booking.on_cancel_reverse_transfer",
+	},
+	"Outturn Statement": {
+		"on_submit": "upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement.on_submit_create_milled_stock",
+		"on_cancel": "upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement.on_cancel_reverse_milled_stock",
+	},
+	"Delivery Note": {
+		"before_validate": "upande_coffee.selling_hooks.calculate_item_weights",
+		"validate": "upande_coffee.selling_hooks.validate_outturn_limits",
+	},
+	"Sales Invoice": {
+		"before_validate": "upande_coffee.selling_hooks.calculate_item_weights",
+		"validate": "upande_coffee.selling_hooks.validate_outturn_limits",
+	},
+}
 
 # Apps
 # ------------------

@@ -1,0 +1,64 @@
+[
+ {
+  "doctype": "Workflow",
+  "name": "Harvest Pickup Flow",
+  "workflow_name": "Harvest Pickup Flow",
+  "document_type": "Harvest Pickup",
+  "is_active": 1,
+  "send_email_alert": 0,
+  "workflow_state_field": "workflow_state",
+  "states": [
+   {
+    "state": "Draft",
+    "doc_status": "0",
+    "allow_edit": "Coffee Harvest User"
+   },
+   {
+    "state": "Pending Weigh Approval",
+    "doc_status": "0",
+    "allow_edit": "Coffee Harvest Manager"
+   },
+   {
+    "state": "Weighed",
+    "doc_status": "0",
+    "allow_edit": "Coffee Harvest Manager"
+   },
+   {
+    "state": "Received",
+    "doc_status": "1",
+    "allow_edit": "Coffee Harvest Manager"
+   }
+  ],
+  "transitions": [
+   {
+    "state": "Draft",
+    "action": "Submit for Weighing",
+    "next_state": "Pending Weigh Approval",
+    "allowed": "Coffee Harvest User",
+    "allow_self_approval": 1
+   },
+   {
+    "state": "Pending Weigh Approval",
+    "action": "Approve Weight",
+    "next_state": "Weighed",
+    "allowed": "Coffee Harvest Manager",
+    "allow_self_approval": 1
+   },
+   {
+    "state": "Pending Weigh Approval",
+    "action": "Send Back",
+    "next_state": "Draft",
+    "allowed": "Coffee Harvest Manager",
+    "allow_self_approval": 1
+   },
+   {
+    "state": "Weighed",
+    "action": "Receive",
+    "next_state": "Received",
+    "allowed": "Coffee Harvest Manager",
+    "allow_self_approval": 1
+   }
+  ],
+  "modified": "2026-07-16 12:00:00"
+ }
+]

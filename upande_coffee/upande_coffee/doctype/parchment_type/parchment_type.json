@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:parchment_type_name",
+ "creation": "2026-07-16 22:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "parchment_type_name",
+  "item",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "parchment_type_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Parchment Type",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Stock item this parchment type is stored as (drying outputs, bins, mill)",
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description"
+  }
+ ],
+ "links": [],
+ "modified": "2026-07-16 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Parchment Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

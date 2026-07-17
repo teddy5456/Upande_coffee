@@ -1,0 +1,298 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"coffee_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Coffee</b></span>\",\"col\":12}},{\"id\":\"sc_harvest_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Harvest Log\",\"col\":3}},{\"id\":\"sc_harvest_pickup\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Harvest Pickup\",\"col\":3}},{\"id\":\"sc_drying\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Drying Assignment\",\"col\":3}},{\"id\":\"sc_outturn\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Outturn Statement\",\"col\":3}},{\"id\":\"spacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_harvest\",\"type\":\"card\",\"data\":{\"card_name\":\"Harvest\",\"col\":4}},{\"id\":\"card_drying\",\"type\":\"card\",\"data\":{\"card_name\":\"Drying\",\"col\":4}},{\"id\":\"card_milling\",\"type\":\"card\",\"data\":{\"card_name\":\"Milling & Dispatch\",\"col\":4}},{\"id\":\"card_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"card_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Setup\",\"col\":4}}]",
+ "creation": "2026-07-16 09:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "agriculture",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Coffee",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Harvest",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Harvest Log",
+   "link_count": 0,
+   "link_to": "Harvest Log",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Harvester",
+   "link_count": 0,
+   "link_to": "Harvester",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Harvest Pickup",
+   "link_count": 0,
+   "link_to": "Harvest Pickup",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Coffee Payment",
+   "link_count": 0,
+   "link_to": "Coffee Payment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Coffee Season",
+   "link_count": 0,
+   "link_to": "Coffee Season",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Drying",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Drying Table",
+   "link_count": 0,
+   "link_to": "Drying Table",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Drying Assignment",
+   "link_count": 0,
+   "link_to": "Drying Assignment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Moisture Reading",
+   "link_count": 0,
+   "link_to": "Daily Moisture Reading",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Milling & Dispatch",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking",
+   "link_count": 0,
+   "link_to": "Booking",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Outturn Statement",
+   "link_count": 0,
+   "link_to": "Outturn Statement",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Delivery Note",
+   "link_count": 0,
+   "link_to": "Delivery Note",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Invoice",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Block Seasonal Performance",
+   "link_count": 0,
+   "link_to": "Block Seasonal Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Cherry to Clean Conversion",
+   "link_count": 0,
+   "link_to": "Cherry to Clean Conversion",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Coffee Dispatch Summary",
+   "link_count": 0,
+   "link_to": "Coffee Dispatch Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Coffee Stock Stages",
+   "link_count": 0,
+   "link_to": "Coffee Stock Stages",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Outgrower Coffee Report",
+   "link_count": 0,
+   "link_to": "Outgrower Coffee Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Setup",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Coffee Settings",
+   "link_count": 0,
+   "link_to": "Coffee Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Farm",
+   "link_count": 0,
+   "link_to": "Farm",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Warehouse",
+   "link_count": 0,
+   "link_to": "Warehouse",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-07-16 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Coffee",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 30.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Harvest Log",
+   "link_to": "Harvest Log",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Harvest Pickup",
+   "link_to": "Harvest Pickup",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Drying Assignment",
+   "link_to": "Drying Assignment",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Outturn Statement",
+   "link_to": "Outturn Statement",
+   "type": "DocType"
+  }
+ ],
+ "title": "Coffee"
+}

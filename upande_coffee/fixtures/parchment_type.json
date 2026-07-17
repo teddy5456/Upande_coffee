@@ -1,0 +1,9 @@
+[
+ {"doctype": "Parchment Type", "name": "P1", "parchment_type_name": "P1", "description": "Premium fully washed parchment", "modified": "2026-07-16 22:00:00"},
+ {"doctype": "Parchment Type", "name": "P2", "parchment_type_name": "P2", "description": "Second grade washed parchment", "modified": "2026-07-16 22:00:00"},
+ {"doctype": "Parchment Type", "name": "P3", "parchment_type_name": "P3", "description": "Third grade washed parchment", "modified": "2026-07-16 22:00:00"},
+ {"doctype": "Parchment Type", "name": "PL", "parchment_type_name": "PL", "description": "Parchment lights", "modified": "2026-07-16 22:00:00"},
+ {"doctype": "Parchment Type", "name": "Mbuni", "parchment_type_name": "Mbuni", "description": "Sun-dried natural cherry (buni)", "modified": "2026-07-16 22:00:00"},
+ {"doctype": "Parchment Type", "name": "Naturals", "parchment_type_name": "Naturals", "description": "Natural process coffee", "modified": "2026-07-16 22:00:00"},
+ {"doctype": "Parchment Type", "name": "Estate Cured", "parchment_type_name": "Estate Cured", "description": "Estate coffee already milled/cured", "modified": "2026-07-16 22:00:00"}
+]

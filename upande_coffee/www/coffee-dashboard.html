@@ -1,0 +1,1347 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upande · Kaitet · Coffee Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Shades of black — from the Upande logo */
+  --ink:#0a0a0a;
+  --ink-1:#1a1a18;
+  --ink-2:#2a2a26;
+  --ink-3:#3a3a34;
+  --ink-4:#5a5a52;
+  --ink-mute:#8a8780;
+  --ink-faint:#b8b6ae;
+
+  /* Surfaces */
+  --bg:#f4f3ef;
+  --surface:#fafaf6;
+  --surface-2:#ffffff;
+  --hairline:rgba(10,10,10,0.06);
+  --shadow-card:0 1px 0 rgba(10,10,10,0.04), 0 8px 32px -16px rgba(10,10,10,0.10);
+  --shadow-hover:0 1px 0 rgba(10,10,10,0.06), 0 24px 48px -24px rgba(10,10,10,0.18);
+
+  /* Avocado ramp — flesh to skin, this page's data accent */
+  --avo-100:#f2e9dc;
+  --avo-200:#e3d2b7;
+  --avo-300:#c9a878;
+  --avo-400:#a8824d;
+  --avo-500:#8a6437;
+  --avo-600:#6f4e29;
+  --avo-700:#53381c;
+  --avo-900:#2d1d0e;
+
+  /* Pit tan — single secondary */
+  --pit:#b08d55;
+  --pit-deep:#8a6a3b;
+
+  /* Semantic states */
+  --warn:#d9962e;
+  --neg:#c4302b;
+
+  /* Page signal = avocado green */
+  --signal:var(--avo-600);
+
+  /* Gradient layers */
+  --grad-ink:linear-gradient(135deg,#0a0a0a 0%,#3a3a34 100%);
+  --grad-avo:linear-gradient(135deg,#53381c 0%,#8a6437 100%);
+  --grad-chart:linear-gradient(180deg,rgba(10,10,10,0.18) 0%,rgba(10,10,10,0) 100%);
+
+  --sans:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --display:'Fraunces',Georgia,serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);font-size:14px;color:var(--ink-3);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:where(button,a):focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+/* TOPBAR — light, borderless, prominent logo */
+.topbar{background:var(--surface-2);padding:14px 40px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-bottom:1px solid var(--hairline)}
+.topbar__brand{display:flex;align-items:center;gap:16px}
+.topbar__logo{height:30px;width:auto}
+.topbar__divider{width:1px;height:22px;background:var(--hairline)}
+.topbar__product{font:600 14px var(--sans);color:var(--ink);letter-spacing:-.2px}
+.topbar__product small{display:block;font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute);margin-top:1px}
+.topbar__nav{display:flex;gap:4px;margin-left:32px}
+.topbar__nav a{padding:8px 14px;font:500 13px var(--sans);color:var(--ink-4);text-decoration:none;border-radius:999px;transition:all .2s}
+.topbar__nav a:hover{background:rgba(10,10,10,0.04);color:var(--ink)}
+.topbar__nav a.on{background:var(--ink);color:#fafaf6}
+.topbar__right{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink-4);margin-left:auto}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--grad-ink);color:#fafaf6;display:grid;place-items:center;font-weight:600;font-size:12px}
+
+/* PAGE */
+.page{max-width:1480px;margin:0 auto;padding:48px 40px 80px}
+.pagehead{display:grid;grid-template-columns:1fr auto;align-items:end;gap:32px;margin-bottom:36px}
+.pagehead__eyebrow{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:2.2px;color:var(--ink-mute);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
+.pagehead__eyebrow::before{content:"";width:18px;height:1px;background:var(--ink-3)}
+.pagehead__title{font:600 44px/1.05 var(--sans);color:var(--ink);letter-spacing:-1.3px;margin:0}
+.pagehead__sub{margin-top:8px;font-size:15px;color:var(--ink-4)}
+.pagehead__tools{display:flex;gap:10px;align-items:center}
+
+/* Toggle / pill controls */
+.pillgroup{display:inline-flex;background:rgba(10,10,10,0.04);border-radius:999px;padding:4px;gap:2px}
+.pillgroup button{border:0;background:transparent;font:500 12px var(--sans);color:var(--ink-4);padding:8px 16px;cursor:pointer;border-radius:999px;transition:all .2s}
+.pillgroup button.on{background:var(--ink);color:#fafaf6;box-shadow:0 2px 8px rgba(10,10,10,0.15)}
+.datepill{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:999px;padding:10px 16px;font:500 12px var(--sans);color:var(--ink);box-shadow:var(--shadow-card)}
+.iconbtn{width:40px;height:40px;border:0;background:var(--surface-2);border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink-4);box-shadow:var(--shadow-card);transition:all .2s}
+.iconbtn:hover{color:var(--ink);transform:translateY(-1px)}
+
+/* TABS — modern black pills, large */
+.tabs{display:inline-flex;gap:4px;margin-bottom:32px;background:rgba(10,10,10,0.04);padding:5px;border-radius:999px;max-width:100%;overflow-x:auto}
+.tab{background:transparent;border:0;font:500 13px var(--sans);color:var(--ink-4);padding:10px 18px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;transition:all .2s}
+.tab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.tab:hover{color:var(--ink)}
+.tab.on{background:var(--grad-ink);color:#fafaf6;box-shadow:0 4px 14px rgba(10,10,10,0.20)}
+
+/* KPI cards — LARGE, BORDERLESS, gradient hover */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-bottom:32px}
+.kpi{background:var(--surface-2);border-radius:20px;padding:28px 30px;box-shadow:var(--shadow-card);transition:all .25s;position:relative;overflow:hidden;cursor:pointer}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
+.kpi__label{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:1.8px;color:var(--ink-mute);margin-bottom:14px}
+.kpi__value{font:600 44px/1 var(--sans);color:var(--ink);letter-spacing:-1.4px;font-feature-settings:"tnum"}
+.kpi__unit{font:400 14px var(--sans);color:var(--ink-mute);margin-top:6px}
+.kpi__trend{margin-top:16px;display:inline-flex;align-items:center;gap:6px;font:500 12px var(--sans);padding:5px 12px;border-radius:999px;background:rgba(10,10,10,0.03)}
+.kpi__trend.up{color:var(--avo-600);background:rgba(138,100,55,0.13)}
+.kpi__trend.down{color:var(--neg);background:rgba(196,48,43,0.10)}
+.kpi__trend.flat{color:var(--pit-deep);background:rgba(176,141,85,0.14)}
+.kpi__trend small{color:inherit;opacity:.65;font-weight:500}
+.kpi__spark{position:absolute;right:18px;top:18px;width:80px;height:30px}
+
+/* Big card */
+.card{background:var(--surface-2);border-radius:24px;padding:28px 32px;box-shadow:var(--shadow-card);margin-bottom:18px}
+.card--padded{padding:32px 36px}
+.card__head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:24px}
+.card__head h3{margin:0;font:600 18px var(--sans);color:var(--ink);letter-spacing:-.4px}
+.card__head .meta{font:500 12px var(--sans);color:var(--ink-mute)}
+
+/* Columns */
+.row-2{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px}
+.row-2-eq{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.row-3{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+.chart-sm{width:100%;height:300px;display:block}
+
+/* Legend */
+.legend{display:flex;gap:18px;font-size:12px;color:var(--ink-mute)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:18px;height:3px;border-radius:2px}
+
+/* Color legend chips */
+.clegend{display:flex;flex-wrap:wrap;gap:12px 18px;margin-top:14px}
+.clegend span{display:inline-flex;align-items:center;gap:8px;font:500 12px var(--sans);color:var(--ink-3)}
+.clegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* Pie center label */
+.piewrap{position:relative;display:grid;place-items:center}
+.piewrap__center{position:absolute;text-align:center;pointer-events:none}
+.piewrap__center b{display:block;font:600 32px var(--sans);color:var(--ink);letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.piewrap__center small{font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute)}
+
+/* Trend chart — gradient fill */
+.chart{width:100%;height:280px}
+
+/* Lists */
+.list{display:flex;flex-direction:column}
+.list__row{display:grid;grid-template-columns:36px 1fr auto;gap:14px;padding:14px 0;border-bottom:1px solid var(--hairline);align-items:center;cursor:pointer;transition:background .2s;border-radius:10px;padding-left:8px;padding-right:8px}
+.list__row:hover{background:rgba(10,10,10,0.02)}
+.list__row:last-child{border-bottom:0}
+.list__rank{font:500 13px var(--sans);color:var(--ink-mute);width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:rgba(10,10,10,0.04)}
+.list__rank.lead{background:var(--grad-avo);color:#fafaf6}
+.list__name{font:600 14px var(--sans);color:var(--ink)}
+.list__meta{font-size:12px;color:var(--ink-mute);margin-top:2px}
+.list__qty{font:600 16px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+.list__qty small{display:block;font:500 11px var(--sans);color:var(--ink-mute);margin-top:1px}
+
+/* Block tiles / generic cells */
+.tilegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.tile{background:var(--surface-2);border-radius:20px;padding:24px 26px;box-shadow:var(--shadow-card);cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;display:block}
+.tile:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+.tile__head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.tile__name{font:600 15px var(--sans);color:var(--ink);letter-spacing:-.2px}
+.tile__arrow{color:var(--ink-mute);transition:transform .2s;font-size:14px}
+.tile:hover .tile__arrow{transform:translateX(3px);color:var(--ink)}
+.tile__chip{display:inline-block;padding:3px 10px;font:500 11px var(--sans);background:rgba(138,100,55,0.13);color:var(--avo-700);border-radius:99px}
+.tile__chip.warn{background:rgba(217,150,46,0.13);color:#96650f}
+.tile__chip.neg{background:rgba(196,48,43,0.10);color:var(--neg)}
+.tile__stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 10px}
+.tile__stats div small{font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1px;color:var(--ink-mute);display:block;margin-bottom:2px}
+.tile__stats div b{font:600 18px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* Estimate vs actual horizontal bars */
+.hb{display:grid;grid-template-columns:110px 1fr 56px;gap:18px;align-items:center;padding:10px 0;border-bottom:1px solid var(--hairline)}
+.hb:last-child{border-bottom:0}
+.hb__name{font:600 13px var(--sans);color:var(--ink)}
+.hb__lane{position:relative;height:18px}
+.hb__est{position:absolute;left:0;top:0;height:18px;background:rgba(10,10,10,0.05);border-radius:999px}
+.hb__act{position:absolute;left:0;top:3px;height:12px;border-radius:999px;background:var(--grad-ink)}
+.hb__act.high{background:linear-gradient(90deg,#53381c,#8a6437)}
+.hb__act.mid{background:linear-gradient(90deg,#9a5a00,#d9962e)}
+.hb__act.low{background:linear-gradient(90deg,#7a2218,#c4302b)}
+.hb__pct{font:600 14px var(--sans);text-align:right;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* Funnel */
+.funnel{padding:20px 0 10px;display:flex;flex-direction:column;gap:14px}
+.funnel__stage{display:grid;grid-template-columns:1fr auto;align-items:center;gap:18px}
+.funnel__bar{height:60px;display:flex;align-items:center;padding:0 24px;font:600 16px var(--sans);color:#fafaf6;border-radius:14px;letter-spacing:-.2px;min-width:190px}
+.funnel__bar.s1{background:var(--grad-ink);width:100%}
+.funnel__bar.s2{background:linear-gradient(135deg,#3a2813,#6f4e29);width:68%}
+.funnel__bar.s3{background:linear-gradient(135deg,#6f4e29,#a8824d);width:38%}
+.funnel__meta{font:500 12px var(--sans);color:var(--ink-mute);min-width:150px;text-align:right}
+.funnel__meta b{display:block;font:600 22px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
+.funnel__foot{display:flex;flex-wrap:wrap;gap:8px 24px;padding-top:18px;margin-top:8px;border-top:1px solid var(--hairline);font:500 12px var(--sans);color:var(--ink-mute)}
+.funnel__foot i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:8px;vertical-align:-1px}
+.funnel__foot b{color:var(--ink-3);font-weight:600}
+
+/* Detail page back nav */
+.backbtn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--sans);color:var(--ink-4);text-decoration:none;padding:8px 16px;border-radius:999px;background:rgba(10,10,10,0.04);margin-bottom:24px;transition:all .2s}
+.backbtn:hover{background:var(--ink);color:#fafaf6}
+
+/* Hero stat (detail) */
+.hero{background:var(--surface-2);border-radius:28px;padding:48px 48px;box-shadow:var(--shadow-card);margin-bottom:18px;background-image:radial-gradient(circle at 95% 5%,rgba(138,100,55,0.10),transparent 35%)}
+.hero__eyebrow{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:2.2px;color:var(--ink-mute);margin-bottom:14px}
+.hero__name{font:600 64px/0.95 var(--sans);color:var(--ink);letter-spacing:-2px;margin:0 0 10px}
+.hero__sub{font:400 17px var(--sans);color:var(--ink-4);margin:0 0 28px}
+.hero__stats{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;padding-top:24px;border-top:1px solid var(--hairline)}
+.hero__stat small{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute);display:block;margin-bottom:6px}
+.hero__stat b{font:600 30px var(--sans);color:var(--ink);letter-spacing:-.7px;font-variant-numeric:tabular-nums;display:block}
+.hero__stat em{font:400 12px var(--sans);font-style:normal;color:var(--ink-mute);margin-left:6px}
+
+@media (max-width:1200px){.row-3{grid-template-columns:1fr 1fr}}
+@media (max-width:1000px){.row-2,.row-2-eq,.row-3{grid-template-columns:1fr}.hero__name{font-size:42px}.hero__stats{grid-template-columns:repeat(2,1fr)}.funnel__bar.s2,.funnel__bar.s3{min-width:150px}}
+
+/* ── Data-tab extensions, same design language ── */
+.tbl{width:100%;border-collapse:collapse;font:400 13px var(--sans);color:var(--ink-3)}
+.tbl th{text-align:left;font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-mute);padding:10px 12px;border-bottom:1px solid var(--hairline)}
+.tbl td{padding:12px;border-bottom:1px solid var(--hairline);font-variant-numeric:tabular-nums}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr:hover td{background:rgba(10,10,10,0.02)}
+.tbl .num{text-align:right;font-weight:600;color:var(--ink)}
+.tblwrap{overflow-x:auto}
+.loading{display:flex;align-items:center;gap:10px;padding:26px;color:var(--ink-mute);font:500 13px var(--sans)}
+.spin{width:16px;height:16px;border:2px solid var(--hairline);border-top-color:var(--ink);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.errbox{background:rgba(196,48,43,0.07);color:var(--neg);border-radius:14px;padding:14px 18px;font:500 13px var(--sans);margin-bottom:18px}
+.emptybox{padding:26px;text-align:center;color:var(--ink-faint);font:400 13px var(--sans)}
+.panel{display:none}
+.panel.on{display:block}
+select.datepill,input.datepill{border:0;-webkit-appearance:none;appearance:none;cursor:pointer}
+input.datepill{min-width:140px}
+
+/* ── Floating sidebar (SCP style: card, radius, shadow, collapse) ── */
+:root{--sbw:236px}
+body{padding-left:calc(var(--sbw) + 44px)}
+body.sb-collapsed{--sbw:64px}
+.sidebar{position:fixed;left:16px;top:16px;bottom:16px;width:var(--sbw);background:var(--surface-2);border-radius:22px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;padding:18px 12px;z-index:50;transition:width .15s}
+.sidebar__logo{display:flex;align-items:center;gap:10px;padding:6px 10px;margin-bottom:16px;text-decoration:none}
+.sidebar__logo img{height:26px;width:auto;max-width:100%}
+.sidebar__nav{flex:1;display:flex;flex-direction:column;gap:4px;overflow-y:auto;overflow-x:hidden}
+.snav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;font:500 13px var(--sans);color:var(--ink-4);cursor:pointer;border:0;background:transparent;text-align:left;white-space:nowrap;width:100%}
+.snav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;flex:none}
+.snav:hover{background:rgba(10,10,10,0.05);color:var(--ink)}
+.snav.on{background:var(--grad-ink);color:#fafaf6}
+.sb-collapsed .snav span{display:none}
+.sb-collapsed .sidebar{padding:18px 8px}
+.sidebar__foot{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--hairline);padding-top:10px}
+.sidebar__user{display:flex;align-items:center;gap:10px;padding:8px 12px;font:500 12px var(--sans);color:var(--ink-4);white-space:nowrap;overflow:hidden}
+.sb-collapsed .sidebar__user span{display:none}
+.sidebar__resizer{position:absolute;top:0;right:-6px;width:12px;height:100%;cursor:ew-resize}
+.page{max-width:none;margin:0;padding:34px 40px 80px}
+/* form controls in the design language */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute)}
+.field input,.field select{border:1px solid var(--hairline);background:var(--surface);border-radius:12px;padding:11px 14px;font:500 13px var(--sans);color:var(--ink);outline:none}
+.field input:focus,.field select:focus{border-color:var(--ink-3)}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0 16px}
+.btn{border:0;background:var(--grad-ink);color:#fafaf6;font:600 13px var(--sans);padding:12px 22px;border-radius:999px;cursor:pointer;box-shadow:0 4px 14px rgba(10,10,10,.2)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn--ghost{background:rgba(10,10,10,0.05);color:var(--ink);box-shadow:none}
+.btn--sm{padding:7px 14px;font-size:12px}
+.view{display:none}.view.on{display:block}
+.winput{width:110px;border:1px solid var(--hairline);border-radius:10px;padding:8px 10px;font:600 13px var(--sans);text-align:right}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--grad-ink);color:#fafaf6;padding:14px 22px;border-radius:14px;font:500 13px var(--sans);box-shadow:var(--shadow-hover);z-index:99;opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.show{opacity:1}
+@media(max-width:900px){body{padding-left:0}.sidebar{display:none}}
+
+/* card-cell grid — table without borders: each cell a shaded block + shadow */
+.cgrid{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.cgrid__row{display:grid;gap:10px;align-items:stretch}
+.cgrid__head .cgrid__cell{background:transparent;box-shadow:none;padding:0 16px;font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-mute)}
+.cgrid__cell{background:var(--surface);border-radius:14px;box-shadow:var(--shadow-card);padding:12px 16px;display:flex;align-items:center;min-height:46px}
+.cgrid__cell input,.cgrid__cell select{border:0;background:transparent;width:100%;font:600 13px var(--sans);color:var(--ink);outline:none}
+.cgrid__cell input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+.cgrid__cell.is-label{font:600 13px var(--sans);color:var(--ink)}
+.cgrid__cell.is-calc{justify-content:flex-end;font:600 14px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums;background:var(--surface-2)}
+.cgrid__x{border:0;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:16px;padding:0 4px}
+.cgrid__x:hover{color:var(--neg)}
+.addrow{border:1px dashed var(--ink-faint);background:transparent;border-radius:14px;padding:10px;font:500 12px var(--sans);color:var(--ink-mute);cursor:pointer;width:100%}
+.addrow:hover{color:var(--ink);border-color:var(--ink-3)}
+</style></head><body>
+<aside class="sidebar" id="sidebar">
+  <a class="sidebar__logo" href="/app" title="Back to Desk"><img alt="Upande" src="data:image/png;base64,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"/></a>
+  <nav class="sidebar__nav">
+    <button class="snav on" data-view="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></button>
+    <button class="snav" data-view="bookings"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Bookings</span></button>
+    <button class="snav" data-view="weighbridge"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 7l7-4 7 4"/><path d="M2 13l3-6 3 6a3 3 0 0 1-6 0z"/><path d="M16 13l3-6 3 6a3 3 0 0 1-6 0z"/></svg><span>Weighbridge</span></button>
+    <button class="snav" data-view="dryingops"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span>Drying Ops</span></button>
+    <button class="snav" data-view="milling"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.22 4.22l4.24 4.24m7.08 7.08l4.24 4.24M1 12h6m10 0h6M4.22 19.78l4.24-4.24m7.08-7.08l4.24-4.24"/></svg><span>Milling</span></button>
+    <button class="snav" data-view="transfers"><svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Transfers</span></button>
+  </nav>
+  <div class="sidebar__foot">
+    <a class="snav" href="/app"><svg viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg><span>Back to Desk</span></a>
+    <div class="sidebar__user"><svg style="display:none" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><div class="avatar" style="width:26px;height:26px;font-size:10px" id="sb-avatar">·</div><span id="sb-user"></span></div>
+    <button class="snav" id="sb-collapse"><svg viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg><span>Collapse</span></button>
+  </div>
+  <div class="sidebar__resizer" id="sb-resizer"></div>
+</aside>
+<div class="toast" id="toast"></div>
+<div class="page">
+<div class="view on" id="v-dashboard">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__eyebrow">Kaitet · Endebess · <span id="season-eyebrow">Season</span></div>
+      <h1 class="pagehead__title">Coffee</h1>
+      <p class="pagehead__sub" id="page-sub">Harvest, drying, milling, dispatch and invoicing — live</p>
+    </div>
+    <div class="pagehead__tools">
+      <select class="datepill" id="f-season"><option value="">All seasons</option></select>
+      <input type="date" class="datepill" id="f-from" title="From date">
+      <input type="date" class="datepill" id="f-to" title="To date">
+      <button class="iconbtn" id="btn-refresh" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="harvested">Harvested</button>
+    <button class="tab" data-tab="drying">Drying</button>
+    <button class="tab" data-tab="milled">Milled</button>
+    <button class="tab" data-tab="dispatch">Dispatch</button>
+    <button class="tab" data-tab="invoiced">Invoiced</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="panel on" id="p-overview">
+    <div id="ov-err"></div>
+    <div class="kpi-grid" id="ov-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+    <div class="row-2">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Daily Harvest</h3><div class="legend"><span><i style="background:linear-gradient(90deg,#a8824d,#53381c)"></i>Buckets / day · last 30</span></div></div>
+        <div id="ov-line"></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>Season Flow</h3><div class="meta">cherry → drying → clean</div></div>
+        <div id="ov-funnel"></div>
+      </div>
+    </div>
+    <div class="row-2-eq">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Types in Drying</h3><div class="meta">debes on tables</div></div>
+        <div id="ov-donut"></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>Moisture Readiness</h3><div class="meta">latest reading per table</div></div>
+        <div id="ov-ready" class="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HARVESTED -->
+  <div class="panel" id="p-harvested">
+    <div id="h-err"></div>
+    <div class="kpi-grid" id="h-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+    <div class="row-2">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Buckets by Block</h3><div class="meta">this range</div></div>
+        <div id="h-blocks"></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>Top Harvesters</h3><div class="meta" id="h-topmeta">buckets</div></div>
+        <div id="h-top" class="list"></div>
+      </div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Recent Pickups</h3><div class="meta">weighbridge · workflow</div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Pickup</th><th class="num">Buckets</th><th class="num">Weight (kg)</th><th>State</th></tr></thead><tbody id="h-pickups"></tbody></table></div>
+    </div>
+    <div class="row-2-eq">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Harvest Log</h3><div class="meta" id="h-logcnt"></div></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Harvester</th><th>Block</th><th class="num">Buckets</th><th>Picked</th><th>Paid</th></tr></thead><tbody id="h-log"></tbody></table></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>Payments</h3><div class="meta" id="h-paycnt"></div></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Harvester</th><th class="num">Buckets</th><th class="num">Rate</th><th class="num">Total (KES)</th></tr></thead><tbody id="h-pay"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRYING -->
+  <div class="panel" id="p-drying">
+    <div id="d-err"></div>
+    <div class="kpi-grid" id="d-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Debes by Type</h3><div class="meta">on tables now</div></div>
+      <div id="d-types"></div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Drying Tables</h3><div class="meta" id="d-tabmeta"></div></div>
+      <div class="tilegrid" id="d-tables"></div>
+    </div>
+    <div class="row-2-eq">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Moisture Readings</h3><div class="meta" id="d-rdgcnt"></div></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Table</th><th>Batch</th><th class="num">Moisture %</th><th class="num">Debes</th></tr></thead><tbody id="d-rdg"></tbody></table></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>Drying Assignments</h3><div class="meta" id="d-asgncnt"></div></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Assignment</th><th>Batch</th><th>Start</th><th>Status</th><th class="num">Debes</th><th class="num">Initial kg</th></tr></thead><tbody id="d-asgn"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MILLED -->
+  <div class="panel" id="p-milled">
+    <div id="m-err"></div>
+    <div class="kpi-grid" id="m-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+    <div class="row-2">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Bookings</h3><div class="meta" id="m-bookcnt"></div></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Outturn #</th><th>Grower</th><th>Type</th><th class="num">Bags</th><th class="num">Net kg</th><th>Date</th><th>Status</th></tr></thead><tbody id="m-book"></tbody></table></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>Output by Type</h3><div class="meta">kg clean</div></div>
+        <div id="m-types"></div>
+      </div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Outturn Statements</h3><div class="meta" id="m-outcnt"></div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Outturn</th><th>Grower</th><th class="num">Parchment kg</th><th class="num">Output kg</th><th class="num">Loss %</th></tr></thead><tbody id="m-out"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- DISPATCH -->
+  <div class="panel" id="p-dispatch">
+    <div id="dp-err"></div>
+    <div class="kpi-grid" id="dp-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+    <div class="row-2">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Dispatch Records</h3><div class="meta" id="dp-cnt"></div></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>DN #</th><th>Customer</th><th class="num">Weight (kg)</th></tr></thead><tbody id="dp-body"></tbody></table></div>
+      </div>
+      <div>
+        <div class="card card--padded">
+          <div class="card__head"><h3>Weight by Customer</h3><div class="meta">kg</div></div>
+          <div id="dp-cust"></div>
+        </div>
+        <div class="card card--padded">
+          <div class="card__head"><h3>Monthly Dispatch</h3><div class="meta">kg</div></div>
+          <div id="dp-monthly"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVOICED -->
+  <div class="panel" id="p-invoiced">
+    <div id="i-err"></div>
+    <div class="kpi-grid" id="i-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Sales Invoices</h3><div class="meta" id="i-cnt"></div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Invoice</th><th>Customer</th><th>Date</th><th>Due</th><th class="num">Total</th><th class="num">Outstanding</th><th>Status</th></tr></thead><tbody id="i-body"></tbody></table></div>
+    </div>
+  </div>
+
+</div><!-- /v-dashboard -->
+
+<div class="view" id="v-bookings">
+  <div class="pagehead"><div><div class="pagehead__eyebrow">Kaitet · Endebess · Milling</div>
+  <h1 class="pagehead__title">Bookings</h1><p class="pagehead__sub">Book outgrower &amp; estate parchment for milling</p></div></div>
+  <div class="row-2">
+    <div class="card card--padded">
+      <div class="card__head"><h3>Bookings</h3><div class="meta" id="bk-cnt"></div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Booking</th><th>Grower</th><th>Type</th><th class="num">Bags</th><th class="num">Net kg</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody id="bk-body"></tbody></table></div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>New Booking</h3></div>
+      <div class="field"><label>Outturn Number (blank = auto, e.g. 15EM0001)</label><input type="text" id="bk-outturn" placeholder="auto-generated from season week"></div>
+      <div class="field"><label>Grower (blank = Estate / Endebess)</label><select id="bk-grower"></select></div>
+      <div class="field"><label>Parchment Type</label><select id="bk-type"></select></div>
+      <div class="formgrid">
+        <div class="field"><label>No of Bags</label><input type="number" id="bk-bags" min="1" value="1"></div>
+        <div class="field"><label>Empty Bag Weight (kg)</label><input type="number" id="bk-bagwt" value="0.6" step="0.1"></div>
+      </div>
+      <div class="formgrid">
+        <div class="field"><label>Gross Weight (kg)</label><input type="number" id="bk-gross" min="0" step="0.1"></div>
+        <div class="field"><label>Net Weight (kg)</label><input type="number" id="bk-net" readonly style="background:rgba(10,10,10,0.04)"></div>
+      </div>
+      <div class="formgrid">
+        <div class="field"><label>Date</label><input type="date" id="bk-date"></div>
+        <div class="field"><label>Source Bin</label><select id="bk-bin"><option value=""></option></select></div>
+      </div>
+      <button class="btn" id="bk-create">Create Booking</button>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="v-weighbridge">
+  <div class="pagehead"><div><div class="pagehead__eyebrow">Kaitet · Endebess · Field</div>
+  <h1 class="pagehead__title">Weighbridge</h1><p class="pagehead__sub">Enter pickup weights and drive the approval workflow</p></div>
+  <div class="pagehead__tools"><button class="iconbtn" id="wb-refresh" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div></div>
+  <div id="wb-list"></div>
+</div>
+
+<div class="view" id="v-dryingops">
+  <div class="pagehead"><div><div class="pagehead__eyebrow">Kaitet · Endebess · Drying</div>
+  <h1 class="pagehead__title">Drying Ops</h1><p class="pagehead__sub">Remove dried coffee from tables into store — a standard repack/transfer, no custom doctype</p></div></div>
+  <div class="row-2">
+    <div class="card card--padded">
+      <div class="card__head"><h3>Remove from Drying</h3></div>
+      <div class="formgrid">
+        <div class="field"><label>From Warehouse</label><select id="dr-from"></select></div>
+        <div class="field"><label>Batch on Table</label><select id="dr-batch"></select></div>
+      </div>
+      <div class="field"><label>Wet Weight In (kg consumed)</label><input type="number" id="dr-qty" min="0.1" step="0.1"></div>
+      <div class="field" style="margin-bottom:4px"><label>Came out of drying — per grade</label></div>
+      <div class="cgrid" id="dr-cgrid">
+        <div class="cgrid__row cgrid__head" style="grid-template-columns:1.6fr 1fr 1.6fr 34px">
+          <div class="cgrid__cell">Parchment Type</div><div class="cgrid__cell" style="justify-content:flex-end">Dry kg</div><div class="cgrid__cell">To Bin</div><div></div>
+        </div>
+      </div>
+      <button class="addrow" id="dr-add">+ add another parchment type</button>
+      <div style="display:flex;gap:18px;align-items:center;margin-top:16px">
+        <button class="btn" id="dr-go">Move off Tables</button>
+        <span style="font:500 13px var(--sans);color:var(--ink-4)">Out: <b id="dr-outtotal">0</b> kg · Loss: <b id="dr-losslbl">—</b></span>
+      </div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Stock on Selected Warehouse</h3><div class="meta" id="dr-stockmeta"></div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Item</th><th>Batch</th><th class="num">Qty (kg)</th></tr></thead><tbody id="dr-stock"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="v-milling">
+  <div class="pagehead"><div><div class="pagehead__eyebrow">Kaitet · Endebess · Dry Mill</div>
+  <h1 class="pagehead__title">Milling</h1><p class="pagehead__sub">Record the outturn — grades and amounts that came out of the mill</p></div></div>
+  <div class="row-2">
+    <div class="card card--padded">
+      <div class="card__head"><h3>Record Outturn</h3><div class="meta" id="ml-meta"></div></div>
+      <div class="field"><label>Booking at Mill</label><select id="ml-booking"></select></div>
+      <div class="cgrid" id="ml-cgrid">
+        <div class="cgrid__row cgrid__head" style="grid-template-columns:1.2fr 1fr 1fr 1fr">
+          <div class="cgrid__cell">Grade</div><div class="cgrid__cell" style="justify-content:flex-end">Bags</div>
+          <div class="cgrid__cell" style="justify-content:flex-end">Pockets (kg)</div><div class="cgrid__cell" style="justify-content:flex-end">= kg</div>
+        </div>
+        <div id="ml-grades" style="display:contents"></div>
+      </div>
+      <div style="display:flex;gap:18px;align-items:center;margin-top:16px">
+        <button class="btn" id="ml-go">Record &amp; Mill</button>
+        <span style="font:500 13px var(--sans);color:var(--ink-4)">Output: <b id="ml-total">0</b> kg · Loss: <b id="ml-loss">—</b></span>
+      </div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Recent Outturn Statements</h3><div class="meta" id="ml-cnt"></div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Outturn</th><th>Grower</th><th class="num">In kg</th><th class="num">Out kg</th><th class="num">Loss %</th></tr></thead><tbody id="ml-recent"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="v-transfers">
+  <div class="pagehead"><div><div class="pagehead__eyebrow">Kaitet · Endebess · Stores</div>
+  <h1 class="pagehead__title">Transfers</h1><p class="pagehead__sub">Receive parchment into stores, feed the dry mill, move stock between bins</p></div></div>
+  <div class="row-2">
+    <div class="card card--padded">
+      <div class="card__head"><h3>Bookings Awaiting Transfer to Mill</h3><div class="meta" id="tq-cnt"></div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Outturn</th><th>Grower</th><th>Type</th><th class="num">Net kg</th><th>Source Bin</th><th class="num">Bin Stock</th><th></th></tr></thead><tbody id="tq-body"></tbody></table></div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>How the Queue Works</h3></div>
+      <p style="font:400 13px var(--sans);color:var(--ink-4);line-height:1.7">
+        <b>Outgrower bookings</b> (grower filled) arrive from outside — the button books a
+        <b>Material Receipt straight into the dry mill</b>, batch named by the outturn.<br>
+        <b>Estate bookings</b> (grower blank) move Endebess parchment from its store bin —
+        a <b>Material Transfer</b> with FIFO batch allocation.</p>
+    </div>
+  </div>
+  <div class="row-2">
+    <div class="card card--padded">
+      <div class="card__head"><h3>New Transfer</h3></div>
+      <div class="formgrid">
+        <div class="field"><label>From</label><select id="tr-from"></select></div>
+        <div class="field"><label>To</label><select id="tr-to"></select></div>
+      </div>
+      <div class="formgrid">
+        <div class="field"><label>Item · Batch</label><select id="tr-batch"></select></div>
+        <div class="field"><label>Quantity (kg)</label><input type="number" id="tr-qty" min="0.1" step="0.1"></div>
+      </div>
+      <button class="btn" id="tr-go">Create Transfer</button>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Recent Movements</h3></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Entry</th><th>Type</th><th>Date</th></tr></thead><tbody id="tr-recent"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+(function () {
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+
+/* ── data access ─────────────────────────────────────────────────────────── */
+var CSRF = "{{ csrf_token }}";
+function api(fn, args) {
+  if (fn.indexOf(".") === -1) fn = "dashboardapi." + fn;
+  var qp = new URLSearchParams();
+  Object.keys(args || {}).forEach(function (k) { if (args[k]) qp.set(k, args[k]); });
+  return fetch("/api/method/upande_coffee.api." + fn + (qp.toString() ? "?" + qp : ""), {
+    credentials: "same-origin",
+    headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+  }).then(function (r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(function (j) { return j.message; });
+}
+function ranges() {
+  return { season: $("f-season").value, from_date: $("f-from").value, to_date: $("f-to").value };
+}
+
+/* ── formatting ──────────────────────────────────────────────────────────── */
+function n(v, d) {
+  if (v == null || isNaN(v)) return "—";
+  return Number(v).toLocaleString(undefined, { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
+}
+function fd(s) {
+  if (!s) return "—";
+  var d = new Date(String(s).slice(0, 10) + "T00:00:00");
+  return isNaN(d) ? String(s).slice(0, 10) : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+}
+function esc(s) { return String(s == null ? "—" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+/* ── design-system renderers (ufd-modern-3 visual language) ─────────────── */
+var RAMP = ["#f2e9dc", "#e3d2b7", "#c9a878", "#a8824d", "#8a6437", "#6f4e29", "#53381c"];
+var uid = 0;
+
+function kpiCard(label, value, unit, trend, trendCls, sparkPts) {
+  var spark = "";
+  if (sparkPts && sparkPts.length > 1) {
+    var id = "sp" + (++uid);
+    spark = '<svg class="kpi__spark" viewBox="0 0 80 30" aria-hidden="true"><defs><linearGradient id="' + id +
+      '" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#a8824d"/><stop offset="100%" stop-color="#53381c"/></linearGradient></defs><path d="' +
+      sparkPath(sparkPts, 80, 30) + '" fill="none" stroke="url(#' + id + ')" stroke-width="2" stroke-linecap="round"/></svg>';
+  }
+  return '<div class="kpi">' + spark + '<div class="kpi__label">' + label + '</div><div class="kpi__value">' + value +
+    '</div><div class="kpi__unit">' + unit + '</div>' +
+    (trend ? '<div class="kpi__trend ' + (trendCls || "flat") + '">' + trend + "</div>" : "") + "</div>";
+}
+function sparkPath(vals, w, h) {
+  var mx = Math.max.apply(null, vals.concat(1));
+  var pts = vals.map(function (v, i) {
+    return [i * (w / (vals.length - 1)), h - 4 - (v / mx) * (h - 8)];
+  });
+  return smooth(pts);
+}
+function smooth(p) {
+  if (p.length < 3) return "M" + p.map(function (q) { return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" L");
+  var d = "M" + p[0][0].toFixed(1) + "," + p[0][1].toFixed(1);
+  for (var i = 1; i < p.length; i++) {
+    var p0 = p[i - 1], p1 = p[i];
+    var cx = ((p0[0] + p1[0]) / 2).toFixed(1);
+    d += " C" + cx + "," + p0[1].toFixed(1) + " " + cx + "," + p1[1].toFixed(1) + " " + p1[0].toFixed(1) + "," + p1[1].toFixed(1);
+  }
+  return d;
+}
+
+/* area/line chart — exact grid, labels, gradient fill of the design */
+function areaChart(el, labels, values) {
+  if (!values.length) { el.innerHTML = '<div class="emptybox">No data in this range.</div>'; return; }
+  var W = 600, H = 280, L = 42, B = 240, T = 40;
+  var mx = Math.max.apply(null, values.concat(1)) * 1.15;
+  var pts = values.map(function (v, i) {
+    return [L + i * ((W - L) / Math.max(values.length - 1, 1)), B - (v / mx) * (B - T)];
+  });
+  var line = smooth(pts);
+  var fid = "af" + (++uid), lid = "al" + (++uid);
+  var ticks = [1, 2, 3].map(function (k) {
+    var y = B - (k / 3) * (B - T), val = Math.round((mx * k) / 3);
+    return '<line x1="' + L + '" y1="' + y + '" x2="' + W + '" y2="' + y + '" stroke="rgba(10,10,10,0.05)"/>' +
+      '<text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-family="Poppins" font-size="10" fill="#9a9a92">' + val + "</text>";
+  }).join("");
+  var xl = "";
+  var step = Math.max(1, Math.ceil(labels.length / 6));
+  for (var i = 0; i < labels.length; i += step) {
+    xl += '<text x="' + pts[i][0] + '" y="266" text-anchor="middle" font-family="Poppins" font-size="11" fill="#9a9a92">' + labels[i] + "</text>";
+  }
+  el.innerHTML = '<svg class="chart" viewBox="0 0 600 280" preserveAspectRatio="none" role="img">' +
+    '<defs><linearGradient id="' + fid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8a6437" stop-opacity=".26"/><stop offset="100%" stop-color="#8a6437" stop-opacity="0"/></linearGradient>' +
+    '<linearGradient id="' + lid + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#a8824d"/><stop offset="100%" stop-color="#53381c"/></linearGradient></defs>' +
+    ticks +
+    '<path d="' + line + " L" + pts[pts.length - 1][0] + "," + B + " L" + L + "," + B + ' Z" fill="url(#' + fid + ')"/>' +
+    '<path d="' + line + '" fill="none" stroke="url(#' + lid + ')" stroke-width="3" stroke-linecap="round"/>' +
+    '<circle cx="' + pts[pts.length - 1][0] + '" cy="' + pts[pts.length - 1][1] + '" r="5" fill="#53381c" stroke="#fff" stroke-width="2"/>' +
+    xl + "</svg>";
+}
+
+/* vertical rounded gradient bars — Weekly Packout style */
+function barChart(el, labels, values, height) {
+  if (!values.length) { el.innerHTML = '<div class="emptybox">No data in this range.</div>'; return; }
+  var W = 480, H = height || 300, T = 34, B = H - 80, XL = 40;
+  var mx = Math.max.apply(null, values.concat(1)) * 1.1;
+  var gid = "bg" + (++uid);
+  var bw = Math.min(38, ((W - XL) / values.length) * 0.6);
+  var gap = (W - XL) / values.length;
+  var bars = "", xl = "";
+  values.forEach(function (v, i) {
+    var h = (v / mx) * (B - T);
+    var x = XL + i * gap + (gap - bw) / 2;
+    bars += '<rect x="' + x.toFixed(1) + '" y="' + (B - h).toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) + '" rx="6" fill="url(#' + gid + ')"/>';
+    xl += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (B + 18) + '" text-anchor="middle" font-family="Poppins" font-size="10" fill="#9a9a92">' + esc(labels[i]) + "</text>";
+  });
+  var ticks = [1, 2, 3].map(function (k) {
+    var y = B - (k / 3) * (B - T);
+    return '<line x1="' + XL + '" y1="' + y + '" x2="' + (W - 10) + '" y2="' + y + '" stroke="rgba(10,10,10,0.05)"/>' +
+      '<text x="' + (XL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-family="Poppins" font-size="10" fill="#9a9a92">' + n(Math.round((mx * k) / 3)) + "</text>";
+  }).join("");
+  el.innerHTML = '<svg class="chart-sm" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="xMidYMid meet" role="img">' +
+    '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a8824d"/><stop offset="100%" stop-color="#53381c"/></linearGradient></defs>' +
+    ticks + bars + xl + "</svg>";
+}
+
+/* donut — stroke-dasharray rings + legend chips, ramp colored */
+function donutChart(el, items, centerLabel) {
+  var total = items.reduce(function (s, r) { return s + r.value; }, 0);
+  if (!total) { el.innerHTML = '<div class="emptybox">Nothing on the tables.</div>'; return; }
+  var C = 502.65, off = 0, rings = "", legend = "";
+  items.forEach(function (r, i) {
+    var col = RAMP[Math.min(1 + i, RAMP.length - 1)];
+    var frac = r.value / total, dash = (frac * C).toFixed(1);
+    rings += '<circle r="80" fill="none" stroke="' + col + '" stroke-width="50" stroke-dasharray="' + dash + " " + C +
+      '" stroke-dashoffset="' + (-off).toFixed(1) + '" transform="rotate(-90)"/>';
+    off += frac * C;
+    legend += '<span><i style="background:' + col + '"></i>' + esc(r.label) + " · " + Math.round(frac * 100) + "%</span>";
+  });
+  el.innerHTML = '<div class="piewrap"><svg class="chart-sm" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet" style="height:260px" role="img">' +
+    '<g transform="translate(150 150)">' + rings + "</g></svg>" +
+    '<div class="piewrap__center"><b>' + n(total) + "</b><small>" + centerLabel + '</small></div></div><div class="clegend">' + legend + "</div>";
+}
+
+/* ranking list — Top Blocks style */
+function rankList(el, rows) {
+  if (!rows.length) { el.innerHTML = '<div class="emptybox">No records.</div>'; return; }
+  el.innerHTML = rows.map(function (r, i) {
+    return '<a class="list__row"><div class="list__rank' + (i === 0 ? " lead" : "") + '">' + (i + 1) +
+      '</div><div><div class="list__name">' + esc(r.name) + '</div><div class="list__meta">' + esc(r.meta || "") +
+      '</div></div><div class="list__qty">' + r.qty + (r.sub ? "<small>" + r.sub + "</small>" : "") + "</div></a>";
+  }).join("");
+}
+
+/* funnel — Season Flow style */
+function funnel(el, stages) {
+  el.innerHTML = '<div class="funnel">' + stages.map(function (s, i) {
+    return '<div class="funnel__stage"><div class="funnel__bar s' + (i + 1) + '">' + s.label +
+      '</div><div class="funnel__meta"><b>' + s.value + "</b>" + s.sub + "</div></div>";
+  }).join("") + "</div>";
+}
+
+function chip(cls, text) { return '<span class="tile__chip' + (cls ? " " + cls : "") + '">' + esc(text) + "</span>"; }
+function stChip(state) {
+  if (["Received", "Weighed", "Completed", "Paid", "Ready"].indexOf(state) !== -1) return chip("", state);
+  if (["Cancelled", "Overdue", "High"].indexOf(state) !== -1) return chip("neg", state);
+  return chip("warn", state || "Draft");
+}
+
+/* ── tab loaders ─────────────────────────────────────────────────────────── */
+function loadOverview() {
+  $("ov-err").innerHTML = "";
+  api("get_overview", ranges()).then(function (d) {
+    var h = d.harvest, dr = d.drying, est = d.estimate;
+    $("ov-kpis").innerHTML =
+      kpiCard("Season Target", n(est.target_cherry_kg), "kg cherry · " + (est.season_name || "no active season"),
+        est.blocks + " blocks", "flat") +
+      kpiCard("Harvested", n(h.total_buckets), "buckets · " + n(h.total_weight_kg) + " kg received",
+        "↑ " + n(h.today_buckets) + " <small>today</small>", "up",
+        (h.daily_buckets || []).map(function (r) { return r.count || 0; })) +
+      kpiCard("On Drying Tables", n(dr.total_debes), "debes across types",
+        (dr.readiness.ready || 0) + " tables ready", dr.readiness.ready ? "up" : "flat") +
+      kpiCard("Clean Coffee", n(d.clean.output_kg), "kg milled output", null) +
+      kpiCard("Dispatched", n(d.dispatch.total_weight_kg), "kg · " + d.dispatch.shipments + " shipments",
+        "KES " + n(d.invoices.total_billed) + " <small>invoiced</small>",
+        d.invoices.outstanding > 0 ? "flat" : "up");
+    areaChart($("ov-line"), (h.daily_buckets || []).map(function (r) { return fd(r.date); }),
+      (h.daily_buckets || []).map(function (r) { return r.count || 0; }));
+    funnel($("ov-funnel"), [
+      { label: "Cherry", value: n(h.total_weight_kg) + " kg", sub: "received at wet mill" },
+      { label: "Drying", value: n(dr.total_debes), sub: "debes on tables" },
+      { label: "Clean", value: n(d.clean.output_kg) + " kg", sub: "milled output" },
+    ]);
+    donutChart($("ov-donut"), (dr.by_type || []).map(function (r) { return { label: r.type, value: r.debes }; }), "debes");
+    var R = dr.readiness;
+    rankList($("ov-ready"), [
+      { name: "Ready · ≤14%", meta: "move to milling", qty: R.ready || 0 },
+      { name: "Low · 15–24%", meta: "drying well", qty: R.low || 0 },
+      { name: "Medium · 25–29%", meta: "keep turning", qty: R.medium || 0 },
+      { name: "High · ≥30%", meta: "needs attention", qty: R.high || 0 },
+    ]);
+  }).catch(function (e) { $("ov-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
+function loadHarvested() {
+  $("h-err").innerHTML = "";
+  api("get_harvest", ranges()).then(function (d) {
+    var k = d.kpis;
+    $("h-kpis").innerHTML =
+      kpiCard("Buckets", n(k.total_buckets), k.harvesters + " harvesters active", null) +
+      kpiCard("Weight Received", n(k.total_weight_kg), "kg · " + k.pickup_count + " pickups", null) +
+      kpiCard("Labour", n(k.total_payments), "KES paid", "avg " + n(k.avg_rate) + "/bucket", "flat") +
+      kpiCard("Harvest Days", n(k.harvest_days), k.active_blocks + " active blocks", null);
+    barChart($("h-blocks"), (d.by_block || []).map(function (r) { return (r.block || "—").split(" - ")[0]; }),
+      (d.by_block || []).map(function (r) { return r.buckets || 0; }));
+    rankList($("h-top"), (d.by_harvester || []).slice(0, 8).map(function (r) {
+      return { name: r.harvester_id || "Unknown", meta: "harvester", qty: n(r.buckets), sub: "buckets" };
+    }));
+    $("h-pickups").innerHTML = (d.pickups || []).map(function (r) {
+      return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.name) + '</td><td class="num">' + n(r.total_buckets) +
+        '</td><td class="num">' + n(r.total_weight_kg) + "</td><td>" + stChip(r.workflow_state) + "</td></tr>";
+    }).join("") || '<tr><td colspan="5"><div class="emptybox">No pickups.</div></td></tr>';
+    $("h-logcnt").textContent = (d.logs || []).length + " records";
+    $("h-log").innerHTML = (d.logs || []).map(function (r) {
+      return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.harvester_id) + "</td><td>" + esc((r.block || "").split(" - ")[0]) +
+        '</td><td class="num">' + n(r.bucket_count) + "</td><td>" + chip(r.picked_up ? "" : "warn", r.picked_up ? "Yes" : "No") +
+        "</td><td>" + chip(r.paid ? "" : "warn", r.paid ? "Yes" : "No") + "</td></tr>";
+    }).join("") || '<tr><td colspan="6"><div class="emptybox">No records.</div></td></tr>';
+    $("h-paycnt").textContent = (d.payments || []).length + " payments";
+    $("h-pay").innerHTML = (d.payments || []).map(function (r) {
+      return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.harvester_id) + '</td><td class="num">' + n(r.total_buckets) +
+        '</td><td class="num">' + n(r.rate) + '</td><td class="num">' + n(r.total_payment) + "</td></tr>";
+    }).join("") || '<tr><td colspan="5"><div class="emptybox">No payments.</div></td></tr>';
+  }).catch(function (e) { $("h-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
+function loadDrying() {
+  $("d-err").innerHTML = "";
+  api("get_drying", ranges()).then(function (d) {
+    var k = d.kpis;
+    $("d-kpis").innerHTML =
+      kpiCard("Tables", n(k.total_tables), k.occupied + " occupied · " + k.available + " free", null) +
+      kpiCard("Ready", n(k.ready), "tables at ≤14% moisture", k.ready ? "move to milling" : null, "up") +
+      kpiCard("Avg Moisture", n(k.avg_moisture, 1) + "%", "latest reading per table",
+        k.high + " tables ≥30%", k.high ? "down" : "flat") +
+      kpiCard("Active Batches", n(k.active_assignments), "drying in progress", null);
+    barChart($("d-types"), (d.by_type || []).map(function (r) { return r.type; }),
+      (d.by_type || []).map(function (r) { return r.debes || 0; }), 220);
+    $("d-tabmeta").textContent = (d.tables || []).length + " tables";
+    $("d-tables").innerHTML = (d.tables || []).map(function (t) {
+      var m = (d.latest_moisture || {})[t.name] || {};
+      var p = m.moisture_percentage;
+      var cls = p == null ? "warn" : p <= 14 ? "" : p >= 30 ? "neg" : "warn";
+      var lbl = p == null ? "No reading" : n(p, 1) + "%";
+      return '<div class="tile"><div class="tile__head"><div class="tile__name">' + esc(t.name) +
+        "</div>" + chip(cls, lbl) + '</div><div class="tile__stats">' +
+        "<div><small>Batch</small><b>" + esc(t.current_batch || "—") + "</b></div>" +
+        "<div><small>Type</small><b>" + esc(t.current_coffee_type || "—") + "</b></div>" +
+        "<div><small>Debes</small><b>" + n(t.current_debes) + "</b></div>" +
+        "<div><small>Last read</small><b>" + fd(m.reading_date) + "</b></div></div></div>";
+    }).join("") || '<div class="emptybox">No drying tables.</div>';
+    $("d-rdgcnt").textContent = (d.moisture || []).length + " readings";
+    $("d-rdg").innerHTML = (d.moisture || []).map(function (r) {
+      return "<tr><td>" + fd(r.reading_date) + "</td><td>" + esc(r.drying_table) + "</td><td>" + esc(r.batch) +
+        '</td><td class="num">' + n(r.moisture_percentage, 1) + '</td><td class="num">' + n(r.debes) + "</td></tr>";
+    }).join("") || '<tr><td colspan="5"><div class="emptybox">No readings.</div></td></tr>';
+    $("d-asgncnt").textContent = (d.assignments || []).length + " assignments";
+    $("d-asgn").innerHTML = (d.assignments || []).map(function (r) {
+      return "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.batch) + "</td><td>" + fd(r.start_date) + "</td><td>" +
+        stChip(r.drying_status) + '</td><td class="num">' + n(r.total_debes) + '</td><td class="num">' +
+        n(r.total_initial_weight_kg, 1) + "</td></tr>";
+    }).join("") || '<tr><td colspan="6"><div class="emptybox">No assignments.</div></td></tr>';
+  }).catch(function (e) { $("d-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
+function loadMilled() {
+  $("m-err").innerHTML = "";
+  api("get_milling", ranges()).then(function (d) {
+    var k = d.kpis;
+    $("m-kpis").innerHTML =
+      kpiCard("Bookings", n(k.total_bookings), k.growers + " growers", null) +
+      kpiCard("Parchment In", n(k.parchment_kg), "kg received for milling", null) +
+      kpiCard("Clean Output", n(k.output_kg), "kg after dry mill",
+        "↓ " + n(k.avg_milling_loss, 1) + "% <small>avg loss</small>", k.avg_milling_loss > 20 ? "down" : "up") +
+      kpiCard("Outturns", n(k.outturns), "statements issued", null);
+    $("m-bookcnt").textContent = (d.bookings || []).length + " bookings";
+    $("m-book").innerHTML = (d.bookings || []).map(function (r) {
+      return "<tr><td>" + esc(r.outturn_number || r.name) + "</td><td>" + esc(r.grower || "Endebess Coffee Estate") + "</td><td>" +
+        chip("", r.parchment_type || "—") + '</td><td class="num">' + n(r.no_of_bags) + '</td><td class="num">' +
+        n(r.net_weight, 1) + "</td><td>" + fd(r.booking_date) + "</td><td>" + stChip(r.status) + "</td></tr>";
+    }).join("") || '<tr><td colspan="7"><div class="emptybox">No bookings.</div></td></tr>';
+    barChart($("m-types"), (d.by_type || []).map(function (r) { return r.type; }),
+      (d.by_type || []).map(function (r) { return Math.round(r.output_kg || 0); }), 260);
+    $("m-outcnt").textContent = (d.outturns || []).length + " statements";
+    $("m-out").innerHTML = (d.outturns || []).map(function (r) {
+      return "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.grower) + '</td><td class="num">' + n(r.parchment_weight, 1) +
+        '</td><td class="num">' + n(r.output_weight, 1) + '</td><td class="num">' + n(r.milling_loss, 1) + "</td></tr>";
+    }).join("") || '<tr><td colspan="5"><div class="emptybox">No outturns.</div></td></tr>';
+  }).catch(function (e) { $("m-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
+function loadDispatch() {
+  $("dp-err").innerHTML = "";
+  api("get_dispatch", ranges()).then(function (d) {
+    var k = d.kpis;
+    $("dp-kpis").innerHTML =
+      kpiCard("Shipments", n(k.shipments), "delivery notes", null) +
+      kpiCard("Weight", n(k.total_weight_kg), "kg clean coffee moved", null) +
+      kpiCard("Customers", n(k.customers), "unique buyers", null) +
+      kpiCard("Latest", k.latest_date ? fd(k.latest_date) : "—", "last shipment", null);
+    $("dp-cnt").textContent = (d.dispatches || []).length + " records";
+    $("dp-body").innerHTML = (d.dispatches || []).map(function (r) {
+      return "<tr><td>" + fd(r.posting_date) + "</td><td>" + esc(r.name) + "</td><td>" +
+        esc(r.customer_name || r.customer) + '</td><td class="num">' + n(r.total_qty) + "</td></tr>";
+    }).join("") || '<tr><td colspan="4"><div class="emptybox">No dispatches.</div></td></tr>';
+    var custEl = $("dp-cust");
+    var rows = (d.by_customer || []).sort(function (a, b) { return b.total_kg - a.total_kg; }).slice(0, 6);
+    custEl.innerHTML = rows.length ? rows.map(function (r, i) {
+      var mx = rows[0].total_kg || 1;
+      return '<div class="hb"><div class="hb__name">' + esc(r.customer) + '</div><div class="hb__lane">' +
+        '<div class="hb__est" style="width:100%"></div><div class="hb__act high" style="width:' +
+        Math.max(3, Math.round((r.total_kg / mx) * 100)) + '%"></div></div><div class="hb__pct">' + n(r.total_kg) + "</div></div>";
+    }).join("") : '<div class="emptybox">No customer data.</div>';
+    barChart($("dp-monthly"), (d.monthly || []).map(function (r) { return r.month; }),
+      (d.monthly || []).map(function (r) { return Math.round(r.total_kg || 0); }), 220);
+  }).catch(function (e) { $("dp-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
+function loadInvoiced() {
+  $("i-err").innerHTML = "";
+  api("get_invoices", ranges()).then(function (d) {
+    var k = d.kpis;
+    $("i-kpis").innerHTML =
+      kpiCard("Invoices", n(k.count), k.customers + " customers", null) +
+      kpiCard("Billed", n(k.total_billed), "KES total", null) +
+      kpiCard("Outstanding", n(k.outstanding), "KES unpaid", k.outstanding > 0 ? "follow up" : "all collected",
+        k.outstanding > 0 ? "down" : "up") +
+      kpiCard("Collection", n(k.collection_rate, 1) + "%", k.paid_count + " fully paid", null);
+    $("i-cnt").textContent = (d.invoices || []).length + " invoices";
+    $("i-body").innerHTML = (d.invoices || []).map(function (r) {
+      return "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.customer_name || r.customer) + "</td><td>" + fd(r.posting_date) +
+        "</td><td>" + fd(r.due_date) + '</td><td class="num">' + n(r.grand_total) + '</td><td class="num">' +
+        n(r.outstanding_amount) + "</td><td>" + stChip(r.status) + "</td></tr>";
+    }).join("") || '<tr><td colspan="7"><div class="emptybox">No invoices.</div></td></tr>';
+  }).catch(function (e) { $("i-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
+/* ── routing ─────────────────────────────────────────────────────────────── */
+var LOADERS = { overview: loadOverview, harvested: loadHarvested, drying: loadDrying,
+  milled: loadMilled, dispatch: loadDispatch, invoiced: loadInvoiced };
+var loaded = {}, active = "overview";
+
+function switchTab(tab) {
+  document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("on", t.dataset.tab === tab); });
+  document.querySelectorAll(".panel").forEach(function (p) { p.classList.toggle("on", p.id === "p-" + tab); });
+  active = tab;
+  if (!loaded[tab]) { loaded[tab] = true; LOADERS[tab](); }
+}
+document.querySelectorAll(".tab").forEach(function (t) {
+  t.addEventListener("click", function () { switchTab(t.dataset.tab); });
+});
+function reloadAll() { loaded = {}; loaded[active] = true; LOADERS[active](); }
+$("btn-refresh").addEventListener("click", function () { LOADERS[active](); });
+$("f-season").addEventListener("change", reloadAll);
+$("f-from").addEventListener("change", reloadAll);
+$("f-to").addEventListener("change", reloadAll);
+
+/* ── boot ────────────────────────────────────────────────────────────────── */
+api("get_seasons", {}).then(function (d) {
+  var sel = $("f-season"), activeSeason = "";
+  (d.seasons || []).forEach(function (s) {
+    var o = document.createElement("option");
+    o.value = s.name; o.textContent = s.season_name || s.name;
+    sel.appendChild(o);
+    if (s.is_active && !activeSeason) activeSeason = s.name;
+  });
+  if (activeSeason) {
+    sel.value = activeSeason;
+    $("season-eyebrow").textContent = sel.options[sel.selectedIndex].textContent;
+  }
+}).catch(function () {}).then(function () { loaded.overview = true; loadOverview(); });
+
+
+/* ── shared post with CSRF ───────────────────────────────────────────────── */
+function post(fn, args) {
+  return fetch("/api/method/upande_coffee.api." + fn, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded",
+               "X-Frappe-CSRF-Token": CSRF },
+    body: new URLSearchParams(args || {}).toString(),
+  }).then(function (r) {
+    return r.json().then(function (j) {
+      if (!r.ok) {
+        var msg = "HTTP " + r.status;
+        try { msg = JSON.parse(j._server_messages)[0]; msg = JSON.parse(msg).message || msg; } catch (e) {}
+        throw new Error(msg.replace(/<[^>]+>/g, ""));
+      }
+      return j.message;
+    });
+  });
+}
+function toast(msg) {
+  var t = $("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(function () { t.classList.remove("show"); }, 3200);
+}
+function opt(sel, items, val, lbl) {
+  sel.innerHTML = sel.dataset.blank != null ? '<option value=""></option>' : "";
+  items.forEach(function (i) {
+    var o = document.createElement("option");
+    o.value = typeof i === "string" ? i : i[val];
+    o.textContent = typeof i === "string" ? i : (i[lbl] || i[val]);
+    sel.appendChild(o);
+  });
+}
+
+/* ── sidebar: collapse, resize, persist ──────────────────────────────────── */
+(function () {
+  var saved = localStorage.getItem("cfsbw");
+  if (saved) document.documentElement.style.setProperty("--sbw", saved + "px");
+  if (localStorage.getItem("cfsbc") === "1") document.body.classList.add("sb-collapsed");
+  $("sb-collapse").addEventListener("click", function () {
+    var c = document.body.classList.toggle("sb-collapsed");
+    localStorage.setItem("cfsbc", c ? "1" : "0");
+    if (!c && saved) document.documentElement.style.setProperty("--sbw", saved + "px");
+    if (c) document.documentElement.style.removeProperty("--sbw");
+  });
+  var rs = $("sb-resizer"), drag = false;
+  rs.addEventListener("mousedown", function (e) { drag = true; e.preventDefault(); });
+  document.addEventListener("mousemove", function (e) {
+    if (!drag) return;
+    var w = Math.min(360, Math.max(170, e.clientX - 16));
+    document.body.classList.remove("sb-collapsed");
+    document.documentElement.style.setProperty("--sbw", w + "px");
+    saved = w;
+  });
+  document.addEventListener("mouseup", function () {
+    if (drag) { drag = false; localStorage.setItem("cfsbw", saved); localStorage.setItem("cfsbc", "0"); }
+  });
+})();
+
+/* ── view router ─────────────────────────────────────────────────────────── */
+var VIEW_LOADERS = { bookings: loadBookings, weighbridge: loadWeighbridge,
+                     dryingops: loadDryingOps, transfers: loadTransfers, milling: loadMilling };
+var viewLoaded = {};
+document.querySelectorAll(".snav[data-view]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    document.querySelectorAll(".snav[data-view]").forEach(function (x) { x.classList.toggle("on", x === b); });
+    document.querySelectorAll(".view").forEach(function (v) { v.classList.toggle("on", v.id === "v-" + b.dataset.view); });
+    // operational views always reload — stock and queues change under you
+    var fn = VIEW_LOADERS[b.dataset.view];
+    if (fn) fn();
+  });
+});
+
+/* ── Bookings ────────────────────────────────────────────────────────────── */
+function loadBookings() {
+  api("bookingapi.get_defaults").then(function (d) {
+    $("bk-grower").dataset.blank = "";
+    opt($("bk-grower"), d.growers, "name", "customer_name");
+    opt($("bk-type"), d.parchment_types);
+    $("bk-bin").dataset.blank = "";
+    opt($("bk-bin"), d.bins, "name", "name");
+    $("bk-date").value = d.today;
+  });
+  refreshBookings();
+}
+function refreshBookings() {
+  api("bookingapi.list_bookings").then(function (rows) {
+    $("bk-cnt").textContent = rows.length + " bookings";
+    $("bk-body").innerHTML = rows.map(function (r) {
+      var act = r.docstatus === 0
+        ? '<button class="btn btn--ghost btn--sm" data-submit="' + r.name + '">Submit</button>' : "";
+      return "<tr><td>" + esc(r.outturn_number || r.name) + "</td><td>" + esc(r.grower || "Endebess Coffee Estate") + "</td><td>" +
+        chip("", r.parchment_type || "—") + '</td><td class="num">' + n(r.no_of_bags) +
+        '</td><td class="num">' + n(r.net_weight) + "</td><td>" + fd(r.booking_date) + "</td><td>" +
+        stChip(r.status) + "</td><td>" + act + "</td></tr>";
+    }).join("") || '<tr><td colspan="8"><div class="emptybox">No bookings yet.</div></td></tr>';
+    $("bk-body").querySelectorAll("[data-submit]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        post("bookingapi.submit_booking", { name: b.dataset.submit })
+          .then(function () { toast("Booking submitted — parchment moves to the mill."); refreshBookings(); })
+          .catch(function (e) { toast(e.message); });
+      });
+    });
+  });
+}
+$("bk-create").addEventListener("click", function () {
+  post("bookingapi.create_booking", {
+    outturn_number: $("bk-outturn").value,
+    grower: $("bk-grower").value, parchment_type: $("bk-type").value,
+    no_of_bags: $("bk-bags").value, bag_weight: $("bk-bagwt").value,
+    gross_weight: $("bk-gross").value,
+    booking_date: $("bk-date").value, source_bin: $("bk-bin").value,
+  }).then(function (r) { toast("Booking " + r.name + " created — net " + n(r.net_weight, 1) + " kg."); refreshBookings(); })
+    .catch(function (e) { toast(e.message); });
+});
+function _bkNet() {
+  var g = parseFloat($("bk-gross").value) || 0;
+  var tare = (parseFloat($("bk-bags").value) || 0) * (parseFloat($("bk-bagwt").value) || 0);
+  $("bk-net").value = g ? Math.max(g - tare, 0).toFixed(1) : "";
+}
+["bk-gross", "bk-bags", "bk-bagwt"].forEach(function (id) {
+  $(id).addEventListener("input", _bkNet);
+});
+
+/* ── Weighbridge ─────────────────────────────────────────────────────────── */
+function loadWeighbridge() {
+  $("wb-list").innerHTML = '<div class="loading"><div class="spin"></div>Loading pickups…</div>';
+  api("pickupapi.pending_pickups").then(function (rows) {
+    if (!rows.length) { $("wb-list").innerHTML = '<div class="card card--padded"><div class="emptybox">No open pickups — everything received.</div></div>'; return; }
+    $("wb-list").innerHTML = rows.map(function (p) {
+      var inputs = p.rows.map(function (r) {
+        return '<div class="hb"><div class="hb__name">' + esc((r.block || "").split(" - ")[0]) +
+          '</div><div class="hb__lane" style="display:flex;align-items:center;font:500 12px var(--sans);color:var(--ink-mute)">' +
+          n(r.bucket_count) + ' buckets</div><input class="winput" type="number" step="0.1" min="0" ' +
+          'value="' + (r.weight_kg || "") + '" data-row="' + r.name + '"></div>';
+      }).join("");
+      var actions = p.actions.map(function (a) {
+        return '<button class="btn btn--sm' + (a === "Receive" ? "" : " btn--ghost") +
+          '" data-action="' + a + '" data-name="' + p.name + '">' + a + "</button>";
+      }).join(" ");
+      return '<div class="card card--padded" data-pickup="' + p.name + '">' +
+        '<div class="card__head"><h3>' + p.name + " · " + fd(p.date) + "</h3><div>" + stChip(p.workflow_state) + "</div></div>" +
+        inputs +
+        '<div style="display:flex;gap:10px;margin-top:18px;align-items:center">' +
+        '<button class="btn btn--ghost btn--sm" data-save="' + p.name + '">Save Weights</button>' + actions +
+        '<span class="meta" style="margin-left:auto;font:500 12px var(--sans);color:var(--ink-mute)">total ' + n(p.total_weight_kg, 1) + " kg</span></div></div>";
+    }).join("");
+    $("wb-list").querySelectorAll("[data-save]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var card = b.closest("[data-pickup]"), weights = {};
+        card.querySelectorAll("input[data-row]").forEach(function (i) { weights[i.dataset.row] = i.value || 0; });
+        post("pickupapi.save_weights", { name: b.dataset.save, weights: JSON.stringify(weights) })
+          .then(function (r) { toast("Weights saved — total " + n(r.total_weight_kg, 1) + " kg."); loadWeighbridge(); })
+          .catch(function (e) { toast(e.message); });
+      });
+    });
+    $("wb-list").querySelectorAll("[data-action]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        post("pickupapi.workflow_action", { name: b.dataset.name, action: b.dataset.action })
+          .then(function (r) { toast(r.name + " → " + r.workflow_state); loadWeighbridge(); })
+          .catch(function (e) { toast(e.message); });
+      });
+    });
+  }).catch(function (e) { $("wb-list").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+$("wb-refresh").addEventListener("click", loadWeighbridge);
+
+/* ── Drying Ops (repack off the tables) ──────────────────────────────────── */
+var DR_ITEMS = [], DR_BINS = [];
+function loadDryingOps() {
+  api("dryingapi.get_defaults").then(function (d) {
+    DR_ITEMS = (d.parchment_types && d.parchment_types.length) ? d.parchment_types : (d.items || []);
+    DR_BINS = d.bins || [];
+    var sources = d.wet_mill ? [{ name: d.wet_mill }].concat(d.bins) : d.bins;
+    opt($("dr-from"), sources, "name", "name");
+    if (d.wet_mill) $("dr-from").value = d.wet_mill;
+    if (!$("dr-cgrid").querySelector("[data-outrow]")) _drAddRow();
+    refreshDryingStock();
+  });
+}
+function _drAddRow() {
+  var row = document.createElement("div");
+  row.className = "cgrid__row";
+  row.style.gridTemplateColumns = "1.6fr 1fr 1.6fr 34px";
+  row.setAttribute("data-outrow", "");
+  row.innerHTML = '<div class="cgrid__cell"><select class="dr-oitem">' +
+    DR_ITEMS.map(function (i) { return '<option value="' + i.name + '">' + i.name + "</option>"; }).join("") +
+    '</select></div><div class="cgrid__cell"><input type="number" class="dr-okg" min="0" step="0.1" placeholder="0.0"></div>' +
+    '<div class="cgrid__cell"><select class="dr-obin">' +
+    DR_BINS.map(function (b) { return '<option value="' + b.name + '">' + b.name + "</option>"; }).join("") +
+    '</select></div>' +
+    '<button class="cgrid__x" title="Remove">&times;</button>';
+  row.querySelector(".cgrid__x").addEventListener("click", function () { row.remove(); _drLoss(); });
+  row.querySelector(".dr-okg").addEventListener("input", _drLoss);
+  $("dr-cgrid").appendChild(row);
+}
+$("dr-add").addEventListener("click", _drAddRow);
+function refreshDryingStock() {
+  var wh = $("dr-from").value;
+  if (!wh) return;
+  api("dryingapi.batch_stock", { warehouse: wh }).then(function (rows) {
+    $("dr-stockmeta").textContent = wh;
+    $("dr-stock").innerHTML = rows.map(function (r) {
+      return "<tr><td>" + esc(r.item_code) + "</td><td>" + esc(r.batch_no) + '</td><td class="num">' + n(r.qty, 1) + "</td></tr>";
+    }).join("") || '<tr><td colspan="3"><div class="emptybox">No batched stock here.</div></td></tr>';
+    opt($("dr-batch"), rows.map(function (r) { return { v: r.item_code + "||" + r.batch_no, l: r.item_code + " · " + r.batch_no + " (" + n(r.qty, 1) + " kg)" }; }), "v", "l");
+  });
+}
+$("dr-from") && $("dr-from").addEventListener("change", refreshDryingStock);
+$("dr-go").addEventListener("click", function () {
+  var pick = ($("dr-batch").value || "").split("||");
+  var outputs = [];
+  $("dr-cgrid").querySelectorAll("[data-outrow]").forEach(function (row) {
+    outputs.push({ parchment_type: row.querySelector(".dr-oitem").value,
+                   qty: row.querySelector(".dr-okg").value || 0,
+                   to_warehouse: row.querySelector(".dr-obin").value });
+  });
+  post("dryingapi.remove_from_drying", {
+    item_code: pick[0], batch_no: pick[1], qty: $("dr-qty").value,
+    from_warehouse: $("dr-from").value,
+    outputs: JSON.stringify(outputs),
+  }).then(function (r) { toast(r.type + " " + r.stock_entry + " — " + n(r.out_kg, 1) + " kg out, loss " + n(r.loss_kg, 1) + " kg."); refreshDryingStock(); })
+    .catch(function (e) { toast(e.message); });
+});
+function _drLoss() {
+  var i = parseFloat($("dr-qty").value) || 0, o = 0;
+  $("dr-cgrid").querySelectorAll(".dr-okg").forEach(function (x) { o += parseFloat(x.value) || 0; });
+  $("dr-outtotal").textContent = n(o, 1);
+  $("dr-losslbl").textContent = i && o ? n(i - o, 1) + " kg (" + Math.round((i - o) / i * 100) + "%)" : "—";
+}
+$("dr-qty").addEventListener("input", _drLoss);
+
+/* ── Milling: record the outturn ─────────────────────────────────────────── */
+var ML = { bag_kg: 60, net: {} };
+function loadMilling() {
+  api("millingapi.get_defaults").then(function (d) {
+    ML.bag_kg = d.bag_kg || 60;
+    ML.net = {};
+    (d.bookings || []).forEach(function (b) { ML.net[b.name] = b.net_weight; });
+    var sel = $("ml-booking");
+    sel.innerHTML = (d.bookings || []).length ? "" :
+      '<option value="">— nothing at the mill: transfer a booking first —</option>';
+    (d.bookings || []).forEach(function (b) {
+      var o = document.createElement("option");
+      o.value = b.name;
+      o.textContent = b.name + " · " + (b.grower || "Endebess Coffee Estate") + " · " + n(b.net_weight) + " kg " + (b.parchment_type || "");
+      sel.appendChild(o);
+    });
+    $("ml-meta").textContent = (d.bookings || []).length
+      ? (d.bookings || []).length + " outturn(s) at the mill · bag = " + ML.bag_kg + " kg"
+      : "transfer a booking to the mill first (Transfers page)";
+    $("ml-grades").innerHTML = (d.grades.length ? d.grades : d.all_grades).map(function (g) {
+      return '<div class="cgrid__row" data-grade="' + g + '" style="grid-template-columns:1.2fr 1fr 1fr 1fr">' +
+        '<div class="cgrid__cell is-label">' + g + "</div>" +
+        '<div class="cgrid__cell"><input class="ml-bags" type="number" min="0"></div>' +
+        '<div class="cgrid__cell"><input class="ml-pockets" type="number" min="0" step="0.1"></div>' +
+        '<div class="cgrid__cell is-calc ml-kg">—</div></div>';
+    }).join("");
+    $("ml-grades").querySelectorAll("input").forEach(function (i) {
+      i.addEventListener("input", _mlTotals);
+    });
+    _mlTotals();
+  });
+  api("dashboardapi.get_milling").then(function (d) {
+    var rows = d.outturns || [];
+    $("ml-cnt").textContent = rows.length + " statements";
+    $("ml-recent").innerHTML = rows.slice(0, 12).map(function (r) {
+      return "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.grower || "Endebess Coffee Estate") + '</td><td class="num">' +
+        n(r.parchment_weight, 1) + '</td><td class="num">' + n(r.output_weight, 1) +
+        '</td><td class="num">' + n(r.milling_loss, 1) + "</td></tr>";
+    }).join("") || '<tr><td colspan="5"><div class="emptybox">No outturns yet.</div></td></tr>';
+  });
+}
+function _mlTotals() {
+  var total = 0;
+  $("ml-grades").querySelectorAll("[data-grade]").forEach(function (tr) {
+    var kg = (parseFloat(tr.querySelector(".ml-bags").value) || 0) * ML.bag_kg +
+             (parseFloat(tr.querySelector(".ml-pockets").value) || 0);
+    tr.querySelector(".ml-kg").textContent = kg ? n(kg, 1) : "—";
+    total += kg;
+  });
+  $("ml-total").textContent = n(total, 1);
+  var inKg = ML.net[$("ml-booking").value] || 0;
+  var over = inKg && total > inKg;
+  $("ml-loss").textContent = over
+    ? "output exceeds the " + n(inKg, 1) + " kg that went in!"
+    : (inKg && total ? n(inKg - total, 1) + " kg (" + Math.round((inKg - total) / inKg * 100) + "%)" : "—");
+  $("ml-loss").style.color = over ? "var(--neg)" : "";
+  $("ml-go").disabled = !!over;
+}
+$("ml-booking") && $("ml-booking").addEventListener("change", _mlTotals);
+$("ml-go").addEventListener("click", function () {
+  var grades = [];
+  $("ml-grades").querySelectorAll("[data-grade]").forEach(function (tr) {
+    grades.push({ grade: tr.dataset.grade,
+      no_of_bags: tr.querySelector(".ml-bags").value || 0,
+      no_of_pockets: tr.querySelector(".ml-pockets").value || 0 });
+  });
+  post("millingapi.record_outturn", { outturn_number: $("ml-booking").value, grades: JSON.stringify(grades) })
+    .then(function (r) {
+      toast("Outturn " + r.name + " milled — " + n(r.output_weight, 1) + " kg out, loss " + n(r.milling_loss, 1) + "%.");
+      loadMilling();
+    })
+    .catch(function (e) { toast(e.message); });
+});
+
+/* ── Transfers ───────────────────────────────────────────────────────────── */
+function loadTransfers() {
+  api("dryingapi.get_defaults").then(function (d) {
+    opt($("tr-from"), d.bins, "name", "name");
+    opt($("tr-to"), d.bins, "name", "name");
+    refreshTransferStock();
+  });
+  refreshTransferQueue();
+  refreshRecentTransfers();
+}
+function refreshTransferQueue() {
+  api("bookingapi.pending_transfers").then(function (rows) {
+    $("tq-cnt").textContent = rows.length + " waiting";
+    $("tq-body").innerHTML = rows.map(function (r) {
+      var outgrower = !!r.grower;
+      var short = !outgrower && r.source_bin && (r.net_weight || 0) > (r.current_bin_stock || 0);
+      var binCell = outgrower
+        ? '<span style="font:500 12px var(--sans);color:var(--ink-mute)">arrives at mill</span>'
+        : (r.source_bin ? esc(r.source_bin)
+          : '<select class="tq-bin" style="max-width:150px;border:1px solid var(--hairline);border-radius:8px;padding:5px 8px;font:500 12px var(--sans)">' +
+            Array.prototype.map.call($("tr-from").options, function (o) { return '<option value="' + o.value + '">' + o.textContent + "</option>"; }).join("") + "</select>");
+      return "<tr><td>" + esc(r.name) + "</td><td>" + (outgrower ? esc(r.grower) : chip("", "Endebess Coffee Estate")) + "</td><td>" + chip("", r.parchment_type || "—") +
+        '</td><td class="num">' + n(r.net_weight) + "</td><td>" + binCell +
+        '</td><td class="num">' + (outgrower ? "—" : (short ? '<span style="color:var(--neg);font-weight:600">' + n(r.current_bin_stock) + "</span>" : n(r.current_bin_stock))) +
+        '</td><td><button class="btn btn--sm' + (short ? " btn--ghost" : "") + '" data-mill="' + r.name + '">' +
+        (outgrower ? "Receive at Mill" : "Transfer to Mill") + "</button></td></tr>";
+    }).join("") || '<tr><td colspan="7"><div class="emptybox">Nothing waiting — all booked parchment is at the mill.</div></td></tr>';
+    $("tq-body").querySelectorAll("[data-mill]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var sel = b.closest("tr").querySelector(".tq-bin");
+        post("bookingapi.transfer_to_mill", { name: b.dataset.mill, source_bin: sel ? sel.value : "" })
+          .then(function (r) { toast(r.name + " → mill (" + r.stock_entry + ")."); refreshTransferQueue(); refreshRecentTransfers(); })
+          .catch(function (e) { toast(e.message); });
+      });
+    });
+  });
+}
+
+function refreshTransferStock() {
+  var wh = $("tr-from").value;
+  if (!wh) return;
+  api("dryingapi.batch_stock", { warehouse: wh }).then(function (rows) {
+    opt($("tr-batch"), rows.map(function (r) { return { v: r.item_code + "||" + r.batch_no, l: r.item_code + " · " + r.batch_no + " (" + n(r.qty, 1) + " kg)" }; }), "v", "l");
+  });
+}
+function refreshRecentTransfers() {
+  api("transferapi.recent_transfers").then(function (rows) {
+    $("tr-recent").innerHTML = rows.map(function (r) {
+      return "<tr><td>" + esc(r.name) + "</td><td>" + chip("", r.stock_entry_type) + "</td><td>" + fd(r.posting_date) + "</td></tr>";
+    }).join("") || '<tr><td colspan="3"><div class="emptybox">No movements yet.</div></td></tr>';
+  });
+}
+$("tr-from") && $("tr-from").addEventListener("change", refreshTransferStock);
+$("tr-go").addEventListener("click", function () {
+  var pick = ($("tr-batch").value || "").split("||");
+  post("transferapi.create_transfer", {
+    item_code: pick[0], batch_no: pick[1], qty: $("tr-qty").value,
+    from_warehouse: $("tr-from").value, to_warehouse: $("tr-to").value,
+  }).then(function (r) { toast("Transfer " + r.stock_entry + " created."); refreshTransferStock(); refreshRecentTransfers(); })
+    .catch(function (e) { toast(e.message); });
+});
+
+/* ── who am i (sidebar) ──────────────────────────────────────────────────── */
+fetch("/api/method/frappe.auth.get_logged_user", { credentials: "same-origin", headers: { Accept: "application/json" } })
+  .then(function (r) { return r.json(); })
+  .then(function (j) {
+    var u = j.message || "";
+    document.getElementById("sb-user").textContent = u;
+    document.getElementById("sb-avatar").textContent = (u[0] || "·").toUpperCase();
+  }).catch(function () {});
+
+})();
+</script>
+</body></html>

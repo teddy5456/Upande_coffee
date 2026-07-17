@@ -1,0 +1,26 @@
+[
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Submit for Weighing",
+  "workflow_action_name": "Submit for Weighing",
+  "modified": "2026-07-16 12:00:00"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Approve Weight",
+  "workflow_action_name": "Approve Weight",
+  "modified": "2026-07-16 12:00:00"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Send Back",
+  "workflow_action_name": "Send Back",
+  "modified": "2026-07-16 12:00:00"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Receive",
+  "workflow_action_name": "Receive",
+  "modified": "2026-07-16 12:00:00"
+ }
+]

@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "creation": "2026-07-15 18:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "harvest_section",
+  "cherry_item",
+  "wet_mill_warehouse",
+  "column_break_hs",
+  "milled_store_warehouse",
+  "bag_weight_kg",
+  "milling_section",
+  "parchment_item",
+  "column_break_ms",
+  "dry_mill_warehouse"
+ ],
+ "fields": [
+  {
+   "fieldname": "harvest_section",
+   "fieldtype": "Section Break",
+   "label": "Harvest & Milling"
+  },
+  {
+   "description": "Batched cherry item received from harvest pickups",
+   "fieldname": "cherry_item",
+   "fieldtype": "Link",
+   "label": "Cherry Item",
+   "options": "Item"
+  },
+  {
+   "description": "Warehouse receiving cherry from the field (wet mill)",
+   "fieldname": "wet_mill_warehouse",
+   "fieldtype": "Link",
+   "label": "Wet Mill Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "column_break_hs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Source warehouse for Coffee Dispatch delivery notes (milled/clean coffee store)",
+   "fieldname": "milled_store_warehouse",
+   "fieldtype": "Link",
+   "label": "Milled Store Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "default": "60",
+   "description": "Weight of one bag in kg, used to compute dispatch quantities",
+   "fieldname": "bag_weight_kg",
+   "fieldtype": "Float",
+   "label": "Bag Weight (kg)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "milling_section",
+   "fieldtype": "Section Break",
+   "label": "Milling"
+  },
+  {
+   "description": "Item representing outgrower/estate parchment in stores",
+   "fieldname": "parchment_item",
+   "fieldtype": "Link",
+   "label": "Parchment Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "column_break_ms",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Warehouse parchment is transferred into for dry milling",
+   "fieldname": "dry_mill_warehouse",
+   "fieldtype": "Link",
+   "label": "Dry Mill Warehouse",
+   "options": "Warehouse"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-15 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Coffee Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Coffee Harvest Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
