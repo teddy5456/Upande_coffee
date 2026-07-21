@@ -4,7 +4,12 @@ from frappe.model.document import Document
 
 class HarvestLog(Document):
     def before_insert(self):
-        self.date = frappe.utils.today()
+        # Preserve the date the scan was actually taken. Offline scans are
+        # queued on the device and may upload hours or a day later — the
+        # Kahawa Trail app sends the original harvest date, so only fall back
+        # to today when no date was supplied (e.g. a live desk entry).
+        if not self.date:
+            self.date = frappe.utils.today()
         self.bucket_count = 1
         # Fetch national_id and employee_id from harvester
         if self.harvester_id:
