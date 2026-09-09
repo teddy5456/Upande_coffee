@@ -48,41 +48,49 @@ def on_submit_create_stock_entry(doc, method):
     if not doc.total_weight_kg or doc.total_weight_kg <= 0:
         frappe.throw(_("Cannot submit: total weight must be greater than 0."))
 
-    # Mark harvest logs as picked up
-    for row in doc.block_pickups:
-        if row.picked_log_ids:
-            log_ids = [lid.strip() for lid in row.picked_log_ids.split(",") if lid.strip()]
-            for log_id in log_ids:
-                if frappe.db.exists("Harvest Log", log_id):
-                    frappe.db.set_value("Harvest Log", log_id, "picked_up", 1, update_modified=False)
+    try:
+        # Mark harvest logs as picked up
+        for row in doc.block_pickups:
+            if row.picked_log_ids:
+                log_ids = [lid.strip() for lid in row.picked_log_ids.split(",") if lid.strip()]
+                for log_id in log_ids:
+                    if frappe.db.exists("Harvest Log", log_id):
+                        frappe.db.set_value("Harvest Log", log_id, "picked_up", 1, update_modified=False)
 
-    # Create or reuse a date-level cherry batch
-    batch_name = f"CHERRY-{doc.date}"
-    if not frappe.db.exists("Batch", batch_name):
-        batch = frappe.new_doc("Batch")
-        batch.batch_id = batch_name
-        batch.item = CHERRY_ITEM
-        batch.insert(ignore_permissions=True)
+        # Create or reuse a date-level cherry batch
+        batch_name = f"CHERRY-{doc.date}"
+        if not frappe.db.exists("Batch", batch_name):
+            batch = frappe.new_doc("Batch")
+            batch.batch_id = batch_name
+            batch.item = CHERRY_ITEM
+            batch.insert(ignore_permissions=True)
 
-    # Create stock entry: Material Receipt to wet mill
-    se = frappe.new_doc("Stock Entry")
-    se.stock_entry_type = "Material Receipt"
-    se.posting_date = doc.date
-    se.company = COMPANY
-    se.remarks = f"Cherry received from harvest pickup {doc.name} on {doc.date}"
-    se.append(
-        "items",
-        {
-            "item_code": CHERRY_ITEM,
-            "qty": doc.total_weight_kg,
-            "uom": "Kilogram",
-            "t_warehouse": WET_MILL_WH,
-            "batch_no": batch_name,
-            "use_serial_batch_fields": 1,
-        },
-    )
-    se.insert(ignore_permissions=True)
-    se.submit()
+        # Create stock entry: Material Receipt to wet mill
+        se = frappe.new_doc("Stock Entry")
+        se.stock_entry_type = "Material Receipt"
+        se.posting_date = doc.date
+        se.company = COMPANY
+        se.remarks = f"Cherry received from harvest pickup {doc.name} on {doc.date}"
+        se.append(
+            "items",
+            {
+                "item_code": CHERRY_ITEM,
+                "qty": doc.total_weight_kg,
+                "uom": "Kilogram",
+                "t_warehouse": WET_MILL_WH,
+                "batch_no": batch_name,
+                "use_serial_batch_fields": 1,
+            },
+        )
+        se.insert(ignore_permissions=True)
+        se.submit()
+    except Exception as e:
+        frappe.log_error(
+            f"Stock Entry creation failed for Harvest Pickup {doc.name} "
+            f"({doc.total_weight_kg} kg on {doc.date}): {e}",
+            "Coffee Harvest",
+        )
+        raise
 
     frappe.db.set_value("Harvest Pickup", doc.name, "moved_stock", 1, update_modified=False)
     frappe.db.set_value("Harvest Pickup", doc.name, "stock_entry", se.name, update_modified=False)

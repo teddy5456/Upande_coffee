@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "autoname": "field:employee",
+ "creation": "2026-05-18 09:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "is_active",
+  "column_break_1",
+  "enrolled_at",
+  "enrolled_by",
+  "image_section",
+  "face_image",
+  "embedding_section",
+  "face_embedding",
+  "notes_section",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "now",
+   "fieldname": "enrolled_at",
+   "fieldtype": "Datetime",
+   "label": "Enrolled At"
+  },
+  {
+   "fieldname": "enrolled_by",
+   "fieldtype": "Link",
+   "label": "Enrolled By",
+   "options": "User"
+  },
+  {
+   "fieldname": "image_section",
+   "fieldtype": "Section Break",
+   "label": "Face Image"
+  },
+  {
+   "fieldname": "face_image",
+   "fieldtype": "Attach Image",
+   "label": "Face Image",
+   "description": "Reference photo captured by the Upande Bio kiosk during enrolment."
+  },
+  {
+   "fieldname": "embedding_section",
+   "fieldtype": "Section Break",
+   "label": "Embedding (for automatic matching)",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "face_embedding",
+   "fieldtype": "Long Text",
+   "label": "Face Embedding",
+   "description": "JSON vector populated by the face-matching pipeline. Empty if matching isn't enabled yet."
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-18 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Harvest",
+ "name": "Employee Face Enrollment",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest User"
+  }
+ ],
+ "sort_field": "enrolled_at",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

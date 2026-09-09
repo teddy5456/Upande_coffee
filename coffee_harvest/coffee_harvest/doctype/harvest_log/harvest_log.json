@@ -12,6 +12,7 @@
   "block",
   "date",
   "harvester_id",
+  "bucket_id",
   "column_break_1",
   "national_id",
   "employee_id",
@@ -51,6 +52,13 @@
    "label": "Harvester",
    "options": "Harvester",
    "reqd": 1
+  },
+  {
+   "fieldname": "bucket_id",
+   "fieldtype": "Data",
+   "label": "Bucket ID",
+   "in_list_view": 1,
+   "description": "Pre-printed QR on each physical bucket — traces this log all the way to dispatch."
   },
   {
    "fieldname": "column_break_1",

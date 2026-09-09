@@ -8,9 +8,17 @@ class HarvestLog(Document):
         self.bucket_count = 1
         # Fetch national_id and employee_id from harvester
         if self.harvester_id:
-            harvester = frappe.get_doc("Harvester", self.harvester_id)
-            self.national_id = harvester.national_id
-            self.employee_id = harvester.employee_id
+            try:
+                harvester = frappe.get_doc("Harvester", self.harvester_id)
+                self.national_id = harvester.national_id
+                self.employee_id = harvester.employee_id
+            except Exception as e:
+                frappe.log_error(
+                    f"Harvest Log scan failed to load Harvester {self.harvester_id} "
+                    f"(block {self.block}): {e}",
+                    "Coffee Harvest",
+                )
+                raise
 
     def validate(self):
         if not self.harvester_id:

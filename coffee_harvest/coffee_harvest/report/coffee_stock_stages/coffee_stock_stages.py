@@ -141,26 +141,30 @@ def _get_data():
         data.append(_row("", "—", "No parchment in bins", 0))
 
     # ── Stage 4: Clean Coffee (Outturn Statements not fully dispatched) ──────
+    # DNs link to outturns via their batch_no (named `{outturn}-{grade}`),
+    # not via Sales Order. Sales Invoice links via custom_outturn_number.
     clean_rows = frappe.db.sql(
         """
         SELECT os.name, os.grower, os.output_weight,
-               os.booking,
-               COALESCE(dn.name, '') AS delivery_note,
-               COALESCE(si.name, '') AS sales_invoice
+               GROUP_CONCAT(DISTINCT dn.name ORDER BY dn.name SEPARATOR ', ') AS delivery_note,
+               COALESCE(MAX(si.name), '') AS sales_invoice,
+               COALESCE(SUM(DISTINCT dni.qty), 0) AS dispatched_kg
         FROM `tabOutturn Statement` os
-        LEFT JOIN `tabDelivery Note Item` dni ON dni.against_sales_order = os.booking
-        LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent AND dn.docstatus < 2
+        LEFT JOIN `tabDelivery Note Item` dni
+               ON dni.batch_no LIKE CONCAT(os.name, '-%%')
+        LEFT JOIN `tabDelivery Note` dn
+               ON dn.name = dni.parent AND dn.docstatus < 2
         LEFT JOIN `tabSales Invoice` si
                ON si.custom_outturn_number = os.name AND si.docstatus < 2
         WHERE os.docstatus = 1
-        GROUP BY os.name
+        GROUP BY os.name, os.grower, os.output_weight
         ORDER BY os.creation DESC
         """,
         as_dict=True,
     )
 
     clean_total = sum(float(r.output_weight or 0) for r in clean_rows)
-    data.append(_section_header(f"Stage 4 — Clean Coffee (Outturn)  ({round(clean_total, 1)} kg)"))
+    data.append(_section_header(f"Stage 4 — Clean Coffee  ({round(clean_total, 1)} kg)"))
     for r in clean_rows:
         dispatched = bool(r.delivery_note)
         invoiced = bool(r.sales_invoice)
@@ -209,6 +213,13 @@ def _get_chart(data):
         "height": 280,
         "colors": ["#2d6a3f"],
     }
+
+
+@frappe.whitelist()
+def get_summary_stats():
+    """Return per-stage totals (used by the Coffee Stock HTML block)."""
+    _, data, _, _, summary = execute()
+    return summary
 
 
 def _get_summary(data):
