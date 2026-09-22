@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 14:05:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "A planner overruling the forecast for one block-week, with a reason and an audit trail.",
+ "field_order": [
+  "block",
+  "week_start",
+  "column_break_head",
+  "kg_cherry",
+  "model_kg",
+  "section_why",
+  "reason",
+  "section_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "week_start",
+   "fieldtype": "Date",
+   "label": "Week Starting (Monday)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The forecast week being overruled."
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kg_cherry",
+   "fieldtype": "Float",
+   "label": "Cherry (kg)",
+   "reqd": 1,
+   "precision": "0",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "model_kg",
+   "fieldtype": "Float",
+   "label": "Model Said",
+   "read_only": 1,
+   "precision": "0",
+   "description": "What the flowering model produced, kept so the override can be judged later \u2014 and so the model can be corrected rather than quietly worked around."
+  },
+  {
+   "fieldname": "section_why",
+   "fieldtype": "Section Break",
+   "label": "Why"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1,
+   "description": "Required on purpose. An override without a reason is indistinguishable from a typo."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 14:05:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Forecast Override",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "week_start",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "title_field": "block",
+ "search_fields": "block,week_start"
+}

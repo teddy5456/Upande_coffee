@@ -1,0 +1,154 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "A flowering event on a block. Rain triggers flowering; ripe cherry follows about 30-35 weeks later, which is what makes coffee forecastable.",
+ "field_order": [
+  "block",
+  "flowering_date",
+  "column_break_head",
+  "intensity",
+  "pct_of_block",
+  "section_projection",
+  "expected_peak_date",
+  "column_break_projection",
+  "expected_from_date",
+  "expected_to_date",
+  "section_notes",
+  "rainfall_mm",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "flowering_date",
+   "fieldtype": "Date",
+   "label": "Flowering Date",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Coffee flowers a few days after rain. Logging the date is what lets you forecast this crop seven months before you pick it."
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "intensity",
+   "fieldtype": "Select",
+   "label": "Intensity",
+   "options": "\nLight\nModerate\nHeavy",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pct_of_block",
+   "fieldtype": "Percent",
+   "label": "% Of Block Flowering",
+   "default": "100",
+   "description": "A block often flowers in waves. Record each wave separately."
+  },
+  {
+   "fieldname": "section_projection",
+   "fieldtype": "Section Break",
+   "label": "Projected Harvest"
+  },
+  {
+   "fieldname": "expected_peak_date",
+   "fieldtype": "Date",
+   "label": "Expected Peak Harvest",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_projection",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_from_date",
+   "fieldtype": "Date",
+   "label": "Harvest Window From",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expected_to_date",
+   "fieldtype": "Date",
+   "label": "Harvest Window To",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "rainfall_mm",
+   "fieldtype": "Float",
+   "label": "Triggering Rainfall (mm)",
+   "precision": "1"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Flowering Event",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "flowering_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "title_field": "block"
+}

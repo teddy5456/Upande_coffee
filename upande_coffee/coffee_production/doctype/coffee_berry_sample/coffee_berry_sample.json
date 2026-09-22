@@ -1,0 +1,218 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "A physical berry count. Turns 'the crop looks good' into a number you can plan labour and mill capacity against.",
+ "field_order": [
+  "block",
+  "sample_date",
+  "column_break_head",
+  "trees_sampled",
+  "bearing_primaries",
+  "secondaries_per_primary",
+  "nodes_per_branch",
+  "drop_pct",
+  "sampled_by",
+  "section_counts",
+  "bearing_nodes_per_tree",
+  "column_break_counts",
+  "berries_per_node",
+  "column_break_counts_2",
+  "avg_cherry_weight_g",
+  "section_result",
+  "est_kg_per_tree",
+  "column_break_result",
+  "est_block_kg",
+  "section_notes",
+  "notes",
+  "client_ref"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sample_date",
+   "fieldtype": "Date",
+   "label": "Sample Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "trees_sampled",
+   "fieldtype": "Int",
+   "label": "Trees Sampled",
+   "default": "10",
+   "reqd": 1,
+   "description": "Ten trees spread across the block beats thirty in one corner."
+  },
+  {
+   "fieldname": "bearing_primaries",
+   "fieldtype": "Float",
+   "label": "Bearing Primaries per Tree",
+   "description": "Primary (lateral) branches carrying fruit. Count them on the sample trees, don't estimate."
+  },
+  {
+   "fieldname": "secondaries_per_primary",
+   "fieldtype": "Float",
+   "label": "Secondaries per Primary",
+   "description": "Secondary branches growing off an average primary. They bear their own nodes, so on an older block they can carry most of the crop."
+  },
+  {
+   "fieldname": "nodes_per_branch",
+   "fieldtype": "Float",
+   "label": "Fruiting Nodes per Branch",
+   "description": "Nodes WITH fruit on an average branch. A node is a leaf-pair joint; secondaries are branches, not nodes."
+  },
+  {
+   "fieldname": "drop_pct",
+   "fieldtype": "Percent",
+   "label": "Expected Drop %",
+   "description": "Defaults to the estate figure in Coffee Production Settings."
+  },
+  {
+   "fieldname": "sampled_by",
+   "fieldtype": "Link",
+   "label": "Sampled By",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_counts",
+   "fieldtype": "Section Break",
+   "label": "Counts"
+  },
+  {
+   "fieldname": "bearing_nodes_per_tree",
+   "fieldtype": "Float",
+   "label": "Bearing Nodes per Tree",
+   "reqd": 1,
+   "precision": "1"
+  },
+  {
+   "fieldname": "column_break_counts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "berries_per_node",
+   "fieldtype": "Float",
+   "label": "Berries per Node",
+   "reqd": 1,
+   "precision": "1"
+  },
+  {
+   "fieldname": "column_break_counts_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "avg_cherry_weight_g",
+   "fieldtype": "Float",
+   "label": "Avg Cherry Weight (g)",
+   "precision": "2",
+   "description": "Leave blank to use the value in Coffee Production Settings."
+  },
+  {
+   "fieldname": "section_result",
+   "fieldtype": "Section Break",
+   "label": "Estimate"
+  },
+  {
+   "fieldname": "est_kg_per_tree",
+   "fieldtype": "Float",
+   "label": "Estimated kg / tree",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "est_block_kg",
+   "fieldtype": "Float",
+   "label": "Estimated Block Cherry (kg)",
+   "read_only": 1,
+   "precision": "0",
+   "description": "Counted yield for the block. Compared against the variety-curve baseline so you can see which blocks are over- or under-performing."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "client_ref",
+   "fieldtype": "Data",
+   "label": "Client Ref",
+   "read_only": 1,
+   "no_copy": 1,
+   "search_index": 1,
+   "description": "Device-unique key from Kahawa Trail (deviceId:obs:rowId). Lets a retry after a timeout find the record it already created instead of entering the observation twice."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Berry Sample",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "sample_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "title_field": "block"
+}

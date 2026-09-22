@@ -1,0 +1,57 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "description": "One row per tree-age band: what share of full-bearing yield to expect.",
+ "field_order": [
+  "age_from",
+  "age_to",
+  "pct_of_plateau",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "age_from",
+   "fieldtype": "Int",
+   "label": "Tree Age From (Years)",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "age_to",
+   "fieldtype": "Int",
+   "label": "Tree Age To (Years)",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "pct_of_plateau",
+   "fieldtype": "Percent",
+   "label": "% Of Plateau Yield",
+   "in_list_view": 1,
+   "reqd": 1,
+   "description": "0 for years before first crop, 100 at full bearing, less again in decline."
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "label": "Note",
+   "in_list_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Yield Stage",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "istable": 1
+}

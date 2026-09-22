@@ -1,0 +1,180 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "One selective picking pass over a block. Overdue rounds are the biggest silent loss in coffee \u2014 cherry overripens, drops, and drags the outturn's cup score down.",
+ "field_order": [
+  "block",
+  "season",
+  "column_break_head",
+  "round_number",
+  "status",
+  "section_dates",
+  "start_date",
+  "column_break_dates",
+  "end_date",
+  "section_result",
+  "cherry_kg",
+  "buckets",
+  "column_break_result",
+  "pickers",
+  "kg_per_picker_day",
+  "section_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "season",
+   "fieldtype": "Link",
+   "label": "Season",
+   "options": "Coffee Season"
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "round_number",
+   "fieldtype": "Int",
+   "label": "Round Number",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Coffee is picked selectively over several passes \u2014 typically 5 to 8 a season."
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Planned\nIn Progress\nCompleted\nSkipped",
+   "default": "Planned",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_dates",
+   "fieldtype": "Section Break",
+   "label": "Dates"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_dates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "section_result",
+   "fieldtype": "Section Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "cherry_kg",
+   "fieldtype": "Float",
+   "label": "Cherry Picked (kg)",
+   "read_only": 1,
+   "precision": "0",
+   "description": "Summed from Harvest Log for this block over the round's dates \u2014 never typed."
+  },
+  {
+   "fieldname": "buckets",
+   "fieldtype": "Int",
+   "label": "Buckets",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pickers",
+   "fieldtype": "Int",
+   "label": "Pickers Involved",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kg_per_picker_day",
+   "fieldtype": "Float",
+   "label": "kg per Picker-Day",
+   "read_only": 1,
+   "precision": "1"
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Picking Round",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "start_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "title_field": "block"
+}

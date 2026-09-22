@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "Tuning for the coffee production forecast. Every default here is a real agronomic assumption \u2014 change them rather than the code.",
+ "field_order": [
+  "section_biology",
+  "ripening_weeks",
+  "ripening_spread_weeks",
+  "column_break_biology",
+  "round_interval_days",
+  "avg_cherry_weight_g",
+  "expected_drop_pct",
+  "section_conversion",
+  "cherry_to_parchment",
+  "column_break_conversion",
+  "parchment_to_clean",
+  "section_economics",
+  "cherry_price_per_kg",
+  "column_break_economics",
+  "picker_rate_per_kg"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_biology",
+   "fieldtype": "Section Break",
+   "label": "Crop Biology"
+  },
+  {
+   "fieldname": "ripening_weeks",
+   "fieldtype": "Int",
+   "label": "Weeks From Flowering To Ripe",
+   "default": "32",
+   "description": "Arabica typically ripens 30-35 weeks after flowering. This is what turns a flowering event into a harvest-week forecast \u2014 the single most important number on this page. Confirm with your agronomist for your altitude."
+  },
+  {
+   "fieldname": "ripening_spread_weeks",
+   "fieldtype": "Int",
+   "label": "Ripening Spread (Weeks)",
+   "default": "6",
+   "description": "A flowering does not ripen on one day. The forecast spreads each event over this many weeks, peaking in the middle."
+  },
+  {
+   "fieldname": "column_break_biology",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "round_interval_days",
+   "fieldtype": "Int",
+   "label": "Days Between Picking Rounds",
+   "default": "14",
+   "description": "Selective picking interval. A block not picked within this many days is flagged overdue \u2014 overripe cherry drops and drags down the whole outturn."
+  },
+  {
+   "fieldname": "avg_cherry_weight_g",
+   "fieldtype": "Float",
+   "label": "Average Cherry Weight (g)",
+   "default": "1.5",
+   "precision": "2",
+   "description": "Used to turn berry counts into kilograms."
+  },
+  {
+   "fieldname": "expected_drop_pct",
+   "fieldtype": "Percent",
+   "label": "Expected Fruit Drop %",
+   "default": "12",
+   "description": "Share of counted berries that never reach the store: abscission, CBD, borer, stripping losses. Published Arabica figures run 10-40% under water stress and 24-30% where CBD is unchecked. A count that ignores it always over-promises."
+  },
+  {
+   "fieldname": "section_conversion",
+   "fieldtype": "Section Break",
+   "label": "Conversion Ratios"
+  },
+  {
+   "fieldname": "cherry_to_parchment",
+   "fieldtype": "Float",
+   "label": "Cherry : Parchment",
+   "default": "5.0",
+   "precision": "2",
+   "description": "Fallback only. Ratios measured from your own Outturn Statements are used whenever there is history for the block."
+  },
+  {
+   "fieldname": "column_break_conversion",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parchment_to_clean",
+   "fieldtype": "Float",
+   "label": "Parchment : Clean",
+   "default": "1.25",
+   "precision": "2"
+  },
+  {
+   "fieldname": "section_economics",
+   "fieldtype": "Section Break",
+   "label": "Economics"
+  },
+  {
+   "fieldname": "cherry_price_per_kg",
+   "fieldtype": "Currency",
+   "label": "Cherry Price per kg",
+   "description": "Used to value the forecast, so a delayed picking round can be shown in money rather than kilograms."
+  },
+  {
+   "fieldname": "column_break_economics",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "picker_rate_per_kg",
+   "fieldtype": "Currency",
+   "label": "Picker Rate per kg"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Production Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}

@@ -1,0 +1,286 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "The tree census for one block. Coffee is perennial, so the unit is the tree and its age \u2014 not a crop cycle.",
+ "field_order": [
+  "block",
+  "variety_protocol",
+  "column_break_head",
+  "cycle_year",
+  "supervisor",
+  "status",
+  "area_ha",
+  "section_trees",
+  "year_planted",
+  "tree_age",
+  "column_break_trees",
+  "tree_count",
+  "gap_count",
+  "column_break_trees_2",
+  "effective_trees",
+  "gap_pct",
+  "section_pruning",
+  "last_pruned",
+  "column_break_pruning",
+  "pruning_cycle_years",
+  "section_expected",
+  "expected_kg_cherry",
+  "yield_basis",
+  "actual_kg_per_tree",
+  "actual_kg_cherry",
+  "actual_window",
+  "column_break_expected",
+  "expected_kg_per_tree",
+  "section_fertilizer",
+  "fertilizer_caps",
+  "section_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1,
+   "unique": 1,
+   "description": "The block warehouse this profile describes."
+  },
+  {
+   "fieldname": "variety_protocol",
+   "fieldtype": "Link",
+   "label": "Variety",
+   "options": "Coffee Variety Protocol",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cycle_year",
+   "fieldtype": "Select",
+   "label": "Pruning Cycle Year",
+   "options": "\nYOUNG\n0-1\n1-2\n2-3\n3-4\n4-5\n5-6",
+   "description": "Years since the block was stumped. On a cycle-pruned estate this drives yield far more than tree age does \u2014 a 30-year-old block stumped two years ago behaves like a young one. Takes precedence over tree age when set."
+  },
+  {
+   "fieldname": "supervisor",
+   "fieldtype": "Data",
+   "label": "Assistant Manager",
+   "description": "Who is accountable for this block."
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nStumped\nBeing Replanted\nAbandoned",
+   "default": "Active",
+   "in_list_view": 1,
+   "description": "A stumped block yields almost nothing that season. Saying so here is what keeps the forecast honest."
+  },
+  {
+   "fieldname": "area_ha",
+   "fieldtype": "Float",
+   "label": "Area (ha)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "section_trees",
+   "fieldtype": "Section Break",
+   "label": "Tree Census"
+  },
+  {
+   "fieldname": "year_planted",
+   "fieldtype": "Int",
+   "label": "Year Planted"
+  },
+  {
+   "fieldname": "tree_age",
+   "fieldtype": "Int",
+   "label": "Tree Age (Years)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_trees",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tree_count",
+   "fieldtype": "Int",
+   "label": "Trees Planted",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gap_count",
+   "fieldtype": "Int",
+   "label": "Gaps / Dead Trees",
+   "description": "Missing trees are silent lost yield \u2014 a block with 12% gaps loses 12% of its crop and the total just looks 'a bit low'."
+  },
+  {
+   "fieldname": "column_break_trees_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_trees",
+   "fieldtype": "Int",
+   "label": "Bearing Trees",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gap_pct",
+   "fieldtype": "Percent",
+   "label": "Gap %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_pruning",
+   "fieldtype": "Section Break",
+   "label": "Pruning Cycle"
+  },
+  {
+   "fieldname": "last_pruned",
+   "fieldtype": "Date",
+   "label": "Last Stumped / Cycle-Pruned"
+  },
+  {
+   "fieldname": "column_break_pruning",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pruning_cycle_years",
+   "fieldtype": "Int",
+   "label": "Pruning Cycle (Years)",
+   "default": "5"
+  },
+  {
+   "fieldname": "section_expected",
+   "fieldtype": "Section Break",
+   "label": "Expected Yield"
+  },
+  {
+   "fieldname": "expected_kg_cherry",
+   "fieldtype": "Float",
+   "label": "Expected Cherry (kg / season)",
+   "read_only": 1,
+   "precision": "0",
+   "description": "Bearing trees x per-tree yield at this age, from the variety protocol. The baseline a flowering-based forecast is compared against."
+  },
+  {
+   "fieldname": "yield_basis",
+   "fieldtype": "Data",
+   "label": "Yield Basis",
+   "read_only": 1,
+   "description": "Where this block's kg/tree came from: its own berry count, the variety's counts, or a typed estimate. Anything still saying 'typed estimate' is a block nobody has counted."
+  },
+  {
+   "fieldname": "actual_kg_per_tree",
+   "fieldtype": "Float",
+   "read_only": 1,
+   "label": "Last Season Actual (kg cherry / tree)",
+   "description": "From weighbridge tickets and bucket counts for this block."
+  },
+  {
+   "fieldname": "actual_kg_cherry",
+   "fieldtype": "Float",
+   "read_only": 1,
+   "label": "Last Season Actual (kg cherry)"
+  },
+  {
+   "fieldname": "actual_window",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "label": "Actuals Window"
+  },
+  {
+   "fieldname": "column_break_expected",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_kg_per_tree",
+   "fieldtype": "Float",
+   "label": "Expected kg / tree",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "section_fertilizer",
+   "fieldtype": "Section Break",
+   "label": "Fertilizer Caps"
+  },
+  {
+   "fieldname": "fertilizer_caps",
+   "fieldtype": "Table",
+   "label": "Fertilizer Cap per Tree",
+   "options": "Coffee Block Fertilizer Cap",
+   "description": "Cap on fertilizer per tree, by age category. No fertilizer-request doctype exists yet in this app to validate requested amounts against tree_count x this cap — add that check when one is introduced."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Block Profile",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:block",
+ "naming_rule": "By fieldname",
+ "title_field": "block",
+ "search_fields": "variety_protocol,status"
+}

@@ -1,0 +1,152 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 14:05:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "Weigh a counted handful of cherries. Turns berry counts into kilograms you can trust.",
+ "field_order": [
+  "block",
+  "sample_date",
+  "column_break_head",
+  "cherries_counted",
+  "total_weight_g",
+  "section_result",
+  "avg_cherry_weight_g",
+  "column_break_result",
+  "vs_default_pct",
+  "section_notes",
+  "notes",
+  "client_ref"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sample_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cherries_counted",
+   "fieldtype": "Int",
+   "label": "Cherries Counted",
+   "default": "100",
+   "reqd": 1,
+   "description": "Count out a round number, weigh them together. 100 is plenty."
+  },
+  {
+   "fieldname": "total_weight_g",
+   "fieldtype": "Float",
+   "label": "Total Weight (g)",
+   "reqd": 1,
+   "precision": "1"
+  },
+  {
+   "fieldname": "section_result",
+   "fieldtype": "Section Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "avg_cherry_weight_g",
+   "fieldtype": "Float",
+   "label": "Average Cherry Weight (g)",
+   "read_only": 1,
+   "precision": "3",
+   "in_list_view": 1,
+   "description": "Every berry-count estimate for this block now uses this instead of the estate default \u2014 the single biggest accuracy gain available, because cherry weight moves with the rain."
+  },
+  {
+   "fieldname": "column_break_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "vs_default_pct",
+   "fieldtype": "Percent",
+   "label": "vs Estate Default",
+   "read_only": 1,
+   "description": "How far this block sits from the assumed weight. A big gap means every past estimate for it was off by about that much."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "client_ref",
+   "fieldtype": "Data",
+   "label": "Client Ref",
+   "read_only": 1,
+   "no_copy": 1,
+   "search_index": 1,
+   "description": "Device-unique key from Kahawa Trail (deviceId:obs:rowId). Lets a retry after a timeout find the record it already created instead of entering the observation twice."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 14:05:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Cherry Weight Sample",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "sample_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "title_field": "block"
+}

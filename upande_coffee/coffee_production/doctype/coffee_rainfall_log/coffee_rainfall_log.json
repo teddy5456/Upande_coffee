@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 14:05:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "Rain drives flowering, and flowering drives the crop. This is the earliest signal available about a harvest seven months away.",
+ "field_order": [
+  "reading_date",
+  "block",
+  "column_break_head",
+  "rainfall_mm",
+  "source",
+  "section_effect",
+  "triggers_flowering",
+  "column_break_effect",
+  "expected_flowering_date",
+  "section_notes",
+  "notes",
+  "client_ref"
+ ],
+ "fields": [
+  {
+   "fieldname": "reading_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "in_list_view": 1,
+   "description": "Leave blank for an estate-wide gauge reading."
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rainfall_mm",
+   "fieldtype": "Float",
+   "label": "Rainfall (mm)",
+   "reqd": 1,
+   "precision": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Gauge\nWeather Station\nEstimate",
+   "default": "Gauge"
+  },
+  {
+   "fieldname": "section_effect",
+   "fieldtype": "Section Break",
+   "label": "Expected Effect"
+  },
+  {
+   "fieldname": "triggers_flowering",
+   "fieldtype": "Check",
+   "label": "Enough To Trigger Flowering",
+   "read_only": 1,
+   "description": "Set automatically. A meaningful flowering normally needs a decent shower after a dry spell, not drizzle."
+  },
+  {
+   "fieldname": "column_break_effect",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_flowering_date",
+   "fieldtype": "Date",
+   "label": "Flowering Expected Around",
+   "read_only": 1,
+   "description": "Coffee flowers roughly a week to ten days after the trigger rain. Watch the block then, and log the flowering when you see it."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "client_ref",
+   "fieldtype": "Data",
+   "label": "Client Ref",
+   "read_only": 1,
+   "no_copy": 1,
+   "search_index": 1,
+   "description": "Device-unique key from Kahawa Trail (deviceId:obs:rowId). Lets a retry after a timeout find the record it already created instead of entering the observation twice."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 14:05:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Rainfall Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "reading_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "title_field": "reading_date"
+}

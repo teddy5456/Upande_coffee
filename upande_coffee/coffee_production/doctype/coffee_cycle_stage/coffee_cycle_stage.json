@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 14:20:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "description": "One row per pruning-cycle band: what share of plateau yield to expect.",
+ "fields": [
+  {
+   "fieldname": "cycle_year",
+   "fieldtype": "Select",
+   "label": "Cycle Year",
+   "in_list_view": 1,
+   "options": "\nYOUNG\n0-1\n1-2\n2-3\n3-4\n4-5\n5-6",
+   "reqd": 1
+  },
+  {
+   "fieldname": "pct_of_plateau",
+   "fieldtype": "Percent",
+   "label": "% Of Plateau Yield",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "label": "Note",
+   "in_list_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 14:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Cycle Stage",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "field_order": [
+  "cycle_year",
+  "pct_of_plateau",
+  "note"
+ ]
+}

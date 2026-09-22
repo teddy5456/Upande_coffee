@@ -1,0 +1,229 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "Per-variety yield model. The coffee equivalent of a Crop Protocol: instead of a cut cycle, the curve runs over the tree's whole life.",
+ "field_order": [
+  "variety_name",
+  "item",
+  "column_break_head",
+  "disease_resistant",
+  "cup_potential",
+  "section_agronomy",
+  "trees_per_ha",
+  "column_break_agronomy",
+  "spacing_m",
+  "section_yield",
+  "plateau_kg_cherry_per_tree",
+  "measured_plateau_kg",
+  "plateau_sample_count",
+  "plateau_basis",
+  "history_plateau_kg",
+  "history_blocks",
+  "history_window",
+  "column_break_yield",
+  "biennial_swing_pct",
+  "section_stages",
+  "yield_stages",
+  "section_cycle",
+  "cycle_stages"
+ ],
+ "fields": [
+  {
+   "fieldname": "variety_name",
+   "fieldtype": "Data",
+   "label": "Variety",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "SL28, SL34, Ruiru 11, Batian, K7 \u2026"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Cherry Item",
+   "options": "Item",
+   "description": "Optional link to the stock item this variety's cherry is booked as."
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "disease_resistant",
+   "fieldtype": "Check",
+   "label": "CBD / CLR Resistant",
+   "description": "Ruiru 11 and Batian are resistant; SL28 and SL34 are not. Drives spray programme cost per block."
+  },
+  {
+   "fieldname": "cup_potential",
+   "fieldtype": "Select",
+   "label": "Cup Potential",
+   "options": "\nStandard\nGood\nExcellent",
+   "description": "SL28 is prized for cup quality; resistant varieties often trade some. Used to shortlist blocks worth separating as micro-lots."
+  },
+  {
+   "fieldname": "section_agronomy",
+   "fieldtype": "Section Break",
+   "label": "Planting"
+  },
+  {
+   "fieldname": "trees_per_ha",
+   "fieldtype": "Int",
+   "label": "Trees per Hectare",
+   "default": "1330",
+   "description": "1,330 is 2.74 x 2.74 m (9 x 9 ft), the Kenyan standard spacing - 10,000 / 7.51 m2. Exactly 2.7 x 2.7 m would be 1,372. Compact resistant varieties go much denser."
+  },
+  {
+   "fieldname": "column_break_agronomy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spacing_m",
+   "fieldtype": "Data",
+   "label": "Spacing",
+   "description": "e.g. 2.7 x 2.7 m"
+  },
+  {
+   "fieldname": "section_yield",
+   "fieldtype": "Section Break",
+   "label": "Yield Model"
+  },
+  {
+   "fieldname": "plateau_kg_cherry_per_tree",
+   "fieldtype": "Float",
+   "label": "Plateau Yield (typed fallback)",
+   "precision": "2",
+   "default": "4.0",
+   "description": "Used only until berry counts exist for this variety. A measured plateau always wins."
+  },
+  {
+   "fieldname": "measured_plateau_kg",
+   "fieldtype": "Float",
+   "label": "Measured Plateau (kg cherry / tree)",
+   "read_only": 1,
+   "precision": "2",
+   "description": "Derived from berry counts: each count is divided by that block's position on the cycle curve to back out what the variety yields at full bearing, then averaged. This is used in preference to the typed figure below."
+  },
+  {
+   "fieldname": "plateau_sample_count",
+   "fieldtype": "Int",
+   "label": "Berry Counts Used",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plateau_basis",
+   "fieldtype": "Data",
+   "label": "Plateau Basis",
+   "read_only": 1,
+   "description": "'measured' once berry counts exist, otherwise 'typed'."
+  },
+  {
+   "fieldname": "history_plateau_kg",
+   "fieldtype": "Float",
+   "read_only": 1,
+   "label": "Plateau from Actual Receipts (kg cherry / tree)",
+   "description": "Backed out of what was actually weighed in per block last season, divided by that block's place on the cycle curve. Outranks both the berry counts and the typed guess."
+  },
+  {
+   "fieldname": "history_blocks",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "label": "Blocks with History"
+  },
+  {
+   "fieldname": "history_window",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "label": "History Window"
+  },
+  {
+   "fieldname": "column_break_yield",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "biennial_swing_pct",
+   "fieldtype": "Percent",
+   "label": "Biennial Swing %",
+   "default": "0",
+   "description": "Coffee alternates heavy and light years. 20 means a heavy year runs 20% above the plateau and the following light year 20% below."
+  },
+  {
+   "fieldname": "section_stages",
+   "fieldtype": "Section Break",
+   "label": "Yield By Tree Age"
+  },
+  {
+   "fieldname": "yield_stages",
+   "fieldtype": "Table",
+   "label": "Yield Stages",
+   "options": "Coffee Yield Stage",
+   "description": "Leave empty to use a sensible default curve (nothing for 2 years, ramping to full bearing by year 5, declining after 20)."
+  },
+  {
+   "fieldname": "section_cycle",
+   "fieldtype": "Section Break",
+   "label": "Yield By Pruning Cycle Year"
+  },
+  {
+   "fieldname": "cycle_stages",
+   "fieldtype": "Table",
+   "label": "Cycle Stages",
+   "options": "Coffee Cycle Stage",
+   "description": "Share of plateau yield by years-since-stumping. Leave empty to use a standard cycle-pruning curve (nothing when young, peaking in cycle year 3-4, declining by 5-6 when the block is due for stumping)."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Variety Protocol",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:variety_name",
+ "naming_rule": "By fieldname",
+ "title_field": "variety_name"
+}

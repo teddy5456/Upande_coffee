@@ -1,0 +1,43 @@
+{
+ "actions": [],
+ "creation": "2026-09-21 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "description": "Fertilizer cap per tree for a block, by tree age category.",
+ "fields": [
+  {
+   "fieldname": "tree_age_category",
+   "fieldtype": "Select",
+   "label": "Tree Age Category",
+   "in_list_view": 1,
+   "options": "Young\nOld",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fertilizer_cap_per_tree",
+   "fieldtype": "Float",
+   "label": "Fertilizer Cap per Tree (kg)",
+   "in_list_view": 1,
+   "precision": "3",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Block Fertilizer Cap",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "field_order": [
+  "tree_age_category",
+  "fertilizer_cap_per_tree"
+ ]
+}

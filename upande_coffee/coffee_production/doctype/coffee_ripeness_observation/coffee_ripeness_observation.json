@@ -1,0 +1,198 @@
+{
+ "actions": [],
+ "creation": "2026-08-04 14:05:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "A block walk, written down. Tells you when to pick far better than any calendar rule.",
+ "field_order": [
+  "block",
+  "obs_date",
+  "column_break_head",
+  "trees_looked_at",
+  "observed_by",
+  "section_split",
+  "pct_unripe",
+  "column_break_split",
+  "pct_ripe",
+  "column_break_split_2",
+  "pct_overripe",
+  "column_break_split_3",
+  "pct_dropped",
+  "section_verdict",
+  "readiness",
+  "column_break_verdict",
+  "quality_risk",
+  "section_notes",
+  "notes",
+  "client_ref"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "obs_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "trees_looked_at",
+   "fieldtype": "Int",
+   "label": "Trees Looked At",
+   "default": "10"
+  },
+  {
+   "fieldname": "observed_by",
+   "fieldtype": "Link",
+   "label": "Observed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_split",
+   "fieldtype": "Section Break",
+   "label": "What Is On The Tree",
+   "description": "Rough percentages of the cherry you can see. They should add up to about 100."
+  },
+  {
+   "fieldname": "pct_unripe",
+   "fieldtype": "Percent",
+   "label": "Green / Unripe %"
+  },
+  {
+   "fieldname": "column_break_split",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pct_ripe",
+   "fieldtype": "Percent",
+   "label": "Ripe (Red) %",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_split_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pct_overripe",
+   "fieldtype": "Percent",
+   "label": "Overripe / Black %"
+  },
+  {
+   "fieldname": "column_break_split_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pct_dropped",
+   "fieldtype": "Percent",
+   "label": "On The Ground %",
+   "description": "Cherry already lost. Feeds the crop-loss picture."
+  },
+  {
+   "fieldname": "section_verdict",
+   "fieldtype": "Section Break",
+   "label": "Verdict"
+  },
+  {
+   "fieldname": "readiness",
+   "fieldtype": "Select",
+   "label": "Readiness",
+   "read_only": 1,
+   "in_list_view": 1,
+   "options": "\nNot Ready\nApproaching\nPick Now\nOverdue",
+   "description": "Computed from the split. This is what the Pick Now alarm should really run on \u2014 a date-based rule cannot see the tree."
+  },
+  {
+   "fieldname": "column_break_verdict",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "quality_risk",
+   "fieldtype": "Select",
+   "label": "Quality Risk",
+   "read_only": 1,
+   "options": "\nLow\nMedium\nHigh",
+   "description": "High once overripe and dropped cherry build up: that is what drags an outturn's cup score down."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "client_ref",
+   "fieldtype": "Data",
+   "label": "Client Ref",
+   "read_only": 1,
+   "no_copy": 1,
+   "search_index": 1,
+   "description": "Device-unique key from Kahawa Trail (deviceId:obs:rowId). Lets a retry after a timeout find the record it already created instead of entering the observation twice."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-04 14:05:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Ripeness Observation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "obs_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "title_field": "block"
+}
