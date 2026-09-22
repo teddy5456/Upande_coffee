@@ -1,0 +1,141 @@
+[
+ {
+  "doctype": "Quality Inspection Template",
+  "quality_inspection_template_name": "Coffee Cherry Intake",
+  "item_quality_inspection_parameter": [
+   {
+    "specification": "Moisture %",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 100
+   },
+   {
+    "specification": "Floaters %",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 100
+   },
+   {
+    "specification": "Foreign Matter %",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 100
+   }
+  ],
+  "name": "Coffee Cherry Intake"
+ },
+ {
+  "doctype": "Quality Inspection Template",
+  "quality_inspection_template_name": "Coffee Drying",
+  "item_quality_inspection_parameter": [
+   {
+    "specification": "Moisture %",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 12
+   }
+  ],
+  "name": "Coffee Drying"
+ },
+ {
+  "doctype": "Quality Inspection Template",
+  "quality_inspection_template_name": "Coffee Parchment (Pre-Mill)",
+  "item_quality_inspection_parameter": [
+   {
+    "specification": "Moisture %",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 12
+   },
+   {
+    "specification": "Foreign Matter %",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 100
+   }
+  ],
+  "name": "Coffee Parchment (Pre-Mill)"
+ },
+ {
+  "doctype": "Quality Inspection Template",
+  "quality_inspection_template_name": "Coffee Outturn",
+  "item_quality_inspection_parameter": [
+   {
+    "specification": "Moisture %",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 12
+   },
+   {
+    "specification": "Defect Count",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 10000
+   },
+   {
+    "specification": "Screen Size",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 10000
+   },
+   {
+    "specification": "Bean Colour",
+    "numeric": 0,
+    "min_value": 0,
+    "max_value": 0,
+    "value": "Bluish Green"
+   }
+  ],
+  "name": "Coffee Outturn"
+ },
+ {
+  "doctype": "Quality Inspection Template",
+  "quality_inspection_template_name": "Coffee Dispatch",
+  "item_quality_inspection_parameter": [
+   {
+    "specification": "Moisture %",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 12.5
+   },
+   {
+    "specification": "Water Activity",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 0.6
+   },
+   {
+    "specification": "Defect Count",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 10000
+   },
+   {
+    "specification": "Screen Size",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 10000
+   },
+   {
+    "specification": "Bag Weight kg",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 100
+   }
+  ],
+  "name": "Coffee Dispatch"
+ },
+ {
+  "doctype": "Quality Inspection Template",
+  "quality_inspection_template_name": "Coffee Cupping",
+  "item_quality_inspection_parameter": [
+   {
+    "specification": "Cup Score",
+    "numeric": 1,
+    "min_value": 0,
+    "max_value": 100
+   }
+  ],
+  "name": "Coffee Cupping"
+ }
+]

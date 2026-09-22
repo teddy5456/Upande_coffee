@@ -52,14 +52,16 @@
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Total Buckets",
-   "read_only": 1
+   "read_only": 1,
+   "allow_on_submit": 1
   },
   {
    "fieldname": "total_weight_kg",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Total Weight (kg)",
-   "read_only": 1
+   "read_only": 1,
+   "allow_on_submit": 1
   },
   {
    "default": "0",

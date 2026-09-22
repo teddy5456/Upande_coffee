@@ -241,6 +241,8 @@ body.sb-collapsed{--sbw:64px}
 .snav:hover{background:rgba(10,10,10,0.05);color:var(--ink)}
 .snav.on{background:var(--grad-ink);color:#fafaf6}
 .sb-collapsed .snav span{display:none}
+.sb-sec{padding:12px 10px 5px;font:500 8px var(--sans);letter-spacing:1.3px;text-transform:uppercase;color:var(--ink-mute)}
+.sb-collapsed .sb-sec{display:none}
 .sb-collapsed .sidebar{padding:18px 8px}
 .sidebar__foot{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--hairline);padding-top:10px}
 .sidebar__user{display:flex;align-items:center;gap:10px;padding:8px 12px;font:500 12px var(--sans);color:var(--ink-4);white-space:nowrap;overflow:hidden}
@@ -276,6 +278,14 @@ body.sb-collapsed{--sbw:64px}
 .cgrid__x:hover{color:var(--neg)}
 .addrow{border:1px dashed var(--ink-faint);background:transparent;border-radius:14px;padding:10px;font:500 12px var(--sans);color:var(--ink-mute);cursor:pointer;width:100%}
 .addrow:hover{color:var(--ink);border-color:var(--ink-3)}
+/* searchable dropdown */
+.combo{position:relative;display:block;width:100%}
+.combo__input::placeholder{color:var(--ink-faint);font-weight:500}
+.combo__panel{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:200;max-height:260px;overflow-y:auto;background:var(--surface-2);border-radius:12px;box-shadow:var(--shadow-hover);padding:6px;min-width:180px}
+.combo.open .combo__panel{display:block}
+.combo__opt{padding:9px 12px;border-radius:8px;font:500 13px var(--sans);color:var(--ink-3);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combo__opt:hover{background:rgba(10,10,10,0.06);color:var(--ink)}
+.combo__opt.active{background:var(--grad-ink);color:#fafaf6}
 </style></head><body>
 <aside class="sidebar" id="sidebar">
   <a class="sidebar__logo" href="/app" title="Back to Desk"><img alt="Upande" src="data:image/png;base64,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"/></a>
@@ -286,6 +296,11 @@ body.sb-collapsed{--sbw:64px}
     <button class="snav" data-view="dryingops"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span>Drying Ops</span></button>
     <button class="snav" data-view="milling"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.22 4.22l4.24 4.24m7.08 7.08l4.24 4.24M1 12h6m10 0h6M4.22 19.78l4.24-4.24m7.08-7.08l4.24-4.24"/></svg><span>Milling</span></button>
     <button class="snav" data-view="transfers"><svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span>Transfers</span></button>
+    <button class="snav" data-view="stock"><svg viewBox="0 0 24 24"><path d="M21 8V21H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/><line x1="10" y1="12" x2="14" y2="12"/></svg><span>Stock</span></button>
+    <div class="sb-sec">Production</div>
+    <a class="snav" href="/coffee-production"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>Forecast Grid</span></a>
+    <a class="snav" href="/app/crop-protocol"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="4"/></svg><span>Crop Protocols</span></a>
+    <a class="snav" href="/app/greenhouse"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-7h6v7"/></svg><span>Greenhouses</span></a>
   </nav>
   <div class="sidebar__foot">
     <a class="snav" href="/app"><svg viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg><span>Back to Desk</span></a>
@@ -312,11 +327,14 @@ body.sb-collapsed{--sbw:64px}
   </div>
   <div class="tabs" id="tabs">
     <button class="tab on" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="production">Production</button>
     <button class="tab" data-tab="harvested">Harvested</button>
     <button class="tab" data-tab="drying">Drying</button>
     <button class="tab" data-tab="milled">Milled</button>
     <button class="tab" data-tab="dispatch">Dispatch</button>
     <button class="tab" data-tab="invoiced">Invoiced</button>
+    <button class="tab" data-tab="planner">Daily Planner</button>
+    <button class="tab" data-tab="payments">Payments</button>
   </div>
 
   <!-- OVERVIEW -->
@@ -345,6 +363,49 @@ body.sb-collapsed{--sbw:64px}
     </div>
   </div>
 
+  <!-- PRODUCTION -->
+  <div class="panel" id="p-production">
+    <div id="pr-err"></div>
+    <div class="kpi-grid" id="pr-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+  </div>
+
+  <!-- DAILY PLANNER -->
+  <div class="panel" id="p-planner">
+    <div id="pl-err"></div>
+    <div class="kpi-grid" id="pl-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Set Weekly Forecast</h3><div class="meta">what a block expects to deliver — the same Coffee Forecast Override pickers set from Kahawa Trail</div></div>
+      <div class="formgrid">
+        <div class="field"><label>Block</label><select id="pl-block"></select></div>
+        <div class="field"><label>Week</label><select id="pl-week"></select></div>
+        <div class="field"><label>Expected (kg cherry)</label><input type="number" id="pl-kg" min="0" step="0.1"></div>
+      </div>
+      <button class="btn" id="pl-submit">Save Forecast</button>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Weekly Forecast vs Actual</h3><div class="meta">expected cherry vs weighbridge, by block</div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr id="pl-fchead"><th>Block</th></tr></thead><tbody id="pl-fcbody"></tbody></table></div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Pick Now</h3><div class="meta">blocks overdue a picking round</div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Block</th><th>Last Picked</th><th class="num">Days Since</th><th class="num">At-Risk (KES)</th></tr></thead><tbody id="pl-alerts"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div class="panel" id="p-payments">
+    <div id="pay-err"></div>
+    <div class="kpi-grid" id="pay-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Paid by Harvester</h3><div class="meta">this range</div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Harvester</th><th class="num">Payments</th><th class="num">Total (KES)</th><th>Last Paid</th></tr></thead><tbody id="pay-byharvester"></tbody></table></div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Payments</h3><div class="meta" id="pay-cnt"></div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Harvester</th><th class="num">Buckets</th><th class="num">Rate</th><th class="num">Total (KES)</th><th>Status</th></tr></thead><tbody id="pay-body"></tbody></table></div>
+    </div>
+  </div>
+
   <!-- HARVESTED -->
   <div class="panel" id="p-harvested">
     <div id="h-err"></div>
@@ -361,7 +422,7 @@ body.sb-collapsed{--sbw:64px}
     </div>
     <div class="card card--padded">
       <div class="card__head"><h3>Recent Pickups</h3><div class="meta">weighbridge · workflow</div></div>
-      <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Pickup</th><th class="num">Buckets</th><th class="num">Weight (kg)</th><th>State</th></tr></thead><tbody id="h-pickups"></tbody></table></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Pickup</th><th class="num">Buckets</th><th class="num">Weight (kg)</th><th class="num">Avg kg/Bucket</th><th>State</th></tr></thead><tbody id="h-pickups"></tbody></table></div>
     </div>
     <div class="row-2-eq">
       <div class="card card--padded">
@@ -386,6 +447,15 @@ body.sb-collapsed{--sbw:64px}
     <div class="card card--padded">
       <div class="card__head"><h3>Drying Tables</h3><div class="meta" id="d-tabmeta"></div></div>
       <div class="tilegrid" id="d-tables"></div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Record Moisture</h3><div class="meta">logs a Quality Inspection</div></div>
+      <div class="formgrid">
+        <div class="field"><label>Drying Table</label><select id="dm-table"></select></div>
+        <div class="field"><label>Batch</label><select id="dm-batch"></select></div>
+        <div class="field"><label>Moisture %</label><input type="number" id="dm-moist" min="0" max="100" step="0.1"></div>
+      </div>
+      <button class="btn" id="dm-go">Record Reading</button>
     </div>
     <div class="row-2-eq">
       <div class="card card--padded">
@@ -579,6 +649,34 @@ body.sb-collapsed{--sbw:64px}
     <div class="card card--padded">
       <div class="card__head"><h3>Recent Movements</h3></div>
       <div class="tblwrap"><table class="tbl"><thead><tr><th>Entry</th><th>Type</th><th>Date</th></tr></thead><tbody id="tr-recent"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="v-stock">
+  <div class="pagehead"><div><div class="pagehead__eyebrow">Kaitet · Endebess · Stores</div>
+  <h1 class="pagehead__title">Stock</h1><p class="pagehead__sub">Parchment on hand by type and store · clean coffee by grade</p></div>
+  <div class="pagehead__tools"><button class="iconbtn" id="st-refresh" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div></div>
+  <div id="st-err"></div>
+  <div class="kpi-grid" id="st-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+  <div class="row-2-eq">
+    <div class="card card--padded">
+      <div class="card__head"><h3>Parchment by Type</h3><div class="meta">kg on hand</div></div>
+      <div id="st-ptype"></div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Parchment by Store</h3><div class="meta">kg per warehouse</div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Warehouse</th><th class="num">kg</th></tr></thead><tbody id="st-pwh"></tbody></table></div>
+    </div>
+  </div>
+  <div class="row-2-eq">
+    <div class="card card--padded">
+      <div class="card__head"><h3>Clean Coffee by Grade</h3><div class="meta">kg milled &amp; graded</div></div>
+      <div id="st-grade"></div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Clean Coffee by Store</h3><div class="meta">kg per warehouse</div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Warehouse</th><th class="num">kg</th></tr></thead><tbody id="st-cwh"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -791,9 +889,12 @@ function loadHarvested() {
   $("h-err").innerHTML = "";
   api("get_harvest", ranges()).then(function (d) {
     var k = d.kpis;
+    var avgKgBucket = k.total_buckets ? k.total_weight_kg / k.total_buckets : 0;
     $("h-kpis").innerHTML =
       kpiCard("Buckets", n(k.total_buckets), k.harvesters + " harvesters active", null) +
       kpiCard("Weight Received", n(k.total_weight_kg), "kg · " + k.pickup_count + " pickups", null) +
+      kpiCard("Avg kg/Bucket", n(avgKgBucket, 1), "across " + k.pickup_count + " pickups", null) +
+      kpiCard("Active Harvesters", n(k.harvesters), k.active_blocks + " active blocks", null) +
       kpiCard("Labour", n(k.total_payments), "KES paid", "avg " + n(k.avg_rate) + "/bucket", "flat") +
       kpiCard("Harvest Days", n(k.harvest_days), k.active_blocks + " active blocks", null);
     barChart($("h-blocks"), (d.by_block || []).map(function (r) { return (r.block || "—").split(" - ")[0]; }),
@@ -802,9 +903,10 @@ function loadHarvested() {
       return { name: r.harvester_id || "Unknown", meta: "harvester", qty: n(r.buckets), sub: "buckets" };
     }));
     $("h-pickups").innerHTML = (d.pickups || []).map(function (r) {
+      var avg = r.total_buckets ? r.total_weight_kg / r.total_buckets : 0;
       return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.name) + '</td><td class="num">' + n(r.total_buckets) +
-        '</td><td class="num">' + n(r.total_weight_kg) + "</td><td>" + stChip(r.workflow_state) + "</td></tr>";
-    }).join("") || '<tr><td colspan="5"><div class="emptybox">No pickups.</div></td></tr>';
+        '</td><td class="num">' + n(r.total_weight_kg) + '</td><td class="num">' + n(avg, 1) + "</td><td>" + stChip(r.workflow_state) + "</td></tr>";
+    }).join("") || '<tr><td colspan="6"><div class="emptybox">No pickups.</div></td></tr>';
     $("h-logcnt").textContent = (d.logs || []).length + " records";
     $("h-log").innerHTML = (d.logs || []).map(function (r) {
       return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.harvester_id) + "</td><td>" + esc((r.block || "").split(" - ")[0]) +
@@ -930,9 +1032,103 @@ function loadInvoiced() {
   }).catch(function (e) { $("i-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
 }
 
+function loadPlanner() {
+  $("pl-err").innerHTML = "";
+  api("get_daily_planner", {}).then(function (d) {
+    if (d.available === false) {
+      $("pl-kpis").innerHTML = '<div class="emptybox">Coffee Production module not set up on this site.</div>';
+      $("pl-fchead").innerHTML = "<th>Block</th>"; $("pl-fcbody").innerHTML = ""; $("pl-alerts").innerHTML = "";
+      return;
+    }
+    var k = d.kpis, weeks = d.weeks || [], blocks = d.blocks || [], nowIdx = d.this_week_index;
+    $("pl-kpis").innerHTML =
+      kpiCard("This Week Forecast", n(k.this_week_expected_kg), "kg cherry expected") +
+      kpiCard("This Week Actual", n(k.this_week_actual_kg), "kg cherry received") +
+      kpiCard("Variance", k.variance_pct == null ? "—" : (k.variance_pct >= 0 ? "+" : "") + n(k.variance_pct, 1) + "%",
+        "vs this week's forecast", k.variance_pct == null ? null : (k.variance_pct >= 0 ? "ahead" : "behind"),
+        k.variance_pct == null ? "flat" : (k.variance_pct >= 0 ? "up" : "down")) +
+      kpiCard("Ripe & Unpicked", n(k.overdue_blocks), "blocks overdue", k.overdue_blocks ? "cherry at risk" : "all clear",
+        k.overdue_blocks ? "down" : "up");
+
+    opt($("pl-block"), blocks.map(function (b) { return b.block; }));
+    opt($("pl-week"), weeks.map(function (w) { return { start: w.start, span: w.span }; }), "start", "span");
+    if (nowIdx != null && weeks[nowIdx]) $("pl-week").value = weeks[nowIdx].start;
+
+    $("pl-fchead").innerHTML = "<th>Block</th>" + weeks.map(function (w, i) {
+      return '<th class="num"' + (i === nowIdx ? ' style="background:rgba(10,10,10,0.04)"' : "") + '>' + esc(w.start_label) + "</th>";
+    }).join("");
+    $("pl-fcbody").innerHTML = blocks.map(function (b) {
+      return "<tr><td>" + esc((b.block || "").split(" - ")[0]) + "</td>" + weeks.map(function (w, i) {
+        var exp = (b.expected || [])[i], act = (b.actual || [])[i];
+        return '<td class="num">' + (exp == null ? "—" : n(exp)) + (act != null ? " <small>(" + n(act) + ")</small>" : "") + "</td>";
+      }).join("") + "</tr>";
+    }).join("") || '<tr><td colspan="' + (weeks.length + 1) + '"><div class="emptybox">No block forecasts yet.</div></td></tr>';
+
+    $("pl-alerts").innerHTML = (d.alerts || []).map(function (r) {
+      return "<tr><td>" + esc((r.block || "").split(" - ")[0]) + "</td><td>" + fd(r.last_picked) +
+        '</td><td class="num">' + n(r.days_since) + '</td><td class="num">' + n(r.at_risk_value) + "</td></tr>";
+    }).join("") || '<tr><td colspan="4"><div class="emptybox">No overdue blocks.</div></td></tr>';
+  }).catch(function (e) { $("pl-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+$("pl-submit") && $("pl-submit").addEventListener("click", function () {
+  var block = $("pl-block").value, week = $("pl-week").value, kg = $("pl-kg").value;
+  if (!block || !week || !kg) { toast("Pick a block, week and kg"); return; }
+  post("pickupapi.submit_weekly_forecast", { block: block, week_start: week, kg_cherry: kg }).then(function () {
+    toast("Forecast saved for " + block);
+    $("pl-kg").value = "";
+    loadPlanner();
+  }).catch(function (e) { toast(e.message); });
+});
+
+function loadPayments() {
+  $("pay-err").innerHTML = "";
+  api("get_payments", ranges()).then(function (d) {
+    var k = d.kpis;
+    $("pay-kpis").innerHTML =
+      kpiCard("Paid Out", n(k.total_paid), "KES · " + k.payment_count + " payments", null) +
+      kpiCard("Harvesters Paid", n(k.harvesters_paid), "in this range", null) +
+      kpiCard("Avg Rate", n(k.avg_rate), "KES / bucket", null) +
+      kpiCard("Pending", n(k.pending_count), "payments not yet submitted",
+        k.pending_count ? "needs submit" : null, k.pending_count ? "down" : "flat");
+    var rows = (d.by_harvester || []);
+    $("pay-byharvester").innerHTML = rows.map(function (r) {
+      return "<tr><td>" + esc(r.harvester_id) + '</td><td class="num">' + n(r.payments) +
+        '</td><td class="num">' + n(r.total_paid) + "</td><td>" + fd(r.last_date) + "</td></tr>";
+    }).join("") || '<tr><td colspan="4"><div class="emptybox">No paid harvesters in this range.</div></td></tr>';
+    $("pay-cnt").textContent = (d.payments || []).length + " records";
+    $("pay-body").innerHTML = (d.payments || []).map(function (r) {
+      return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.harvester_id) + '</td><td class="num">' + n(r.total_buckets) +
+        '</td><td class="num">' + n(r.rate) + '</td><td class="num">' + n(r.total_payment) + "</td><td>" +
+        chip(r.paid ? "" : "warn", r.paid ? "Paid" : (r.docstatus === 0 ? "Draft" : "Cancelled")) + "</td></tr>";
+    }).join("") || '<tr><td colspan="6"><div class="emptybox">No payments in this range.</div></td></tr>';
+  }).catch(function (e) { $("pay-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
+function loadProduction() {
+  $("pr-err").innerHTML = "";
+  var args = {};
+  if ($("f-from").value) args.from_date = $("f-from").value;
+  if ($("f-to").value) args.to_date = $("f-to").value;
+  api("productionapi.overview", args).then(function (d) {
+    var h = d.headline;
+    var vsTarget = h.target_kg ? Math.round((h.forecast_kg - h.target_kg) / h.target_kg * 100) : null;
+    $("pr-kpis").innerHTML =
+      kpiCard("Season Target", n(h.target_kg), "kg cherry · management set", null) +
+      kpiCard("Season Forecast", n(h.forecast_kg), "kg cherry · " + h.blocks_forecast + " blocks",
+        vsTarget == null ? null : (vsTarget >= 0 ? "+" : "") + vsTarget + "% <small>vs target</small>",
+        vsTarget == null ? "flat" : (vsTarget >= 0 ? "up" : "down")) +
+      kpiCard("Actual So Far", n(h.actual_kg), "kg cherry received this season", null) +
+      kpiCard("Ripe & Unpicked", n(h.overdue_blocks), h.overdue_blocks === 1 ? "block overdue" : "blocks overdue",
+        h.at_risk_value ? "KES " + n(h.at_risk_value) + " at risk" : null, h.overdue_blocks ? "down" : "up") +
+      kpiCard("Lost to Gaps", n(h.gap_loss_kg), "kg cherry every season",
+        h.gap_loss_value ? "KES " + n(h.gap_loss_value) + " lost" : null, "flat");
+  }).catch(function (e) { $("pr-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
 /* ── routing ─────────────────────────────────────────────────────────────── */
-var LOADERS = { overview: loadOverview, harvested: loadHarvested, drying: loadDrying,
-  milled: loadMilled, dispatch: loadDispatch, invoiced: loadInvoiced };
+var LOADERS = { overview: loadOverview, production: loadProduction, harvested: loadHarvested, drying: loadDrying,
+  milled: loadMilled, dispatch: loadDispatch, invoiced: loadInvoiced, planner: loadPlanner,
+  payments: loadPayments };
 var loaded = {}, active = "overview";
 
 function switchTab(tab) {
@@ -990,6 +1186,7 @@ function toast(msg) {
   setTimeout(function () { t.classList.remove("show"); }, 3200);
 }
 function opt(sel, items, val, lbl) {
+  var prev = sel.value;  // preserve current selection across reloads (non-destructive)
   sel.innerHTML = sel.dataset.blank != null ? '<option value=""></option>' : "";
   items.forEach(function (i) {
     var o = document.createElement("option");
@@ -997,7 +1194,111 @@ function opt(sel, items, val, lbl) {
     o.textContent = typeof i === "string" ? i : (i[lbl] || i[val]);
     sel.appendChild(o);
   });
+  if (prev && Array.prototype.some.call(sel.options, function (o) { return o.value === prev; })) {
+    sel.value = prev;
+  }
 }
+
+/* ── searchable dropdowns (custom combobox, non-destructive) ──────────────
+   Every <select> gets a visible text input + a filtering panel. The <select>
+   is kept (hidden) so all `.value` reads and change handlers keep working;
+   the input reads options LIVE from the select on each keystroke, so it always
+   shows current data. Focusing a field also refreshes the active view's data
+   (debounced), so dropdowns reflect the latest without a page refresh.
+   Defensive: the input carries explicit inline styles, so it can never render
+   invisible regardless of the container. */
+var _ACTIVE_VIEW = "";
+var _refreshTimer = null;
+function refreshActiveView() {
+  var fn = VIEW_LOADERS[_ACTIVE_VIEW];
+  if (!fn) return;
+  clearTimeout(_refreshTimer);
+  _refreshTimer = setTimeout(function () { try { fn(); } catch (e) {} }, 10);
+}
+function makeSearchable(sel) {
+  if (!sel || sel.dataset.combo) return;
+  sel.dataset.combo = "1";
+  var inGrid = !!sel.closest(".cgrid__cell");
+  var wrap = document.createElement("span");
+  wrap.className = "combo";
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(sel);
+  sel.style.display = "none";
+  var inp = document.createElement("input");
+  inp.type = "text";
+  inp.setAttribute("autocomplete", "off");
+  inp.setAttribute("placeholder", "Type to search…");
+  inp.className = "combo__input";
+  // explicit base styles so the field is ALWAYS visible
+  inp.style.cssText = inGrid
+    ? "width:100%;border:0;background:transparent;font:600 13px var(--sans);color:var(--ink);outline:none;cursor:text"
+    : "width:100%;box-sizing:border-box;border:1px solid var(--hairline);background:var(--surface);border-radius:12px;padding:11px 14px;font:500 13px var(--sans);color:var(--ink);outline:none;cursor:text";
+  wrap.appendChild(inp);
+  var panel = document.createElement("div");
+  panel.className = "combo__panel";
+  wrap.appendChild(panel);
+
+  function selText() {
+    var o = sel.options[sel.selectedIndex];
+    return o ? o.textContent.trim() : "";
+  }
+  function render(filter) {
+    filter = (filter || "").toLowerCase();
+    panel.innerHTML = "";
+    var shown = 0;
+    Array.prototype.forEach.call(sel.options, function (o) {
+      var txt = o.textContent.trim();
+      if (!txt && o.value === "") return;
+      if (filter && txt.toLowerCase().indexOf(filter) === -1) return;
+      var d = document.createElement("div");
+      d.className = "combo__opt" + (o.value === sel.value ? " active" : "");
+      d.textContent = txt || "—";
+      d.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        sel.value = o.value;
+        inp.value = txt;
+        wrap.classList.remove("open");
+        sel.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      panel.appendChild(d);
+      shown++;
+    });
+    if (!shown) panel.innerHTML = '<div class="combo__opt" style="color:var(--ink-faint);cursor:default">No match</div>';
+    wrap.classList.add("open");
+    wrap._render = render; // let the observer re-render an open panel with fresh options
+  }
+  inp.addEventListener("focus", function () {
+    refreshActiveView();       // pull latest data the moment they engage
+    inp.value = "";
+    render("");
+  });
+  inp.addEventListener("input", function () { render(inp.value); });
+  inp.addEventListener("blur", function () {
+    setTimeout(function () { wrap.classList.remove("open"); wrap._render = null; inp.value = selText(); }, 160);
+  });
+  sel._comboSync = function () { if (document.activeElement !== inp) inp.value = selText(); };
+  sel._comboSync();
+}
+function upgradeSelects() {
+  document.querySelectorAll("select").forEach(function (s) {
+    if (!s.dataset.combo) makeSearchable(s);
+    else if (s._comboSync) s._comboSync();
+  });
+  // if a panel is open while its options just refreshed, re-render it live
+  var open = document.querySelector(".combo.open");
+  if (open && open._render) {
+    var i = open.querySelector(".combo__input");
+    open._render(i ? i.value : "");
+  }
+}
+(function () {
+  var t;
+  new MutationObserver(function () {
+    clearTimeout(t);
+    t = setTimeout(upgradeSelects, 60);
+  }).observe(document.body, { childList: true, subtree: true });
+  upgradeSelects();
+})();
 
 /* ── sidebar: collapse, resize, persist ──────────────────────────────────── */
 (function () {
@@ -1026,13 +1327,15 @@ function opt(sel, items, val, lbl) {
 
 /* ── view router ─────────────────────────────────────────────────────────── */
 var VIEW_LOADERS = { bookings: loadBookings, weighbridge: loadWeighbridge,
-                     dryingops: loadDryingOps, transfers: loadTransfers, milling: loadMilling };
+                     dryingops: loadDryingOps, transfers: loadTransfers, milling: loadMilling,
+                     stock: loadStock };
 var viewLoaded = {};
 document.querySelectorAll(".snav[data-view]").forEach(function (b) {
   b.addEventListener("click", function () {
     document.querySelectorAll(".snav[data-view]").forEach(function (x) { x.classList.toggle("on", x === b); });
     document.querySelectorAll(".view").forEach(function (v) { v.classList.toggle("on", v.id === "v-" + b.dataset.view); });
     // operational views always reload — stock and queues change under you
+    _ACTIVE_VIEW = b.dataset.view;
     var fn = VIEW_LOADERS[b.dataset.view];
     if (fn) fn();
   });
@@ -1046,7 +1349,7 @@ function loadBookings() {
     opt($("bk-type"), d.parchment_types);
     $("bk-bin").dataset.blank = "";
     opt($("bk-bin"), d.bins, "name", "name");
-    $("bk-date").value = d.today;
+    if (!$("bk-date").value) $("bk-date").value = d.today;
   });
   refreshBookings();
 }
@@ -1123,9 +1426,28 @@ function loadWeighbridge() {
     });
     $("wb-list").querySelectorAll("[data-action]").forEach(function (b) {
       b.addEventListener("click", function () {
-        post("pickupapi.workflow_action", { name: b.dataset.name, action: b.dataset.action })
-          .then(function (r) { toast(r.name + " → " + r.workflow_state); loadWeighbridge(); })
-          .catch(function (e) { toast(e.message); });
+        var card = b.closest("[data-pickup]"), weights = {};
+        card.querySelectorAll("input[data-row]").forEach(function (i) { weights[i.dataset.row] = i.value || 0; });
+        b.disabled = true;
+        post("pickupapi.workflow_action", {
+          name: b.dataset.name, action: b.dataset.action, weights: JSON.stringify(weights),
+        })
+          .then(function (r) {
+            var m = r.name + " → " + r.workflow_state + (r.stock_entry ? " · stock " + r.stock_entry : "");
+            toast(m);
+            loadWeighbridge();
+          })
+          .catch(function (e) {
+            b.disabled = false;
+            var box = card.querySelector(".wb-err");
+            if (!box) {
+              box = document.createElement("div");
+              box.className = "wb-err errbox";
+              box.style.marginTop = "10px";
+              card.appendChild(box);
+            }
+            box.textContent = e.message;
+          });
       });
     });
   }).catch(function (e) { $("wb-list").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
@@ -1140,11 +1462,33 @@ function loadDryingOps() {
     DR_BINS = d.bins || [];
     var sources = d.wet_mill ? [{ name: d.wet_mill }].concat(d.bins) : d.bins;
     opt($("dr-from"), sources, "name", "name");
-    if (d.wet_mill) $("dr-from").value = d.wet_mill;
+    if (d.wet_mill && !$("dr-from").value) $("dr-from").value = d.wet_mill;
     if (!$("dr-cgrid").querySelector("[data-outrow]")) _drAddRow();
     refreshDryingStock();
   });
+  api("dryingapi.drying_tables").then(function (rows) {
+    DM_TABLES = rows || [];
+    opt($("dm-table"), rows, "name", "name");
+    opt($("dm-batch"), rows.filter(function (r) { return r.current_batch; })
+        .map(function (r) { return r.current_batch; }));
+    _dmSyncBatch();
+  });
 }
+var DM_TABLES = [];
+function _dmSyncBatch() {
+  var t = (DM_TABLES || []).filter(function (r) { return r.name === $("dm-table").value; })[0];
+  if (t && t.current_batch) $("dm-batch").value = t.current_batch;
+}
+$("dm-table") && $("dm-table").addEventListener("change", _dmSyncBatch);
+$("dm-go") && $("dm-go").addEventListener("click", function () {
+  post("dryingapi.record_moisture", {
+    batch: $("dm-batch").value, drying_table: $("dm-table").value, moisture: $("dm-moist").value,
+  }).then(function (r) {
+    toast("Moisture " + n(r.moisture, 1) + "% logged — " + r.name + " (" + r.status + ")");
+    $("dm-moist").value = "";
+    loadDryingOps();
+  }).catch(function (e) { toast(e.message); });
+});
 function _drAddRow() {
   var row = document.createElement("div");
   row.className = "cgrid__row";
@@ -1272,6 +1616,39 @@ $("ml-go").addEventListener("click", function () {
 });
 
 /* ── Transfers ───────────────────────────────────────────────────────────── */
+/* ── Stock ───────────────────────────────────────────────────────────────── */
+function _stBars(el, rows, key) {
+  rows = rows || [];
+  if (!rows.length) { el.innerHTML = '<div class="emptybox">Nothing on hand.</div>'; return; }
+  var mx = rows.reduce(function (m, r) { return Math.max(m, r.kg); }, 0) || 1;
+  el.innerHTML = rows.map(function (r, i) {
+    var p = Math.max(3, Math.round(r.kg / mx * 100));
+    return '<div class="hb"><div class="hb__name">' + esc(r[key]) + '</div><div class="hb__lane">' +
+      '<div class="hb__est" style="width:100%"></div><div class="hb__act high" style="width:' + p + '%"></div></div>' +
+      '<div class="hb__pct">' + n(r.kg, 1) + '</div></div>';
+  }).join("");
+}
+function loadStock() {
+  $("st-err").innerHTML = "";
+  api("dashboardapi.get_stock").then(function (d) {
+    var p = d.parchment || {}, c = d.clean || {};
+    $("st-kpis").innerHTML =
+      kpiCard("Parchment on Hand", n(p.total_kg), "kg · " + (p.by_type || []).length + " types", null) +
+      kpiCard("Clean Coffee", n(c.total_kg), "kg · " + (c.by_grade || []).length + " grades", null) +
+      kpiCard("Parchment Stores", n((p.by_warehouse || []).length), "bins/warehouses holding parchment", null) +
+      kpiCard("Clean Stores", n((c.by_warehouse || []).length), "warehouses holding clean coffee", null);
+    _stBars($("st-ptype"), p.by_type, "type");
+    _stBars($("st-grade"), c.by_grade, "grade");
+    $("st-pwh").innerHTML = (p.by_warehouse || []).map(function (r) {
+      return "<tr><td>" + esc(r.warehouse) + '</td><td class="num">' + n(r.kg, 1) + "</td></tr>";
+    }).join("") || '<tr><td colspan="2"><div class="emptybox">No parchment in stores.</div></td></tr>';
+    $("st-cwh").innerHTML = (c.by_warehouse || []).map(function (r) {
+      return "<tr><td>" + esc(r.warehouse) + '</td><td class="num">' + n(r.kg, 1) + "</td></tr>";
+    }).join("") || '<tr><td colspan="2"><div class="emptybox">No clean coffee yet.</div></td></tr>';
+  }).catch(function (e) { $("st-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+$("st-refresh") && $("st-refresh").addEventListener("click", loadStock);
+
 function loadTransfers() {
   api("dryingapi.get_defaults").then(function (d) {
     opt($("tr-from"), d.bins, "name", "name");

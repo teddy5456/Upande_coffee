@@ -1,0 +1,56 @@
+[
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Moisture %",
+  "description": "Moisture content, percent",
+  "name": "Moisture %"
+ },
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Floaters %",
+  "description": "Floating/light cherry, percent",
+  "name": "Floaters %"
+ },
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Foreign Matter %",
+  "description": "Sticks, stones, debris, percent",
+  "name": "Foreign Matter %"
+ },
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Defect Count",
+  "description": "Defects per sample",
+  "name": "Defect Count"
+ },
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Screen Size",
+  "description": "Bean screen size",
+  "name": "Screen Size"
+ },
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Water Activity",
+  "description": "Free water available for mould growth (aw). Complements moisture on shipment checks.",
+  "name": "Water Activity"
+ },
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Bag Weight kg",
+  "description": "Weight of a filled bag, for dispatch verification against the declared standard.",
+  "name": "Bag Weight kg"
+ },
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Cup Score",
+  "description": "Overall liquor score out of 100.",
+  "name": "Cup Score"
+ },
+ {
+  "doctype": "Quality Inspection Parameter",
+  "parameter": "Bean Colour",
+  "description": "Visual colour grade of the green bean.",
+  "name": "Bean Colour"
+ }
+]

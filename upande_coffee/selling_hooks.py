@@ -4,9 +4,11 @@
 # Shared Delivery Note / Sales Invoice coffee logic, gated on the Business
 # Unit name containing "endebess". Other business units are never touched.
 
+from datetime import timedelta
+
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import flt, getdate, nowdate
 
 
 def is_coffee_document(doc):
@@ -133,17 +135,39 @@ def _item_stock_uom(item_code, default="Nos"):
 	return frappe.db.get_value("Item", item_code, "stock_uom") or default
 
 
+def _harvest_week(on_date):
+	"""Week number since the start of harvest. Week 1 is the week containing
+	the active Coffee Season's Week One Start (falling back to its Start
+	Date); weeks roll over on Mondays, so "this week" means the same thing
+	on the form as it does on the estate.
+
+	No active Coffee Season configured — fall back to the ISO week so a save
+	is never blocked; set up the season to get true harvest weeks."""
+	season = frappe.db.get_value(
+		"Coffee Season",
+		{"is_active": 1},
+		["week_one_start", "start_date"],
+		as_dict=True,
+	)
+	origin = season and (season.week_one_start or season.start_date)
+	on_date = getdate(on_date)
+	if not origin:
+		return on_date.isocalendar()[1]
+	origin = getdate(origin)
+	origin -= timedelta(days=origin.weekday())  # Monday of the harvest's first week
+	return max(1, (on_date - origin).days // 7 + 1)
+
+
 def _assign_outturn_number(doc):
-	"""Stamp a unique {WW}EM{#####} outturn number onto a Coffee SO on first
-	save. WW is the ISO week (zero-padded to 2 digits), ##### resets to
-	00001 at the start of each week and increments across ALL Coffee SOs
-	filed that week. Example: 29EM00001, 29EM00002 … 30EM00001.
+	"""Stamp a unique {WW}EM{####} outturn number onto a Coffee SO on first
+	save. WW is the harvest week (see _harvest_week), #### resets to 0001 at
+	the start of each week and increments across ALL Coffee SOs filed that
+	week. Example: 01EM0001, 01EM0002 … 02EM0001.
 
 	Idempotent — no-op if the field already has a value."""
 	if doc.get("custom_outturn_number"):
 		return
-	from datetime import datetime
-	week = datetime.now().isocalendar()[1]
+	week = _harvest_week(doc.get("transaction_date") or nowdate())
 	prefix = f"{week:02d}EM"
 
 	# Find the highest existing number in this week's series. LIKE on the
@@ -166,7 +190,7 @@ def _assign_outturn_number(doc):
 			next_num = int(last[0][0][len(prefix):]) + 1
 		except (ValueError, IndexError):
 			pass
-	doc.custom_outturn_number = f"{prefix}{next_num:05d}"
+	doc.custom_outturn_number = f"{prefix}{next_num:04d}"
 
 
 def sync_endebess_service_items(doc, method=None):

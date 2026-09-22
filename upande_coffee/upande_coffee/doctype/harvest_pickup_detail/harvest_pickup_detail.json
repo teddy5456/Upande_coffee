@@ -34,7 +34,8 @@
    "fieldname": "bucket_count",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Buckets to Collect"
+   "label": "Buckets to Collect",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "column_break_1",
@@ -44,7 +45,8 @@
    "fieldname": "weight_kg",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Weight (kg)"
+   "label": "Weight (kg)",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "picked_log_ids",

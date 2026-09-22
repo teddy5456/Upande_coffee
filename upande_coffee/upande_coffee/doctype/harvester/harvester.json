@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "autoincrement",
+ "autoname": "field:harvester_id",
  "creation": "2026-03-12 08:00:00.000000",
  "custom": 0,
  "doctype": "DocType",
@@ -32,7 +32,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "employee.one_fm_iqama_number",
+   "fetch_from": "employee.national_id",
    "fieldname": "national_id",
    "fieldtype": "Data",
    "label": "National ID",
@@ -66,7 +66,7 @@
  "modified_by": "Administrator",
  "module": "Upande Coffee",
  "name": "Harvester",
- "naming_rule": "Autoincrement",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

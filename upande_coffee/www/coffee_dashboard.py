@@ -7,3 +7,6 @@ def get_context(context):
 		raise frappe.Redirect
 	context.no_cache = 1
 	context.csrf_token = frappe.sessions.get_csrf_token()
+	# never let the browser serve a stale page — a normal reload always gets latest
+	if getattr(frappe.local, "response_headers", None) is not None:
+		frappe.local.response_headers["Cache-Control"] = "no-store, must-revalidate"

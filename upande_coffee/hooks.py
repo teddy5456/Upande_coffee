@@ -15,7 +15,7 @@ fixtures = [
 	},
 	{
 		"doctype": "Workflow State",
-		"filters": [["name", "in", ["Pending Weigh Approval", "Weighed", "Received"]]],
+		"filters": [["name", "in", ["Draft", "Pending Weigh Approval", "Weighed", "Received"]]],
 	},
 	{
 		"doctype": "Workflow Action Master",
@@ -24,6 +24,17 @@ fixtures = [
 	{
 		"doctype": "Workflow",
 		"filters": [["name", "in", ["Harvest Pickup Flow"]]],
+	},
+	# Quality: native Quality Inspection replaces custom quality doctypes.
+	{
+		"doctype": "Quality Inspection Parameter",
+		"filters": [["name", "in", ["Moisture %", "Floaters %", "Foreign Matter %", "Defect Count",
+			"Screen Size", "Water Activity", "Bag Weight kg", "Cup Score", "Bean Colour"]]],
+	},
+	{
+		"doctype": "Quality Inspection Template",
+		"filters": [["name", "in", ["Coffee Cherry Intake", "Coffee Drying", "Coffee Outturn",
+			"Coffee Parchment (Pre-Mill)", "Coffee Dispatch", "Coffee Cupping"]]],
 	},
 ]
 
@@ -36,7 +47,10 @@ after_install = "upande_coffee.setup.after_install"
 # code reads from there — nothing is hardcoded. Optional one-shot installers
 # still exist (upande_coffee.endebess_setup.run, endebess_variants.run) for
 # sites that want a scripted seed.
-after_migrate = "upande_coffee.custom_fields.create_coffee_custom_fields"
+after_migrate = [
+	"upande_coffee.custom_fields.create_coffee_custom_fields",
+	"upande_coffee.setup.set_coffee_desktop_icon",
+]
 
 # DocType JS shipped from the app (no site Client Scripts).
 # sales_order.js is loaded on every SO but every handler bails immediately
@@ -88,16 +102,15 @@ doc_events = {
 
 # required_apps = []
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "upande_coffee",
-# 		"logo": "/assets/upande_coffee/logo.png",
-# 		"title": "Upande Coffee",
-# 		"route": "/upande_coffee",
-# 		"has_permission": "upande_coffee.api.permission.has_app_permission"
-# 	}
-# ]
+# Coffee gets a launcher icon on the /apps screen; it opens the ops dashboard.
+add_to_apps_screen = [
+	{
+		"name": "upande_coffee",
+		"logo": "/assets/upande_coffee/images/coffee-logo.png",
+		"title": "Coffee",
+		"route": "/coffee-dashboard",
+	}
+]
 
 # Includes in <head>
 # ------------------

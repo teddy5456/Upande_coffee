@@ -255,6 +255,98 @@ def create_coffee_custom_fields():
 					"module": "Upande Coffee",
 				},
 			],
+			# Which drying table a moisture Quality Inspection was taken on.
+			# Gated to coffee templates (all named "Coffee …") so non-coffee
+			# inspections never see it. Standard Frappe depends_on — no hidden=1
+			# base state (see the Sales Order note above for why that breaks).
+			"Quality Inspection": [
+				{
+					"fieldname": "custom_drying_table",
+					"fieldtype": "Link",
+					"label": "Drying Table",
+					"options": "Drying Table",
+					"insert_after": "batch_no",
+					"depends_on": "eval:(doc.quality_inspection_template||'').startsWith('Coffee ')",
+					"module": "Upande Coffee",
+				},
+			],
+			# Idempotency key sent by the Kahawa Trail app: "deviceId:queueRowId".
+			# The app queues every scan in SQLite and uploads it later; when an
+			# upload times out it cannot know whether the insert committed, so it
+			# looks the ref up before retrying and adopts the existing log rather
+			# than logging the same bucket twice. Indexed because that lookup runs
+			# on every retried row. Blank for desk-entered logs.
+			"Harvest Log": [
+				{
+					"fieldname": "client_ref",
+					"fieldtype": "Data",
+					"label": "Client Ref",
+					"insert_after": "bucket_count",
+					"read_only": 1,
+					"no_copy": 1,
+					"search_index": 1,
+					"module": "Upande Coffee",
+				},
+				# Where the scan happened, captured by the app at scan time (not
+				# at upload time — an offline scan may sync hours later from the
+				# office). Absent when the clerk declined location permission or
+				# the device had no recent fix; treat blank as "unknown", never
+				# as "not in the block".
+				{
+					"fieldname": "gps_section",
+					"fieldtype": "Section Break",
+					"label": "Scan Location",
+					"insert_after": "client_ref",
+					"collapsible": 1,
+					"module": "Upande Coffee",
+				},
+				{
+					"fieldname": "gps_latitude",
+					"fieldtype": "Float",
+					"label": "Latitude",
+					"precision": "6",
+					"insert_after": "gps_section",
+					"read_only": 1,
+					"no_copy": 1,
+					"module": "Upande Coffee",
+				},
+				{
+					"fieldname": "gps_longitude",
+					"fieldtype": "Float",
+					"label": "Longitude",
+					"precision": "6",
+					"insert_after": "gps_latitude",
+					"read_only": 1,
+					"no_copy": 1,
+					"module": "Upande Coffee",
+				},
+				{
+					"fieldname": "gps_accuracy_m",
+					"fieldtype": "Float",
+					"label": "GPS Accuracy (m)",
+					"precision": "1",
+					"insert_after": "gps_longitude",
+					"read_only": 1,
+					"no_copy": 1,
+					"module": "Upande Coffee",
+				},
+			],
+			# Expo push tokens registered by the Kahawa Trail app, newline-
+			# separated, one line per device. Written by the
+			# kahawa_register_push_token endpoint and read by the Comment hook
+			# that pushes support replies. Safe to clear at any time — devices
+			# re-register on next launch.
+			"User": [
+				{
+					"fieldname": "custom_expo_push_tokens",
+					"fieldtype": "Small Text",
+					"label": "Expo Push Tokens",
+					"insert_after": "mute_sounds",
+					"read_only": 1,
+					"no_copy": 1,
+					"module": "Upande Coffee",
+				},
+			],
 		},
 		ignore_validate=True,
 	)

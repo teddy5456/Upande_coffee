@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:HLP-{#####}",
+ "creation": "2026-07-22 08:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "action",
+  "column_break_top",
+  "print_hint",
+  "range_section",
+  "qty",
+  "single_section",
+  "employee",
+  "table_section",
+  "employee_rows",
+  "result_section",
+  "labels"
+ ],
+ "fields": [
+  {
+   "default": "Empty QR Range",
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Empty QR Range\nEmployee Card\nEmployee Table",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_top",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "print_hint",
+   "fieldtype": "HTML",
+   "label": "Print Hint"
+  },
+  {
+   "depends_on": "eval:doc.action == 'Empty QR Range'",
+   "fieldname": "range_section",
+   "fieldtype": "Section Break",
+   "label": "Empty QR Range"
+  },
+  {
+   "depends_on": "eval:doc.action == 'Empty QR Range'",
+   "description": "Number of blank harvester QR cards to create and print.",
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "label": "Number of Cards",
+   "mandatory_depends_on": "eval:doc.action == 'Empty QR Range'",
+   "non_negative": 1
+  },
+  {
+   "depends_on": "eval:doc.action == 'Employee Card'",
+   "fieldname": "single_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Card"
+  },
+  {
+   "depends_on": "eval:doc.action == 'Employee Card'",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "mandatory_depends_on": "eval:doc.action == 'Employee Card'",
+   "options": "Employee"
+  },
+  {
+   "depends_on": "eval:doc.action == 'Employee Table'",
+   "fieldname": "table_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Table"
+  },
+  {
+   "depends_on": "eval:doc.action == 'Employee Table'",
+   "fieldname": "employee_rows",
+   "fieldtype": "Table",
+   "label": "Employees",
+   "options": "Harvester Label Employee"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "result_section",
+   "fieldtype": "Section Break",
+   "label": "Generated Labels"
+  },
+  {
+   "fieldname": "labels",
+   "fieldtype": "Table",
+   "label": "Labels",
+   "options": "Harvester Label Item",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-07-22 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Harvester Label Print",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Coffee Harvest User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

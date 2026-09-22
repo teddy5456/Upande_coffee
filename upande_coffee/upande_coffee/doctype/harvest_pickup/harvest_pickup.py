@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import flt
 
 
 class HarvestPickup(Document):
@@ -12,6 +13,7 @@ class HarvestPickup(Document):
 		# stale (often 0) when weights arrive via an API round-trip save.
 		self._calculate_totals()
 		self._validate_weighbridge()
+		self._warn_on_post_submit_correction()
 
 	def _validate_weighbridge(self):
 		"""Weights become mandatory once the weigh approval happens
@@ -28,6 +30,22 @@ class HarvestPickup(Document):
 	def _calculate_totals(self):
 		self.total_buckets = sum(row.bucket_count or 0 for row in self.block_pickups)
 		self.total_weight_kg = sum(row.weight_kg or 0 for row in self.block_pickups)
+
+	def _warn_on_post_submit_correction(self):
+		"""Bucket/weight fields are allow_on_submit so supervisors can correct a
+		weighbridge mistake after Receive. If stock already moved on the old
+		total, flag it — the Stock Entry created on submit is not auto-adjusted."""
+		if self.docstatus == 1 and self.moved_stock and not self.is_new():
+			old_weight = frappe.db.get_value("Harvest Pickup", self.name, "total_weight_kg")
+			if old_weight is not None and flt(old_weight) != flt(self.total_weight_kg):
+				frappe.msgprint(
+					_(
+						"Total weight changed from {0} kg to {1} kg after stock was already moved "
+						"({2}). Adjust the stock entry manually if needed."
+					).format(flt(old_weight), flt(self.total_weight_kg), self.stock_entry or ""),
+					indicator="orange",
+					alert=True,
+				)
 
 
 def on_submit_create_stock_entry(doc, method):

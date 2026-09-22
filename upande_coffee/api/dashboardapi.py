@@ -61,6 +61,7 @@ def get_seasons():
 
 @frappe.whitelist()
 def get_overview(from_date=None, to_date=None, season=None):
+	from upande_coffee.api.productionapi import resolve_season_target_kg
 	from_date, to_date = _dates(from_date, to_date, season)
 
 	# harvest
@@ -104,14 +105,18 @@ def get_overview(from_date=None, to_date=None, season=None):
 	billed = _agg("Sales Invoice", si, "SUM", "grand_total")
 	outstanding = _agg("Sales Invoice", si, "SUM", "outstanding_amount")
 
-	active = frappe.db.get_value(
-		"Coffee Season", {"is_active": 1}, ["target_cherry_kg", "season_name"], as_dict=True
-	) or frappe._dict()
+	season_key = season if season and frappe.db.exists("Coffee Season", season) else frappe.db.get_value(
+		"Coffee Season", {"is_active": 1}, "name"
+	)
+	active_name = frappe.db.get_value("Coffee Season", season_key, "season_name") if season_key else None
 
 	return {
 		"estimate": {
-			"target_cherry_kg": flt(active.target_cherry_kg),
-			"season_name": active.season_name,
+			# Coffee Budget (top-down, by block) wins where one exists for this
+			# season; Coffee Season.target_cherry_kg is the fallback for a
+			# season nobody has budgeted yet. See productionapi.resolve_season_target_kg.
+			"target_cherry_kg": resolve_season_target_kg(season_key),
+			"season_name": active_name,
 			"blocks": frappe.db.count("Warehouse", {"warehouse_type": "Block", "disabled": 0}),
 		},
 		"harvest": {
@@ -133,16 +138,45 @@ def get_overview(from_date=None, to_date=None, season=None):
 
 
 def _latest_moisture():
-	"""Latest moisture reading per drying table."""
+	"""Latest moisture reading per drying table, from native Quality
+	Inspections (template 'Coffee Drying', parameter 'Moisture %')."""
 	rows = frappe.db.sql(
-		"""SELECT r.drying_table, r.moisture_percentage, r.debes, r.batch, r.reading_date
-		FROM `tabDaily Moisture Reading` r
-		JOIN (SELECT drying_table, MAX(reading_date) md FROM `tabDaily Moisture Reading`
-		      GROUP BY drying_table) x
-		  ON x.drying_table = r.drying_table AND x.md = r.reading_date""",
+		"""SELECT qi.custom_drying_table AS drying_table,
+		          r.reading_value AS moisture_percentage,
+		          qi.batch_no AS batch, qi.report_date AS reading_date
+		FROM `tabQuality Inspection` qi
+		JOIN `tabQuality Inspection Reading` r
+		  ON r.parent = qi.name AND r.specification = %(spec)s
+		JOIN (SELECT custom_drying_table, MAX(report_date) md
+		      FROM `tabQuality Inspection`
+		      WHERE quality_inspection_template = %(tpl)s
+		        AND IFNULL(custom_drying_table,'') != '' AND docstatus < 2
+		      GROUP BY custom_drying_table) x
+		  ON x.custom_drying_table = qi.custom_drying_table AND x.md = qi.report_date
+		WHERE qi.quality_inspection_template = %(tpl)s AND qi.docstatus < 2""",
+		{"spec": "Moisture %", "tpl": "Coffee Drying"},
 		as_dict=True,
 	)
 	return {r.drying_table: r for r in rows}
+
+
+def _moisture_readings(from_date=None, to_date=None, limit=120):
+	"""Recent drying moisture readings from Quality Inspections."""
+	conds = ["qi.quality_inspection_template = %(tpl)s", "qi.docstatus < 2", "r.specification = %(spec)s"]
+	vals = {"tpl": "Coffee Drying", "spec": "Moisture %"}
+	if from_date:
+		conds.append("qi.report_date >= %(from)s"); vals["from"] = from_date
+	if to_date:
+		conds.append("qi.report_date <= %(to)s"); vals["to"] = to_date
+	return frappe.db.sql(
+		"""SELECT qi.report_date AS reading_date, qi.custom_drying_table AS drying_table,
+		          qi.batch_no AS batch, r.reading_value AS moisture_percentage,
+		          qi.inspected_by AS read_by
+		FROM `tabQuality Inspection` qi
+		JOIN `tabQuality Inspection Reading` r ON r.parent = qi.name
+		WHERE {} ORDER BY qi.report_date DESC LIMIT {}""".format(" AND ".join(conds), int(limit)),
+		vals, as_dict=True,
+	)
 
 
 def _readiness_counts():
@@ -261,14 +295,7 @@ def get_drying(from_date=None, to_date=None, season=None):
 	readiness = _readiness_counts()
 	actives = [flt(r.moisture_percentage) for r in latest.values() if r.moisture_percentage is not None]
 
-	m_f = _between({}, "reading_date", from_date, to_date)
-	moisture = frappe.get_all(
-		"Daily Moisture Reading",
-		filters=m_f,
-		fields=["reading_date", "drying_table", "batch", "moisture_percentage", "debes", "read_by"],
-		order_by="reading_date desc",
-		limit_page_length=120,
-	)
+	moisture = _moisture_readings(from_date, to_date)
 	a_f = _between({"docstatus": ["<", 2]}, "start_date", from_date, to_date)
 	assignments = frappe.get_all(
 		"Drying Assignment",
@@ -412,4 +439,170 @@ def get_invoices(from_date=None, to_date=None, season=None):
 			"collection_rate": ((billed - outstanding) / billed * 100) if billed else 0,
 		},
 		"invoices": invs,
+	}
+
+
+@frappe.whitelist()
+def get_daily_planner():
+	"""The weekly harvest-expectation forecast: what each block is expected to
+	deliver, week by week, against what the weighbridge actually recorded.
+
+	This is the same Coffee Forecast Override a picker sets from Kahawa Trail
+	and a supervisor edits on the desktop /coffee-production grid — wrapped
+	here via pickupapi.weekly_forecast_vs_actual() rather than re-derived, so
+	the dashboard can never disagree with the grid or the mobile app about
+	what a block is expected to deliver. The overdue-block alarm
+	(productionapi.get_round_status) still rides alongside it as "Pick Now" —
+	a live "what to do today" signal a weekly kg number doesn't replace.
+	Both belong to the newer Coffee Production module, which may not be
+	migrated on every site yet, so this returns availability rather than
+	erroring where its doctypes don't exist.
+	"""
+	if not frappe.db.exists("DocType", "Coffee Block Profile"):
+		return {"available": False, "weeks": [], "blocks": [], "alerts": []}
+
+	from upande_coffee.api.pickupapi import weekly_forecast_vs_actual
+	forecast = weekly_forecast_vs_actual(weeks_back=2, weeks_ahead=4)
+	weeks = forecast["weeks"]
+
+	today = str(getdate(nowdate()))
+	this_week_index = next((i for i, w in enumerate(weeks) if w["start"] <= today <= w["end"]), None)
+
+	expected_total = actual_total = 0.0
+	if this_week_index is not None:
+		for b in forecast["blocks"]:
+			expected_total += flt((b["expected"] or [])[this_week_index])
+			actual_total += flt((b["actual"] or [])[this_week_index])
+
+	alerts = []
+	try:
+		from upande_coffee.api.productionapi import get_round_status
+		alerts = [r for r in get_round_status() if r.get("overdue")]
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "get_daily_planner: get_round_status")
+
+	return {
+		"available": True,
+		"weeks": weeks,
+		"blocks": forecast["blocks"],
+		"this_week_index": this_week_index,
+		"kpis": {
+			"this_week_expected_kg": round(expected_total, 1),
+			"this_week_actual_kg": round(actual_total, 1),
+			"variance_pct": round((actual_total - expected_total) / expected_total * 100, 1) if expected_total else None,
+			"overdue_blocks": len(alerts),
+		},
+		"alerts": alerts,
+	}
+
+
+@frappe.whitelist()
+def get_payments(from_date=None, to_date=None, season=None):
+	from_date, to_date = _dates(from_date, to_date, season)
+	f = _between({}, "date", from_date, to_date)
+	payments = frappe.get_all(
+		"Coffee Payment",
+		filters=f,
+		fields=["name", "date", "harvester_id", "total_buckets", "rate", "total_payment", "docstatus", "paid"],
+		order_by="date desc",
+		limit_page_length=200,
+	)
+	paid_total = sum(flt(p.total_payment) for p in payments if p.docstatus == 1)
+	pending = [p for p in payments if p.docstatus == 0]
+
+	by_harvester = {}
+	for p in payments:
+		if p.docstatus != 1:
+			continue
+		row = by_harvester.setdefault(
+			p.harvester_id, {"harvester_id": p.harvester_id, "total_paid": 0, "payments": 0, "last_date": None}
+		)
+		row["total_paid"] += flt(p.total_payment)
+		row["payments"] += 1
+		if not row["last_date"] or p.date > row["last_date"]:
+			row["last_date"] = p.date
+
+	return {
+		"kpis": {
+			"total_paid": paid_total,
+			"payment_count": sum(1 for p in payments if p.docstatus == 1),
+			"harvesters_paid": len(by_harvester),
+			"pending_count": len(pending),
+			"avg_rate": _agg("Coffee Payment", dict(f, docstatus=1), "AVG", "rate"),
+		},
+		"payments": payments,
+		"by_harvester": sorted(by_harvester.values(), key=lambda r: -r["total_paid"]),
+	}
+
+
+@frappe.whitelist()
+def get_stock():
+	"""Live coffee stock for the dashboard Stock section:
+	- parchment on hand, split by parchment type (across all Endebess coffee
+	  warehouses) and by warehouse;
+	- clean coffee on hand, split by grade (in the milled store)."""
+	settings = frappe.get_cached_doc("Coffee Settings")
+
+	# parchment-type items → the stock items each type is stored as
+	ptypes = frappe.get_all("Parchment Type", fields=["name", "item"])
+	pt_item = {}
+	for p in ptypes:
+		item = p.item or (p.name if frappe.db.exists("Item", p.name) else None)
+		if item:
+			pt_item[item] = p.name
+	if settings.parchment_item:
+		pt_item.setdefault(settings.parchment_item, "Parchment")
+
+	# grade items
+	from upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement import (
+		GRADE_ITEM_MAP,
+	)
+	grade_of = {}
+	for grade, item in GRADE_ITEM_MAP.items():
+		grade_of[item] = grade
+
+	# balance per (item, warehouse) from the Bin table (fast, live)
+	def _balances(item_codes):
+		if not item_codes:
+			return []
+		return frappe.get_all(
+			"Bin",
+			filters={"item_code": ["in", list(item_codes)], "actual_qty": [">", 0]},
+			fields=["item_code", "warehouse", "actual_qty"],
+			limit_page_length=0,
+		)
+
+	# ── parchment ──────────────────────────────────────────────────────────
+	p_bal = _balances(pt_item.keys())
+	parchment_total = 0
+	by_type, by_wh = {}, {}
+	for b in p_bal:
+		q = flt(b.actual_qty)
+		parchment_total += q
+		t = pt_item.get(b.item_code, b.item_code)
+		by_type[t] = by_type.get(t, 0) + q
+		by_wh[b.warehouse] = by_wh.get(b.warehouse, 0) + q
+
+	# ── clean coffee ───────────────────────────────────────────────────────
+	c_bal = _balances(grade_of.keys())
+	clean_total = 0
+	by_grade, clean_by_wh = {}, {}
+	for b in c_bal:
+		q = flt(b.actual_qty)
+		clean_total += q
+		g = grade_of.get(b.item_code, b.item_code)
+		by_grade[g] = by_grade.get(g, 0) + q
+		clean_by_wh[b.warehouse] = clean_by_wh.get(b.warehouse, 0) + q
+
+	return {
+		"parchment": {
+			"total_kg": parchment_total,
+			"by_type": [{"type": k, "kg": v} for k, v in sorted(by_type.items(), key=lambda x: -x[1])],
+			"by_warehouse": [{"warehouse": k, "kg": v} for k, v in sorted(by_wh.items(), key=lambda x: -x[1])],
+		},
+		"clean": {
+			"total_kg": clean_total,
+			"by_grade": [{"grade": k, "kg": v} for k, v in sorted(by_grade.items(), key=lambda x: -x[1])],
+			"by_warehouse": [{"warehouse": k, "kg": v} for k, v in sorted(clean_by_wh.items(), key=lambda x: -x[1])],
+		},
 	}

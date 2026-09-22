@@ -9,6 +9,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.workflow import apply_workflow, get_transitions
+from frappe.utils import cint, getdate, nowdate
 
 
 @frappe.whitelist()
@@ -35,6 +36,34 @@ def pending_pickups():
 	return pickups
 
 
+@frappe.whitelist()
+def get_tractors(search=None, asset_category="Tractors", limit=500):
+	"""Options for the Harvest Pickup ``tractor`` Link field (→ Asset).
+
+	Returns Assets in the "Tractors" category, minus disposed ones
+	(Scrapped/Sold/Cancelled). Pass a different ``asset_category`` to override,
+	or ``asset_category=""`` for all assets. ``search`` does a typeahead match
+	on the asset id / name. Consumed by the Kahawa Trail harvest-pickup dropdown.
+	"""
+	filters = {"status": ["not in", ["Scrapped", "Sold", "Cancelled"]]}
+	if asset_category:
+		filters["asset_category"] = asset_category
+
+	or_filters = None
+	if search:
+		like = "%{0}%".format(search)
+		or_filters = {"name": ["like", like], "asset_name": ["like", like]}
+
+	return frappe.get_all(
+		"Asset",
+		filters=filters,
+		or_filters=or_filters,
+		fields=["name", "asset_name", "asset_category", "status"],
+		order_by="asset_name asc",
+		limit_page_length=frappe.utils.cint(limit) or 500,
+	)
+
+
 @frappe.whitelist(methods=["POST"])
 def save_weights(name, weights):
 	"""weights: JSON map of child row name -> weight in kg."""
@@ -50,7 +79,137 @@ def save_weights(name, weights):
 
 
 @frappe.whitelist(methods=["POST"])
-def workflow_action(name, action):
+def workflow_action(name, action, weights=None):
+	"""Advance the pickup workflow. Any weights typed on the card are saved
+	first (mirrors the desk form, where editing rows + clicking the action
+	persist together) so validation never trips on stale/blank weights."""
 	doc = frappe.get_doc("Harvest Pickup", name)
+	if weights and doc.docstatus == 0:
+		weights = json.loads(weights) if isinstance(weights, str) else weights
+		changed = False
+		for row in doc.block_pickups:
+			if row.name in weights and weights[row.name] not in (None, ""):
+				row.weight_kg = frappe.utils.flt(weights[row.name])
+				changed = True
+		if changed:
+			doc.save()
+			doc.reload()
 	doc = apply_workflow(doc, action)
-	return {"name": doc.name, "workflow_state": doc.workflow_state, "docstatus": doc.docstatus}
+	moved = None
+	if doc.docstatus == 1:
+		moved = frappe.db.get_value("Harvest Pickup", doc.name, "stock_entry")
+	return {
+		"name": doc.name,
+		"workflow_state": doc.workflow_state,
+		"docstatus": doc.docstatus,
+		"stock_entry": moved,
+	}
+
+
+# ── Harvester QR ─────────────────────────────────────────────────────────────
+#
+# "Empty QR Range" prints a batch of blank Harvester cards ahead of time so
+# they can be handed out in the field; "Employee Card"/"Employee Table"
+# (label_generation.py) print a card already tied to an employee. Neither path
+# lets the field link a blank, already-printed card to the employee who ends
+# up holding it — that link had to be made by opening the Harvester record on
+# desk. These two calls do it from a scan instead.
+
+
+@frappe.whitelist()
+def get_harvester(harvester_id):
+	"""Resolve a scanned Harvester QR to its employee link, if any."""
+	doc = frappe.db.get_value(
+		"Harvester", harvester_id,
+		["name", "harvester_id", "employee", "employee_id", "national_id"],
+		as_dict=True,
+	)
+	if not doc:
+		frappe.throw(_("No Harvester record for {0}.").format(harvester_id))
+	doc["employee_name"] = (
+		frappe.db.get_value("Employee", doc.employee, "employee_name") if doc.employee else None
+	)
+	return doc
+
+
+@frappe.whitelist(methods=["POST"])
+def link_harvester_employee(harvester_id, employee):
+	"""Link a scanned (already-printed) Harvester QR to an Employee.
+
+	Refuses to silently steal a card already linked to someone else — that
+	needs a deliberate desk edit, not a rescan.
+	"""
+	name = frappe.db.exists("Harvester", harvester_id)
+	if not name:
+		frappe.throw(_("No Harvester record for {0}.").format(harvester_id))
+
+	doc = frappe.get_doc("Harvester", name)
+	if doc.employee and doc.employee != employee:
+		frappe.throw(
+			_("{0} is already linked to {1}.").format(harvester_id, doc.employee)
+		)
+	doc.employee = employee
+	doc.save(ignore_permissions=True)
+	return {
+		"harvester_id": doc.harvester_id,
+		"employee": doc.employee,
+		"employee_name": frappe.db.get_value("Employee", employee, "employee_name"),
+	}
+
+
+# ── Weekly forecast ──────────────────────────────────────────────────────────
+#
+# The desktop /coffee-production grid already has the full model: a flowering
+# forecast, a Coffee Forecast Override for a human to overrule one block-week,
+# and a weighbridge actual to compare against (productiongrid.py). These wrap
+# that same machinery in a shape a phone screen can use — a plain week_start
+# date instead of the grid's ISO week/year vocabulary, and a small window
+# instead of the desktop's full 26-week/coffee_dash payload.
+
+
+@frappe.whitelist(methods=["POST"])
+def submit_weekly_forecast(block, week_start, kg_cherry, reason=None):
+	"""A picker/supervisor's own weekly cherry estimate for a block.
+
+	Writes the same Coffee Forecast Override the desktop grid writes to, so a
+	number set from the field shows up there too instead of living twice.
+	"""
+	from upande_coffee.api.productiongrid import _iso, set_forecast_cell
+
+	iso_year, iso_week = _iso(getdate(week_start))
+	return set_forecast_cell(
+		block=block, week=iso_week, year=iso_year, value=kg_cherry,
+		reason=reason or "Submitted from Kahawa Trail",
+	)
+
+
+@frappe.whitelist()
+def weekly_forecast_vs_actual(block=None, weeks_back=4, weeks_ahead=8):
+	"""Expected (model, or a hand-set override) vs actual weighbridge kg,
+	week by week, for the mobile forecast-vs-actual card."""
+	from upande_coffee.api.productiongrid import _iso, _span, grid_payload
+
+	today = getdate(nowdate())
+	iso_year, now_week = _iso(today)
+	start_year, start_week = _span(iso_year, now_week - cint(weeks_back), 1)[0]
+
+	payload = grid_payload(
+		start_year=start_year, start_week=start_week,
+		end_year=iso_year, end_week=now_week + cint(weeks_ahead),
+	)
+	blocks = payload["blocks"]
+	if block:
+		blocks = [b for b in blocks if b["greenhouse"] == block]
+
+	return {
+		"weeks": payload["week_dates"],
+		"blocks": [
+			{
+				"block": b["greenhouse"],
+				"variety": b["variety"],
+				"expected": b["weekly"]["revised"],
+				"actual": b["weekly"]["actual"],
+			}
+			for b in blocks
+		],
+	}

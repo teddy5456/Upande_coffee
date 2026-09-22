@@ -1,12 +1,14 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import flt
 
 
 CHERRY_ITEM = "Coffee-Cherry-Batched"
 PARCHMENT_ITEM = "COFFEE-PARCHMENT"
 WET_MILL_WH = "Coffee Wet Mill - KL"
 COMPANY = "Kaitet Ltd."
+TABLE_CAPACITY_DEBES = 50
 
 
 class DryingAssignment(Document):
@@ -26,6 +28,19 @@ class DryingAssignment(Document):
             if row.drying_table in tables_used:
                 frappe.throw(_("Row {0}: Drying Table {1} is used more than once.").format(row.idx, row.drying_table))
             tables_used.append(row.drying_table)
+
+            existing_batch, existing_debes = frappe.db.get_value(
+                "Drying Table", row.drying_table, ["current_batch", "current_debes"]
+            ) or (None, 0)
+            # A table already holding a DIFFERENT batch counts towards capacity;
+            # re-saving this same assignment for its own batch does not.
+            already_on_table = flt(existing_debes) if existing_batch and existing_batch != self.batch else 0
+            if already_on_table + flt(row.debes_quantity) > TABLE_CAPACITY_DEBES:
+                frappe.throw(
+                    _("Row {0}: Drying Table {1} can hold at most {2} debes ({3} already on it).").format(
+                        row.idx, row.drying_table, TABLE_CAPACITY_DEBES, already_on_table
+                    )
+                )
 
     def _validate_completion(self):
         if not self.removal_mode:
@@ -90,7 +105,10 @@ class DryingAssignment(Document):
             batch_qty = frappe.db.get_value("Batch", self.batch, "batch_qty") or 0
             self.batch_qty = batch_qty
 
-    def on_save(self):
+    def on_update(self):
+        # NOTE: was named `on_save`, which Frappe never calls (the real hook
+        # is `on_update`) — table occupancy silently never updated on either
+        # draft save or submit.
         self._update_drying_table_status()
 
     def _update_drying_table_status(self):

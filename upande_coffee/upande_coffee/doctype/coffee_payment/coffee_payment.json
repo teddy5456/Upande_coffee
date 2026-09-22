@@ -15,6 +15,7 @@
   "column_break_1",
   "rate",
   "total_payment",
+  "paid",
   "remark"
  ],
  "fields": [
@@ -67,6 +68,15 @@
    "label": "Total Payment (KES)",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "paid",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Paid",
+   "read_only": 1
   },
   {
    "fieldname": "remark",

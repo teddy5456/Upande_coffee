@@ -1,6 +1,13 @@
 [
  {
   "doctype": "Workflow State",
+  "name": "Draft",
+  "workflow_state_name": "Draft",
+  "style": "Danger",
+  "modified": "2026-07-16 12:00:00"
+ },
+ {
+  "doctype": "Workflow State",
   "name": "Pending Weigh Approval",
   "workflow_state_name": "Pending Weigh Approval",
   "style": "Warning",

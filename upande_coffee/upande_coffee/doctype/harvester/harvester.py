@@ -5,13 +5,10 @@ from frappe.model.document import Document
 class Harvester(Document):
     def before_insert(self):
         if not self.harvester_id:
-            # Auto-generate harvester ID: HARVESTER-XXXX
-            last = frappe.db.sql(
-                "SELECT MAX(CAST(SUBSTRING(harvester_id, 11) AS UNSIGNED)) FROM `tabHarvester` WHERE harvester_id LIKE 'HARVESTER-%'",
-                as_list=True,
-            )
-            next_num = (last[0][0] or 0) + 1
-            self.harvester_id = f"HARVESTER-{next_num}"
+            # Pull the next number from the central Coffee QR Sequence so records
+            # created directly and via the label tool never collide.
+            base = frappe.get_single("Coffee QR Sequence").get_next(1)
+            self.harvester_id = f"HARVESTER-{base + 1}"
 
     def after_save(self):
         self._render_qr()
