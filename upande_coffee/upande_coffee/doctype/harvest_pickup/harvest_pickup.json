@@ -16,6 +16,14 @@
   "total_weight_kg",
   "moved_stock",
   "stock_entry",
+  "section_break_received",
+  "received",
+  "received_weight_kg",
+  "received_bag_count",
+  "weight_variance_kg",
+  "column_break_received",
+  "received_by",
+  "received_at",
   "section_break_blocks",
   "block_pickups",
   "amended_from"
@@ -75,6 +83,54 @@
    "fieldtype": "Link",
    "label": "Stock Entry",
    "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_received",
+   "fieldtype": "Section Break",
+   "label": "Receiving at Mill"
+  },
+  {
+   "default": "0",
+   "fieldname": "received",
+   "fieldtype": "Check",
+   "label": "Received",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_weight_kg",
+   "fieldtype": "Float",
+   "label": "Received Weight (kg)",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "received_bag_count",
+   "fieldtype": "Int",
+   "label": "Received Bag Count",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "weight_variance_kg",
+   "fieldtype": "Float",
+   "label": "Weight Variance (kg)",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "column_break_received",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "received_by",
+   "fieldtype": "Link",
+   "label": "Received By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received At",
    "read_only": 1
   },
   {

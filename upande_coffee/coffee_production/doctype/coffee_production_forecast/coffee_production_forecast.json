@@ -1,0 +1,156 @@
+{
+ "actions": [],
+ "creation": "2026-09-22 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "description": "Management's own weekly, per-block planning number — distinct from the flowering-model forecast (productiongrid) and from a Coffee Forecast Override (what a person on the ground thinks a block will give). This is what management now expects, used to work out the crew a week needs.",
+ "field_order": [
+  "block",
+  "week_start",
+  "column_break_head",
+  "revised_forecast_kg",
+  "actual_kg",
+  "section_labour",
+  "kg_per_worker",
+  "computed_workers_needed",
+  "column_break_labour",
+  "workers_needed",
+  "section_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "week_start",
+   "fieldtype": "Date",
+   "label": "Week Starting (Monday)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Snapped to the Monday of the week entered."
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "revised_forecast_kg",
+   "fieldtype": "Float",
+   "label": "Revised Forecast (kg cherry)",
+   "reqd": 1,
+   "precision": "0",
+   "in_list_view": 1,
+   "description": "Management's own planning number for this block this week. Wholly manual — nothing computes it for you."
+  },
+  {
+   "fieldname": "actual_kg",
+   "fieldtype": "Float",
+   "label": "Actual (kg cherry)",
+   "read_only": 1,
+   "precision": "0",
+   "in_list_view": 1,
+   "description": "Weighbridge kilograms received for this block in this week. Pulled from Harvest Pickup, not typed — refreshed every time this row is saved."
+  },
+  {
+   "fieldname": "section_labour",
+   "fieldtype": "Section Break",
+   "label": "Labour"
+  },
+  {
+   "fieldname": "kg_per_worker",
+   "fieldtype": "Float",
+   "label": "Kg per Worker (this week)",
+   "precision": "1",
+   "description": "Blank uses the farm default set on Coffee Production Settings."
+  },
+  {
+   "fieldname": "computed_workers_needed",
+   "fieldtype": "Float",
+   "label": "Workers Needed (computed)",
+   "read_only": 1,
+   "precision": "1",
+   "description": "Revised forecast ÷ the kg-per-worker rate in effect. Kept so an override below can be judged against it."
+  },
+  {
+   "fieldname": "column_break_labour",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "workers_needed",
+   "fieldtype": "Float",
+   "label": "Workers Needed (override)",
+   "precision": "1",
+   "description": "Blank uses the computed figure. Set this only where a planner knows better — a gappy block, a training day, a known absentee run."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-22 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Coffee Production",
+ "name": "Coffee Production Forecast",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "Coffee Harvest User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "week_start",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "title_field": "block",
+ "search_fields": "block,week_start"
+}

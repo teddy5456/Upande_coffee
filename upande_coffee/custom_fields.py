@@ -393,3 +393,47 @@ def remove_legacy_fields():
 	for name in legacy:
 		if frappe.db.exists("Custom Field", name):
 			frappe.delete_doc("Custom Field", name, force=True, ignore_permissions=True)
+
+
+# Fields other Upande apps make mandatory on shared doctypes. They were written
+# when Roses was the only business unit on the site, so they are reqd=1 with no
+# condition and block every Coffee document. Scoping them to Roses leaves the
+# Roses forms exactly as they were (same red asterisk, same client-side block,
+# which is how Upande Packhouse already scopes custom_truck_details and
+# custom_s_number) while letting Coffee save.
+_FOREIGN_MANDATORY = {
+	"Sales Order": [
+		"custom_shipping_agent",
+		"custom_delivery_point",
+		"custom_consignee",
+	],
+}
+_ROSES_ONLY = 'eval: doc.business_unit == "Roses"'
+
+
+def relax_foreign_mandatory_fields():
+	"""Scope another app's unconditional mandatory fields to Roses.
+
+	Runs on after_migrate so it re-asserts itself if the owning app re-syncs
+	its fixtures. Only touches fields that are still unconditionally mandatory
+	— an operator who sets their own condition keeps it.
+	"""
+	for doctype, fieldnames in _FOREIGN_MANDATORY.items():
+		for fieldname in fieldnames:
+			name = f"{doctype}-{fieldname}"
+			if not frappe.db.exists("Custom Field", name):
+				continue
+
+			current = frappe.db.get_value(
+				"Custom Field", name, ["reqd", "mandatory_depends_on"], as_dict=True
+			)
+			if not current.reqd or current.mandatory_depends_on:
+				continue
+
+			frappe.db.set_value(
+				"Custom Field",
+				name,
+				{"reqd": 0, "mandatory_depends_on": _ROSES_ONLY},
+				update_modified=False,
+			)
+			frappe.clear_cache(doctype=doctype)

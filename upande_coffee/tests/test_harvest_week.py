@@ -48,9 +48,26 @@ def demo():
     assert _harvest_week("2026-08-03") == 1
     assert _harvest_week("2026-08-31") == 5
 
-    # No active season -> ISO week, so a save is never blocked.
+    # No active season -> the October rule, NOT the ISO week. The ISO fallback
+    # is what numbered a 21 Sep 2026 outturn 39EM… when the estate was on 49.
     _frappe.db.get_value = lambda *a, **k: None
-    assert _harvest_week("2026-08-03") == datetime.date(2026, 8, 3).isocalendar()[1]
+    # 1 Oct 2026 is a Thursday, so the 2026/27 season opens Mon 28 Sep 2026.
+    assert _harvest_week("2026-09-28") == 1, _harvest_week("2026-09-28")
+    assert _harvest_week("2026-10-01") == 1
+    assert _harvest_week("2026-10-05") == 2
+    # Late September 2026 is the tail of the 2025/26 season, which opened
+    # Mon 29 Sep 2025 (1 Oct 2025 was a Wednesday) -> week 52, not ISO 39.
+    assert _harvest_week("2026-09-21") == 52, _harvest_week("2026-09-21")
+
+    # Kaitet's real anchor: the season was declared from Mon 20 Oct 2025, which
+    # is what puts 21 Sep 2026 on week 49 — the number the estate actually uses.
+    s3 = types.SimpleNamespace(week_one_start=datetime.date(2025, 10, 20), start_date=None)
+    _frappe.db.get_value = lambda *a, **k: s3
+    assert _harvest_week("2026-09-21") == 49, _harvest_week("2026-09-21")
+    assert _harvest_week("2026-09-27") == 49  # Sunday, same week
+    # ...and the anchor stops applying at the next October reset.
+    assert _harvest_week("2026-09-28") == 1, _harvest_week("2026-09-28")
+    assert _harvest_week("2026-10-05") == 2
 
     print("ok")
 

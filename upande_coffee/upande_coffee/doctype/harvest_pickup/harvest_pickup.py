@@ -50,10 +50,16 @@ class HarvestPickup(Document):
 
 def on_submit_create_stock_entry(doc, method):
 	"""Create stock entry moving cherry from blocks to the wet mill when the
-	pickup is Received (workflow submits the document)."""
+	pickup is Received (workflow submits the document).
+
+	Moves the mill re-weigh (received_weight_kg) when it was captured by the
+	receiving step, since that reflects what actually arrived (spillage/theft
+	in transit can differ from the field weighbridge figure); falls back to
+	total_weight_kg for a doc submitted without going through receive_pickup."""
 	if doc.moved_stock:
 		return
-	if not doc.total_weight_kg or doc.total_weight_kg <= 0:
+	qty = flt(doc.received_weight_kg) or flt(doc.total_weight_kg)
+	if not qty or qty <= 0:
 		frappe.throw(_("Cannot receive: total weight must be greater than 0."))
 
 	settings = frappe.get_cached_doc("Coffee Settings")
@@ -89,7 +95,7 @@ def on_submit_create_stock_entry(doc, method):
 		"items",
 		{
 			"item_code": settings.cherry_item,
-			"qty": doc.total_weight_kg,
+			"qty": qty,
 			"uom": "Kilogram",
 			"t_warehouse": settings.wet_mill_warehouse,
 			"batch_no": batch_name,
@@ -104,7 +110,7 @@ def on_submit_create_stock_entry(doc, method):
 	frappe.db.set_value("Harvest Pickup", doc.name, "stock_entry", se.name, update_modified=False)
 	frappe.msgprint(
 		_("Stock Entry {0} created: {1} kg cherry moved to {2}.").format(
-			se.name, doc.total_weight_kg, settings.wet_mill_warehouse
+			se.name, qty, settings.wet_mill_warehouse
 		),
 		indicator="green",
 	)

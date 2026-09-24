@@ -51,12 +51,16 @@ def _make_qr(harvester_id, label_doc_name, index):
 
 
 def _harvester_for_employee(employee):
-    """Return an existing Harvester for the employee, creating one if needed."""
+    """Return the employee's Harvester, creating and linking one if needed.
+
+    Employee number and national ID are stamped by the Harvester controller,
+    so the record that comes back is fully identified either way.
+    """
     name = frappe.db.get_value("Harvester", {"employee": employee}, "name")
     if name:
         return frappe.get_doc("Harvester", name)
     doc = frappe.get_doc({"doctype": "Harvester", "employee": employee})
-    doc.insert()
+    doc.insert(ignore_permissions=True)
     return doc
 
 

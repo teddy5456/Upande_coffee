@@ -9,7 +9,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.workflow import apply_workflow, get_transitions
-from frappe.utils import cint, getdate, nowdate
+from frappe.utils import cint, flt, getdate, now_datetime, nowdate
 
 
 @frappe.whitelist()
@@ -103,6 +103,88 @@ def workflow_action(name, action, weights=None):
 		"workflow_state": doc.workflow_state,
 		"docstatus": doc.docstatus,
 		"stock_entry": moved,
+	}
+
+
+# ── Receiving at the mill ────────────────────────────────────────────────────
+#
+# Weighing (above) happens at pickup, out in the field. Receiving is a
+# separate, later confirmation: when the load physically arrives at the wet
+# mill, someone re-weighs it and recounts bags, since the field figure can
+# differ from what actually arrives (spillage, theft). The "Weighed" ->
+# "Received" transition in the Harvest Pickup Flow workflow is what submits
+# the document and triggers on_submit_create_stock_entry, so receiving is
+# also the moment cherry stock actually moves into the wet mill warehouse —
+# there is no separate stock-moving step elsewhere in this flow.
+
+
+@frappe.whitelist()
+def receivable_pickups():
+	"""Weighed pickups waiting to be confirmed as arrived at the mill."""
+	return frappe.get_all(
+		"Harvest Pickup",
+		filters={"docstatus": 0, "workflow_state": "Weighed"},
+		fields=["name", "date", "tractor", "total_buckets", "total_weight_kg", "workflow_state"],
+		order_by="date asc, creation asc",
+		limit_page_length=50,
+	)
+
+
+@frappe.whitelist()
+def recent_received_pickups(limit=10):
+	"""Pickups already confirmed at the mill, most recently received first."""
+	return frappe.get_all(
+		"Harvest Pickup",
+		filters={"docstatus": 1, "received": 1},
+		fields=[
+			"name", "date", "tractor", "total_buckets", "total_weight_kg", "workflow_state",
+			"received", "received_by", "received_at", "received_weight_kg", "received_bag_count",
+			"weight_variance_kg",
+		],
+		order_by="received_at desc",
+		limit_page_length=cint(limit) or 10,
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def receive_pickup(name, received_weight_kg, received_bag_count):
+	"""Confirm cherry has physically arrived at the wet mill: record the
+	re-weighed total and bag count, then drive the "Receive" workflow
+	transition, which submits the document and moves stock using this actual
+	weight (see on_submit_create_stock_entry)."""
+	doc = frappe.get_doc("Harvest Pickup", name)
+	if doc.workflow_state != "Weighed":
+		frappe.throw(_("Pickup {0} must be Weighed before it can be received.").format(name))
+	if doc.received:
+		frappe.throw(_("Pickup {0} has already been received.").format(name))
+
+	received_weight_kg = flt(received_weight_kg)
+	if received_weight_kg <= 0:
+		frappe.throw(_("Received weight must be greater than 0."))
+
+	doc.db_set("received_weight_kg", received_weight_kg, update_modified=False)
+	doc.db_set("received_bag_count", cint(received_bag_count), update_modified=False)
+	doc.db_set("weight_variance_kg", received_weight_kg - flt(doc.total_weight_kg), update_modified=False)
+	doc.db_set("received_by", frappe.session.user, update_modified=False)
+	doc.db_set("received_at", now_datetime(), update_modified=False)
+	doc.db_set("received", 1, update_modified=False)
+
+	doc = apply_workflow(doc, "Receive")
+
+	# on_submit_create_stock_entry writes stock_entry via frappe.db.set_value,
+	# which doesn't touch this in-memory doc — re-read it (mirrors workflow_action above).
+	stock_entry = frappe.db.get_value("Harvest Pickup", doc.name, "stock_entry")
+
+	return {
+		"name": doc.name,
+		"workflow_state": doc.workflow_state,
+		"docstatus": doc.docstatus,
+		"received_at": doc.received_at,
+		"received_by": doc.received_by,
+		"received_weight_kg": doc.received_weight_kg,
+		"received_bag_count": doc.received_bag_count,
+		"weight_variance_kg": doc.weight_variance_kg,
+		"stock_entry": stock_entry,
 	}
 
 

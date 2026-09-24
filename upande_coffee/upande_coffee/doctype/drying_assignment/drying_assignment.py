@@ -8,7 +8,39 @@ CHERRY_ITEM = "Coffee-Cherry-Batched"
 PARCHMENT_ITEM = "COFFEE-PARCHMENT"
 WET_MILL_WH = "Coffee Wet Mill - KL"
 COMPANY = "Kaitet Ltd."
-TABLE_CAPACITY_DEBES = 50
+# Fallback only — real capacity lives on Drying Table.capacity_debes so ops can
+# set it per table without a code change.
+DEFAULT_TABLE_CAPACITY_DEBES = 50
+
+
+def _table_capacity(drying_table):
+    cap = frappe.db.get_value("Drying Table", drying_table, "capacity_debes")
+    return int(cap) if cap and int(cap) > 0 else DEFAULT_TABLE_CAPACITY_DEBES
+
+
+def _debes_on_table(drying_table, exclude_assignment=None):
+    """Debes physically sitting on a table right now.
+
+    Derived from every live Drying Assignment row that names the table, NOT
+    from Drying Table.current_debes — that field is a last-write-wins cache
+    (each assignment overwrote it), so a table loaded by two batches reported
+    only the most recent one and silently accepted well over its capacity.
+    """
+    return flt(
+        frappe.db.sql(
+            """
+            SELECT COALESCE(SUM(dte.debes_quantity), 0)
+            FROM `tabDrying Table Entry` dte
+            JOIN `tabDrying Assignment` da ON da.name = dte.parent
+            WHERE dte.drying_table = %(table)s
+              AND dte.parenttype = 'Drying Assignment'
+              AND da.docstatus < 2
+              AND da.drying_status != 'Completed'
+              AND da.name != %(exclude)s
+            """,
+            {"table": drying_table, "exclude": exclude_assignment or ""},
+        )[0][0]
+    )
 
 
 class DryingAssignment(Document):
@@ -21,24 +53,36 @@ class DryingAssignment(Document):
     def _validate_tables(self):
         if not self.table_assignments:
             frappe.throw(_("At least one drying table must be assigned."))
-        tables_used = []
+
+        # A table may legitimately appear on several rows (different coffee
+        # types on the same table) and be shared with other live assignments.
+        # Only the total across all of them is capped.
+        wanted = {}
         for row in self.table_assignments:
             if not row.drying_table:
                 frappe.throw(_("Row {0}: Drying Table is required.").format(row.idx))
-            if row.drying_table in tables_used:
-                frappe.throw(_("Row {0}: Drying Table {1} is used more than once.").format(row.idx, row.drying_table))
-            tables_used.append(row.drying_table)
+            if flt(row.debes_quantity) < 0:
+                frappe.throw(_("Row {0}: Debes cannot be negative.").format(row.idx))
+            wanted.setdefault(row.drying_table, []).append(row)
 
-            existing_batch, existing_debes = frappe.db.get_value(
-                "Drying Table", row.drying_table, ["current_batch", "current_debes"]
-            ) or (None, 0)
-            # A table already holding a DIFFERENT batch counts towards capacity;
-            # re-saving this same assignment for its own batch does not.
-            already_on_table = flt(existing_debes) if existing_batch and existing_batch != self.batch else 0
-            if already_on_table + flt(row.debes_quantity) > TABLE_CAPACITY_DEBES:
+        for drying_table, rows in wanted.items():
+            capacity = _table_capacity(drying_table)
+            already_on_table = _debes_on_table(drying_table, exclude_assignment=self.name)
+            adding = sum(flt(r.debes_quantity) for r in rows)
+
+            if already_on_table + adding > capacity:
+                free = max(0, capacity - already_on_table)
                 frappe.throw(
-                    _("Row {0}: Drying Table {1} can hold at most {2} debes ({3} already on it).").format(
-                        row.idx, row.drying_table, TABLE_CAPACITY_DEBES, already_on_table
+                    _(
+                        "Drying Table {0} holds {1} of {2} debes — only {3} free, "
+                        "but row {4} adds {5}."
+                    ).format(
+                        drying_table,
+                        flt(already_on_table, 0),
+                        capacity,
+                        flt(free, 0),
+                        ", ".join(str(r.idx) for r in rows),
+                        flt(adding, 0),
                     )
                 )
 
@@ -112,34 +156,8 @@ class DryingAssignment(Document):
         self._update_drying_table_status()
 
     def _update_drying_table_status(self):
-        for row in self.table_assignments:
-            if frappe.db.exists("Drying Table", row.drying_table):
-                if self.drying_status == "Completed" or self.docstatus == 2:
-                    frappe.db.set_value(
-                        "Drying Table",
-                        row.drying_table,
-                        {
-                            "status": "Available",
-                            "current_batch": None,
-                            "current_coffee_type": None,
-                            "current_debes": 0,
-                            "date_loaded": None,
-                        },
-                        update_modified=False,
-                    )
-                else:
-                    frappe.db.set_value(
-                        "Drying Table",
-                        row.drying_table,
-                        {
-                            "status": "Occupied",
-                            "current_batch": self.batch,
-                            "current_coffee_type": row.coffee_type or "",
-                            "current_debes": row.debes_quantity or 0,
-                            "date_loaded": self.start_date,
-                        },
-                        update_modified=False,
-                    )
+        for drying_table in {r.drying_table for r in self.table_assignments if r.drying_table}:
+            _refresh_drying_table(drying_table)
 
     def before_submit(self):
         if self.drying_status != "Completed":
@@ -153,6 +171,73 @@ class DryingAssignment(Document):
 
     def on_cancel(self):
         self._update_drying_table_status()
+
+
+def _refresh_drying_table(drying_table):
+    """Recompute a table's occupancy from the live assignments that name it.
+
+    Called after any assignment save/submit/cancel. Because it re-derives
+    rather than overwrites, a table shared by two batches stays Occupied with
+    the correct running total when only one of them is completed.
+    """
+    if not frappe.db.exists("Drying Table", drying_table):
+        return
+
+    rows = frappe.db.sql(
+        """
+        SELECT da.batch, da.start_date, dte.coffee_type, dte.debes_quantity
+        FROM `tabDrying Table Entry` dte
+        JOIN `tabDrying Assignment` da ON da.name = dte.parent
+        WHERE dte.drying_table = %s
+          AND dte.parenttype = 'Drying Assignment'
+          AND da.docstatus < 2
+          AND da.drying_status != 'Completed'
+        ORDER BY da.start_date ASC
+        """,
+        drying_table,
+        as_dict=True,
+    )
+
+    total = sum(flt(r.debes_quantity) for r in rows)
+    if not rows or total <= 0:
+        frappe.db.set_value(
+            "Drying Table",
+            drying_table,
+            {
+                "status": "Available",
+                "current_batch": None,
+                "current_coffee_type": None,
+                "current_debes": 0,
+                "date_loaded": None,
+            },
+            update_modified=False,
+        )
+        return
+
+    batches = sorted({r.batch for r in rows if r.batch})
+    types = sorted({r.coffee_type for r in rows if r.coffee_type})
+    frappe.db.set_value(
+        "Drying Table",
+        drying_table,
+        {
+            "status": "Occupied",
+            # Several batches can share a table; the Link field can only name
+            # one, so it shows the oldest and current_debes carries the total.
+            "current_batch": rows[0].batch,
+            "current_coffee_type": types[0] if len(types) == 1 else "",
+            "current_debes": int(total),
+            "date_loaded": rows[0].start_date,
+        },
+        update_modified=False,
+    )
+    if len(batches) > 1:
+        frappe.msgprint(
+            _("Drying Table {0} now holds {1} debes from {2} batches.").format(
+                drying_table, int(total), len(batches)
+            ),
+            indicator="blue",
+            alert=True,
+        )
 
 
 def on_submit_create_repack(doc, method):
@@ -236,15 +321,10 @@ def on_submit_create_repack(doc, method):
         {"repack_created": 1, "linked_repack_entry": se.name},
         update_modified=False,
     )
-    # Free up the drying tables
-    for row in doc.table_assignments:
-        if frappe.db.exists("Drying Table", row.drying_table):
-            frappe.db.set_value(
-                "Drying Table",
-                row.drying_table,
-                {"status": "Available", "current_batch": None, "current_coffee_type": None, "current_debes": 0, "date_loaded": None},
-                update_modified=False,
-            )
+    # Release this assignment's share of each table — anything another live
+    # assignment still has on it stays counted.
+    for drying_table in {r.drying_table for r in doc.table_assignments if r.drying_table}:
+        _refresh_drying_table(drying_table)
 
     frappe.msgprint(
         _("Repack Entry {0} created successfully. {1} kg parchment produced.").format(
@@ -268,39 +348,53 @@ def on_cancel_reverse_repack(doc, method):
         update_modified=False,
     )
     # Restore table status
-    for row in doc.table_assignments:
-        if frappe.db.exists("Drying Table", row.drying_table):
-            frappe.db.set_value(
-                "Drying Table",
-                row.drying_table,
-                {"status": "Available", "current_batch": None, "current_coffee_type": None, "current_debes": 0, "date_loaded": None},
-                update_modified=False,
-            )
+    for drying_table in {r.drying_table for r in doc.table_assignments if r.drying_table}:
+        _refresh_drying_table(drying_table)
 
 
 def _get_batch_stock(batch, warehouse):
-    """Get available stock for a batch in a warehouse."""
-    result = frappe.db.sql(
-        """
-        SELECT SUM(actual_qty)
-        FROM `tabStock Ledger Entry`
-        WHERE batch_no = %s AND warehouse = %s AND is_cancelled = 0
-        """,
-        (batch, warehouse),
-    )
-    return result[0][0] or 0 if result else 0
+    """Get available stock for a batch in a warehouse.
+
+    Must go through ERPNext's own get_batch_qty, not a raw Stock Ledger Entry
+    query: this site uses the Serial and Batch Bundle model (use_serial_batch_fields),
+    where batch association lives in Serial and Batch Entry rows, and
+    Stock Ledger Entry.batch_no is always NULL — a direct SLE.batch_no query
+    silently returns 0 for every batch, however much stock is really there."""
+    from erpnext.stock.doctype.batch.batch import get_batch_qty
+
+    return flt(get_batch_qty(batch_no=batch, warehouse=warehouse))
 
 
 @frappe.whitelist()
-def get_available_tables():
-    """Return list of available drying tables for quick assignment."""
+def get_available_tables(exclude_assignment=None):
+    """Drying tables with room left, for quick assignment.
+
+    A partly-loaded table is still usable, so this returns anything with free
+    space — not just status == "Available", which hid every table that had so
+    much as one debe on it and was why a table could never be reused.
+    """
     tables = frappe.get_all(
         "Drying Table",
-        filters={"status": "Available"},
-        fields=["name", "table_id", "status"],
+        filters={"status": ["!=", "Under Maintenance"]},
+        fields=["name", "table_id", "status", "capacity_debes"],
         order_by="table_id asc",
     )
-    return tables
+    out = []
+    for t in tables:
+        capacity = int(t.capacity_debes) if t.capacity_debes and int(t.capacity_debes) > 0 else DEFAULT_TABLE_CAPACITY_DEBES
+        used = _debes_on_table(t.name, exclude_assignment=exclude_assignment)
+        free = capacity - used
+        if free <= 0:
+            continue
+        out.append({
+            "name": t.name,
+            "table_id": t.table_id,
+            "status": t.status,
+            "capacity_debes": capacity,
+            "used_debes": int(used),
+            "free_debes": int(free),
+        })
+    return out
 
 
 @frappe.whitelist()

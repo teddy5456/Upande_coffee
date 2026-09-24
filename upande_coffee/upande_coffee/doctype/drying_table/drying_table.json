@@ -13,6 +13,7 @@
   "current_batch",
   "column_break_1",
   "current_coffee_type",
+  "capacity_debes",
   "current_debes",
   "date_loaded"
  ],
@@ -50,6 +51,14 @@
    "label": "Coffee Type on Table",
    "options": "Parchment Type",
    "read_only": 1
+  },
+  {
+   "fieldname": "capacity_debes",
+   "fieldtype": "Int",
+   "label": "Capacity (debes)",
+   "default": "50",
+   "non_negative": 1,
+   "description": "Maximum debes this table can hold. A table may be shared by several drying assignments until this is reached."
   },
   {
    "fieldname": "current_debes",

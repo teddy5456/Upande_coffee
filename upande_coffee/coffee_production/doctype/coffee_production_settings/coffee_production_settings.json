@@ -20,7 +20,9 @@
   "section_economics",
   "cherry_price_per_kg",
   "column_break_economics",
-  "picker_rate_per_kg"
+  "picker_rate_per_kg",
+  "section_labour",
+  "default_kg_per_worker"
  ],
  "fields": [
   {
@@ -111,6 +113,19 @@
    "fieldname": "picker_rate_per_kg",
    "fieldtype": "Currency",
    "label": "Picker Rate per kg"
+  },
+  {
+   "fieldname": "section_labour",
+   "fieldtype": "Section Break",
+   "label": "Labour Planning"
+  },
+  {
+   "fieldname": "default_kg_per_worker",
+   "fieldtype": "Float",
+   "label": "Default Kg per Worker (per week)",
+   "default": "150",
+   "precision": "1",
+   "description": "Farm-wide fallback used by the Planner tab to turn a block's revised forecast into a headcount, wherever a block/week does not set its own rate. Not a wage figure — see Picker Rate per kg for that."
   }
  ],
  "index_web_pages_for_search": 1,

@@ -1,10 +1,10 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Upande · Kaitet · Coffee Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* Shades of black — from the Upande logo */
+  /* Shades of black — from the Upande logo, same tokens as avocado-production */
   --ink:#0a0a0a;
   --ink-1:#1a1a18;
   --ink-2:#2a2a26;
@@ -19,36 +19,28 @@
   --surface-2:#ffffff;
   --hairline:rgba(10,10,10,0.06);
   --shadow-card:0 1px 0 rgba(10,10,10,0.04), 0 8px 32px -16px rgba(10,10,10,0.10);
-  --shadow-hover:0 1px 0 rgba(10,10,10,0.06), 0 24px 48px -24px rgba(10,10,10,0.18);
+  --shadow-hover:0 1px 0 rgba(10,10,10,0.05), 0 14px 32px -18px rgba(10,10,10,0.16);
 
-  /* Avocado ramp — flesh to skin, this page's data accent */
-  --avo-100:#f2e9dc;
-  --avo-200:#e3d2b7;
-  --avo-300:#c9a878;
-  --avo-400:#a8824d;
-  --avo-500:#8a6437;
-  --avo-600:#6f4e29;
-  --avo-700:#53381c;
-  --avo-900:#2d1d0e;
-
-  /* Pit tan — single secondary */
-  --pit:#b08d55;
-  --pit-deep:#8a6a3b;
+  /* Roast ramp — parchment to dark roast, this page's data accent */
+  --acc-100:#f2e9dc;
+  --acc-200:#e3d2b7;
+  --acc-300:#c9a878;
+  --acc-400:#a8824d;
+  --acc-500:#8a6437;
+  --acc-600:#6f4e29;
+  --acc-700:#53381c;
 
   /* Semantic states */
   --warn:#d9962e;
   --neg:#c4302b;
-
-  /* Page signal = avocado green */
-  --signal:var(--avo-600);
+  --pos:#3f8f4f;
 
   /* Gradient layers */
   --grad-ink:linear-gradient(135deg,#0a0a0a 0%,#3a3a34 100%);
-  --grad-avo:linear-gradient(135deg,#53381c 0%,#8a6437 100%);
-  --grad-chart:linear-gradient(180deg,rgba(10,10,10,0.18) 0%,rgba(10,10,10,0) 100%);
+  --grad-acc:linear-gradient(135deg,#53381c 0%,#8a6437 100%);
 
+  --meta:'DM Sans',-apple-system,'Segoe UI',sans-serif;
   --sans:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --display:'Fraunces',Georgia,serif;
   --mono:'JetBrains Mono',ui-monospace,monospace;
 }
 *{box-sizing:border-box}
@@ -57,235 +49,403 @@ a{color:inherit}
 :where(button,a):focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 
-/* TOPBAR — light, borderless, prominent logo */
-.topbar{background:var(--surface-2);padding:14px 40px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-bottom:1px solid var(--hairline)}
-.topbar__brand{display:flex;align-items:center;gap:16px}
-.topbar__logo{height:30px;width:auto}
-.topbar__divider{width:1px;height:22px;background:var(--hairline)}
-.topbar__product{font:600 14px var(--sans);color:var(--ink);letter-spacing:-.2px}
-.topbar__product small{display:block;font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute);margin-top:1px}
-.topbar__nav{display:flex;gap:4px;margin-left:32px}
-.topbar__nav a{padding:8px 14px;font:500 13px var(--sans);color:var(--ink-4);text-decoration:none;border-radius:999px;transition:all .2s}
-.topbar__nav a:hover{background:rgba(10,10,10,0.04);color:var(--ink)}
-.topbar__nav a.on{background:var(--ink);color:#fafaf6}
-.topbar__right{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink-4);margin-left:auto}
 .avatar{width:32px;height:32px;border-radius:50%;background:var(--grad-ink);color:#fafaf6;display:grid;place-items:center;font-weight:600;font-size:12px}
 
 /* PAGE */
-.page{max-width:1480px;margin:0 auto;padding:48px 40px 80px}
-.pagehead{display:grid;grid-template-columns:1fr auto;align-items:end;gap:32px;margin-bottom:36px}
-.pagehead__eyebrow{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:2.2px;color:var(--ink-mute);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
-.pagehead__eyebrow::before{content:"";width:18px;height:1px;background:var(--ink-3)}
-.pagehead__title{font:600 44px/1.05 var(--sans);color:var(--ink);letter-spacing:-1.3px;margin:0}
-.pagehead__sub{margin-top:8px;font-size:15px;color:var(--ink-4)}
-.pagehead__tools{display:flex;gap:10px;align-items:center}
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--hairline);margin-bottom:24px}
+.pagehead__eyebrow{font:500 9.5px var(--sans);text-transform:uppercase;letter-spacing:2px;color:var(--ink-mute)}
+.pagehead__title{margin:4px 0 0;font:600 32px/1.05 var(--sans);color:var(--ink);letter-spacing:-.6px}
+.pagehead__sub{margin:6px 0 0;font:400 12.5px var(--meta);color:var(--ink-mute)}
+.pagehead__tools{display:flex;gap:8px;align-items:center}
 
 /* Toggle / pill controls */
-.pillgroup{display:inline-flex;background:rgba(10,10,10,0.04);border-radius:999px;padding:4px;gap:2px}
-.pillgroup button{border:0;background:transparent;font:500 12px var(--sans);color:var(--ink-4);padding:8px 16px;cursor:pointer;border-radius:999px;transition:all .2s}
-.pillgroup button.on{background:var(--ink);color:#fafaf6;box-shadow:0 2px 8px rgba(10,10,10,0.15)}
-.datepill{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:999px;padding:10px 16px;font:500 12px var(--sans);color:var(--ink);box-shadow:var(--shadow-card)}
-.iconbtn{width:40px;height:40px;border:0;background:var(--surface-2);border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink-4);box-shadow:var(--shadow-card);transition:all .2s}
-.iconbtn:hover{color:var(--ink);transform:translateY(-1px)}
+.datepill{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:999px;padding:8px 14px;font:500 12px var(--sans);color:var(--ink);box-shadow:var(--shadow-card)}
+.iconbtn{width:34px;height:34px;border:0;background:var(--surface-2);border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink-4);box-shadow:var(--shadow-card);transition:background .15s,color .15s}
+.iconbtn:hover{color:var(--ink);background:#f0efe9}
 
-/* TABS — modern black pills, large */
-.tabs{display:inline-flex;gap:4px;margin-bottom:32px;background:rgba(10,10,10,0.04);padding:5px;border-radius:999px;max-width:100%;overflow-x:auto}
-.tab{background:transparent;border:0;font:500 13px var(--sans);color:var(--ink-4);padding:10px 18px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;transition:all .2s}
-.tab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+/* TABS — modern black pills */
+.tabs{display:inline-flex;gap:3px;margin-bottom:22px;background:rgba(10,10,10,0.04);padding:4px;border-radius:999px;max-width:100%;overflow-x:auto}
+.tab{background:transparent;border:0;font:500 12px var(--sans);color:var(--ink-4);padding:8px 14px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;transition:all .2s}
+.tab svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
 .tab:hover{color:var(--ink)}
 .tab.on{background:var(--grad-ink);color:#fafaf6;box-shadow:0 4px 14px rgba(10,10,10,0.20)}
 
-/* KPI cards — LARGE, BORDERLESS, gradient hover */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-bottom:32px}
-.kpi{background:var(--surface-2);border-radius:20px;padding:28px 30px;box-shadow:var(--shadow-card);transition:all .25s;position:relative;overflow:hidden;cursor:pointer}
-.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
-.kpi__label{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:1.8px;color:var(--ink-mute);margin-bottom:14px}
-.kpi__value{font:600 44px/1 var(--sans);color:var(--ink);letter-spacing:-1.4px;font-feature-settings:"tnum"}
-.kpi__unit{font:400 14px var(--sans);color:var(--ink-mute);margin-top:6px}
-.kpi__trend{margin-top:16px;display:inline-flex;align-items:center;gap:6px;font:500 12px var(--sans);padding:5px 12px;border-radius:999px;background:rgba(10,10,10,0.03)}
-.kpi__trend.up{color:var(--avo-600);background:rgba(138,100,55,0.13)}
+/* KPI cards — .kpi/.kpi__label/.kpi__value byte-identical to avocado_shell.html's .kpi
+   family (no hover lift there); .kpi__unit plays the role of avocado's .kpi__hint.
+   .kpi__trend/.kpi__spark have no avocado equivalent — coffee's own addition on top. */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px}
+.kpi{background:var(--surface-2);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.kpi--alert .kpi__value{color:var(--neg)}
+.kpi__label{font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute)}
+.kpi__value{font:600 30px/1 var(--sans);color:var(--ink);letter-spacing:-1px;margin-top:10px;font-feature-settings:"tnum"}
+.kpi__unit{font:400 11.5px var(--meta);color:var(--ink-mute);margin-top:7px}
+.kpi__trend{margin-top:12px;display:inline-flex;align-items:center;gap:6px;font:500 11px var(--sans);padding:4px 10px;border-radius:999px;background:rgba(10,10,10,0.03)}
+.kpi__trend.up{color:var(--pos);background:rgba(63,143,79,0.12)}
 .kpi__trend.down{color:var(--neg);background:rgba(196,48,43,0.10)}
-.kpi__trend.flat{color:var(--pit-deep);background:rgba(176,141,85,0.14)}
+.kpi__trend.flat{color:var(--acc-600);background:rgba(138,100,55,0.13)}
 .kpi__trend small{color:inherit;opacity:.65;font-weight:500}
-.kpi__spark{position:absolute;right:18px;top:18px;width:80px;height:30px}
+.kpi__spark{position:absolute;right:14px;top:14px;width:70px;height:26px;opacity:.7}
 
-/* Big card */
-.card{background:var(--surface-2);border-radius:24px;padding:28px 32px;box-shadow:var(--shadow-card);margin-bottom:18px}
-.card--padded{padding:32px 36px}
-.card__head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:24px}
-.card__head h3{margin:0;font:600 18px var(--sans);color:var(--ink);letter-spacing:-.4px}
-.card__head .meta{font:500 12px var(--sans);color:var(--ink-mute)}
+/* Card — .card/.card__head/.card__head h3 byte-identical to avocado_shell.html;
+   .meta plays the role of avocado's `.card__head p` (coffee uses a div, not a <p>). */
+.card{background:var(--surface-2);border-radius:14px;box-shadow:var(--shadow-card);padding:20px 22px;margin-bottom:20px}
+.card--padded{padding:20px 22px}
+.card__head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:14px}
+.card__head h3{margin:0;font:600 14.5px var(--sans);color:var(--ink);letter-spacing:-.2px}
+.card__head .meta{margin:0;font:400 11.5px var(--meta);color:var(--ink-mute);max-width:64ch}
 
 /* Columns */
-.row-2{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px}
-.row-2-eq{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
-.row-3{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:18px;margin-bottom:18px}
-.chart-sm{width:100%;height:300px;display:block}
+.row-2{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
+.row-2-eq{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.chart-sm{width:100%;height:260px;display:block}
 
 /* Legend */
-.legend{display:flex;gap:18px;font-size:12px;color:var(--ink-mute)}
+.legend{display:flex;gap:18px;font:400 11.5px var(--meta);color:var(--ink-mute)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
-.legend i{width:18px;height:3px;border-radius:2px}
+.legend i{width:16px;height:3px;border-radius:2px}
 
 /* Color legend chips */
-.clegend{display:flex;flex-wrap:wrap;gap:12px 18px;margin-top:14px}
-.clegend span{display:inline-flex;align-items:center;gap:8px;font:500 12px var(--sans);color:var(--ink-3)}
-.clegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.clegend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:12px}
+.clegend span{display:inline-flex;align-items:center;gap:7px;font:500 11.5px var(--sans);color:var(--ink-3)}
+.clegend i{width:9px;height:9px;border-radius:3px;display:inline-block}
 
 /* Pie center label */
 .piewrap{position:relative;display:grid;place-items:center}
 .piewrap__center{position:absolute;text-align:center;pointer-events:none}
-.piewrap__center b{display:block;font:600 32px var(--sans);color:var(--ink);letter-spacing:-1px;font-variant-numeric:tabular-nums}
-.piewrap__center small{font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute)}
+.piewrap__center b{display:block;font:600 26px var(--sans);color:var(--ink);letter-spacing:-.7px;font-variant-numeric:tabular-nums}
+.piewrap__center small{font:500 9.5px var(--sans);text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-mute)}
 
 /* Trend chart — gradient fill */
-.chart{width:100%;height:280px}
+.chart{width:100%;height:240px}
 
 /* Lists */
 .list{display:flex;flex-direction:column}
-.list__row{display:grid;grid-template-columns:36px 1fr auto;gap:14px;padding:14px 0;border-bottom:1px solid var(--hairline);align-items:center;cursor:pointer;transition:background .2s;border-radius:10px;padding-left:8px;padding-right:8px}
+.list__row{display:grid;grid-template-columns:32px 1fr auto;gap:12px;padding:10px 8px;border-bottom:1px solid var(--hairline);align-items:center;cursor:pointer;transition:background .2s;border-radius:8px}
 .list__row:hover{background:rgba(10,10,10,0.02)}
 .list__row:last-child{border-bottom:0}
-.list__rank{font:500 13px var(--sans);color:var(--ink-mute);width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:rgba(10,10,10,0.04)}
-.list__rank.lead{background:var(--grad-avo);color:#fafaf6}
-.list__name{font:600 14px var(--sans);color:var(--ink)}
-.list__meta{font-size:12px;color:var(--ink-mute);margin-top:2px}
-.list__qty{font:600 16px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
-.list__qty small{display:block;font:500 11px var(--sans);color:var(--ink-mute);margin-top:1px}
+.list__rank{font:500 12px var(--sans);color:var(--ink-mute);width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:rgba(10,10,10,0.04)}
+.list__rank.lead{background:var(--grad-acc);color:#fafaf6}
+.list__name{font:600 13px var(--sans);color:var(--ink)}
+.list__meta{font:400 11px var(--meta);color:var(--ink-mute);margin-top:2px}
+.list__qty{font:600 14px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+.list__qty small{display:block;font:500 10px var(--sans);color:var(--ink-mute);margin-top:1px}
 
 /* Block tiles / generic cells */
-.tilegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-.tile{background:var(--surface-2);border-radius:20px;padding:24px 26px;box-shadow:var(--shadow-card);cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;display:block}
-.tile:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
-.tile__head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.tile__name{font:600 15px var(--sans);color:var(--ink);letter-spacing:-.2px}
-.tile__arrow{color:var(--ink-mute);transition:transform .2s;font-size:14px}
-.tile:hover .tile__arrow{transform:translateX(3px);color:var(--ink)}
-.tile__chip{display:inline-block;padding:3px 10px;font:500 11px var(--sans);background:rgba(138,100,55,0.13);color:var(--avo-700);border-radius:99px}
-.tile__chip.warn{background:rgba(217,150,46,0.13);color:#96650f}
-.tile__chip.neg{background:rgba(196,48,43,0.10);color:var(--neg)}
-.tile__stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 10px}
-.tile__stats div small{font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1px;color:var(--ink-mute);display:block;margin-bottom:2px}
-.tile__stats div b{font:600 18px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
+.tilegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.tile{background:var(--surface-2);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow-card);transition:background .15s;text-decoration:none;color:inherit;display:block}
+.tile:hover{background:#f6f4ee}
+.tile__head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.tile__name{font:600 13.5px var(--sans);color:var(--ink);letter-spacing:-.1px}
+.tile__stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 8px}
+.tile__stats div small{font:500 9px var(--sans);text-transform:uppercase;letter-spacing:1px;color:var(--ink-mute);display:block;margin-bottom:2px}
+.tile__stats div b{font:600 15px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
 
 /* Estimate vs actual horizontal bars */
-.hb{display:grid;grid-template-columns:110px 1fr 56px;gap:18px;align-items:center;padding:10px 0;border-bottom:1px solid var(--hairline)}
+.hb{display:grid;grid-template-columns:110px 1fr 56px;gap:16px;align-items:center;padding:8px 0;border-bottom:1px solid var(--hairline)}
 .hb:last-child{border-bottom:0}
-.hb__name{font:600 13px var(--sans);color:var(--ink)}
-.hb__lane{position:relative;height:18px}
-.hb__est{position:absolute;left:0;top:0;height:18px;background:rgba(10,10,10,0.05);border-radius:999px}
-.hb__act{position:absolute;left:0;top:3px;height:12px;border-radius:999px;background:var(--grad-ink)}
+.hb__name{font:600 12.5px var(--sans);color:var(--ink)}
+.hb__lane{position:relative;height:16px}
+.hb__est{position:absolute;left:0;top:0;height:16px;background:rgba(10,10,10,0.05);border-radius:999px}
+.hb__act{position:absolute;left:0;top:3px;height:10px;border-radius:999px;background:var(--grad-ink)}
 .hb__act.high{background:linear-gradient(90deg,#53381c,#8a6437)}
 .hb__act.mid{background:linear-gradient(90deg,#9a5a00,#d9962e)}
 .hb__act.low{background:linear-gradient(90deg,#7a2218,#c4302b)}
-.hb__pct{font:600 14px var(--sans);text-align:right;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.hb__pct{font:600 13px var(--sans);text-align:right;color:var(--ink-3);font-variant-numeric:tabular-nums}
 
 /* Funnel */
-.funnel{padding:20px 0 10px;display:flex;flex-direction:column;gap:14px}
-.funnel__stage{display:grid;grid-template-columns:1fr auto;align-items:center;gap:18px}
-.funnel__bar{height:60px;display:flex;align-items:center;padding:0 24px;font:600 16px var(--sans);color:#fafaf6;border-radius:14px;letter-spacing:-.2px;min-width:190px}
+.funnel{padding:14px 0 6px;display:flex;flex-direction:column;gap:12px}
+.funnel__stage{display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px}
+.funnel__bar{height:48px;display:flex;align-items:center;padding:0 20px;font:600 14px var(--sans);color:#fafaf6;border-radius:10px;letter-spacing:-.2px;min-width:170px}
 .funnel__bar.s1{background:var(--grad-ink);width:100%}
 .funnel__bar.s2{background:linear-gradient(135deg,#3a2813,#6f4e29);width:68%}
 .funnel__bar.s3{background:linear-gradient(135deg,#6f4e29,#a8824d);width:38%}
-.funnel__meta{font:500 12px var(--sans);color:var(--ink-mute);min-width:150px;text-align:right}
-.funnel__meta b{display:block;font:600 22px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
-.funnel__foot{display:flex;flex-wrap:wrap;gap:8px 24px;padding-top:18px;margin-top:8px;border-top:1px solid var(--hairline);font:500 12px var(--sans);color:var(--ink-mute)}
-.funnel__foot i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:8px;vertical-align:-1px}
-.funnel__foot b{color:var(--ink-3);font-weight:600}
+.funnel__meta{font:500 11px var(--meta);color:var(--ink-mute);min-width:140px;text-align:right}
+.funnel__meta b{display:block;font:600 18px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
 
-/* Detail page back nav */
-.backbtn{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--sans);color:var(--ink-4);text-decoration:none;padding:8px 16px;border-radius:999px;background:rgba(10,10,10,0.04);margin-bottom:24px;transition:all .2s}
-.backbtn:hover{background:var(--ink);color:#fafaf6}
+@media (max-width:1000px){.row-2,.row-2-eq{grid-template-columns:1fr}.funnel__bar.s2,.funnel__bar.s3{min-width:140px}}
 
-/* Hero stat (detail) */
-.hero{background:var(--surface-2);border-radius:28px;padding:48px 48px;box-shadow:var(--shadow-card);margin-bottom:18px;background-image:radial-gradient(circle at 95% 5%,rgba(138,100,55,0.10),transparent 35%)}
-.hero__eyebrow{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:2.2px;color:var(--ink-mute);margin-bottom:14px}
-.hero__name{font:600 64px/0.95 var(--sans);color:var(--ink);letter-spacing:-2px;margin:0 0 10px}
-.hero__sub{font:400 17px var(--sans);color:var(--ink-4);margin:0 0 28px}
-.hero__stats{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;padding-top:24px;border-top:1px solid var(--hairline)}
-.hero__stat small{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute);display:block;margin-bottom:6px}
-.hero__stat b{font:600 30px var(--sans);color:var(--ink);letter-spacing:-.7px;font-variant-numeric:tabular-nums;display:block}
-.hero__stat em{font:400 12px var(--sans);font-style:normal;color:var(--ink-mute);margin-left:6px}
-
-@media (max-width:1200px){.row-3{grid-template-columns:1fr 1fr}}
-@media (max-width:1000px){.row-2,.row-2-eq,.row-3{grid-template-columns:1fr}.hero__name{font-size:42px}.hero__stats{grid-template-columns:repeat(2,1fr)}.funnel__bar.s2,.funnel__bar.s3{min-width:150px}}
-
-/* ── Data-tab extensions, same design language ── */
-.tbl{width:100%;border-collapse:collapse;font:400 13px var(--sans);color:var(--ink-3)}
-.tbl th{text-align:left;font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-mute);padding:10px 12px;border-bottom:1px solid var(--hairline)}
-.tbl td{padding:12px;border-bottom:1px solid var(--hairline);font-variant-numeric:tabular-nums}
-.tbl tr:last-child td{border-bottom:0}
+/* ── Data-tab extensions — table/th/td/.num byte-identical to avocado_shell.html's
+   bare table/th/td (scoped under .tbl instead of the bare tag, since this page also
+   has form tables the shell's page never needed to scope against) ── */
+.tbl{width:100%;border-collapse:collapse;font-feature-settings:"tnum"}
+.tbl th{text-align:left;font:500 8.5px var(--sans);text-transform:uppercase;letter-spacing:1px;color:var(--ink-mute);padding:0 10px 9px;white-space:nowrap}
+.tbl td{padding:9px 10px;border-top:1px solid var(--hairline);font:400 13px var(--meta);color:var(--ink-2)}
+.tbl tr:first-child td{border-top:0}
 .tbl tr:hover td{background:rgba(10,10,10,0.02)}
-.tbl .num{text-align:right;font-weight:600;color:var(--ink)}
+.tbl tr.short td{background:#fdf6ec}
+.tbl .num{text-align:right;font-family:var(--mono);font-size:12.5px}
 .tblwrap{overflow-x:auto}
-.loading{display:flex;align-items:center;gap:10px;padding:26px;color:var(--ink-mute);font:500 13px var(--sans)}
-.spin{width:16px;height:16px;border:2px solid var(--hairline);border-top-color:var(--ink);border-radius:50%;animation:sp .7s linear infinite}
+.muted{color:var(--ink-mute)}
+
+/* ── Planner: season strip + block×week grid ───────────────────────────────
+   One instrument instead of two tables: a bold calendar-header strip for
+   season context, and a dense heatmap grid (block rows × week columns,
+   GitHub-contribution-graph density) where cell shade is workers_needed —
+   replacing the separate "Week by Week" totals table and "Weekly Plan by
+   Block" table. Both this grid and the Model Forecast table below default
+   to blocks with activity only, so an idle block doesn't cost a row. ── */
+.seasonstrip{background:var(--grad-ink);border-radius:14px;box-shadow:var(--shadow-card);padding:16px 20px 14px;margin-bottom:18px;color:#fafaf6}
+.seasonstrip__figs{display:flex;gap:32px;flex-wrap:wrap;margin-bottom:16px}
+.seasonstrip__fig{display:flex;flex-direction:column;gap:4px}
+.seasonstrip__fig i{font:500 9px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:rgba(250,249,244,.55);font-style:normal}
+.seasonstrip__fig b{font:600 22px var(--sans);letter-spacing:-.6px;font-feature-settings:"tnum"}
+.seasonstrip__fig span{font:400 10.5px var(--meta);color:rgba(250,249,244,.6)}
+.seasonstrip__rail{position:relative;padding-top:20px}
+.seasonstrip__track{position:relative;height:8px;border-radius:99px;background:rgba(250,249,244,.14)}
+.seasonstrip__fill{position:absolute;left:0;top:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#a8824d,#e3d2b7)}
+.seasonstrip__flag{position:absolute;top:-24px;transform:translateX(-50%);background:#fafaf6;color:var(--acc-700);font:700 9px var(--sans);text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.seasonstrip__flag::after{content:"";position:absolute;left:50%;bottom:-3px;width:7px;height:7px;background:#fafaf6;transform:translateX(-50%) rotate(45deg);border-radius:0 0 2px 0}
+.seasonstrip__ticks{display:flex;margin-top:12px}
+.seasonstrip__tick{flex:1;text-align:center;font:500 10px var(--mono);color:rgba(250,249,244,.45)}
+.seasonstrip__tick.now{color:#fafaf6;font-weight:700}
+
+/* Comparison tab's dimension selector — three genuinely different lenses on
+   the same season (spatial ranking, time trend, money), not an open-ended
+   list, so a segmented pill fits better than a dropdown. Same voice as
+   avocado-production's Manual/Automatic toggle. */
+.seg{display:inline-flex;background:var(--surface);border-radius:9px;padding:3px;gap:2px;box-shadow:var(--shadow-card)}
+.seg__opt{border:0;background:transparent;padding:7px 15px;border-radius:7px;font:500 12px var(--sans);color:var(--ink-4);cursor:pointer}
+.seg__opt.on{background:var(--grad-ink);color:#fafaf6}
+.cmp-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.cmp-view{display:none}
+.cmp-view.on{display:block}
+
+.gridmeta{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.gridmeta a{color:var(--acc-600);font-weight:600;cursor:pointer;text-decoration:none;border-bottom:1px solid var(--acc-300)}
+.gridmeta a:hover{color:var(--acc-700)}
+
+.plangridwrap{overflow-x:auto}
+/* table-layout:fixed so a cell's content (e.g. swapping in the quick-entry input)
+   can NEVER resize its column or push neighbouring cells — column widths come only
+   from these two explicit widths; the week columns split whatever's left, evenly,
+   and stay that width no matter what's inside any one of their cells. */
+.plangrid{border-collapse:separate;border-spacing:0 2px;width:100%;table-layout:fixed}
+.plangrid .pgblockth,.plangrid td.pgblock{width:100px}
+.plangrid .pgtotalth,.plangrid td.pgtotal{width:70px}
+.plangrid thead th{text-align:center;font:500 7.5px var(--sans);text-transform:uppercase;letter-spacing:.5px;color:var(--ink-mute);padding:0 1px 4px;white-space:nowrap;position:relative;overflow:hidden}
+.plangrid thead th small{display:block;font:400 7.5px var(--meta);text-transform:none;letter-spacing:0;color:var(--ink-faint);margin-top:1px}
+.plangrid thead th.today{color:var(--acc-700)}
+.plangrid thead th.today::before{content:"";position:absolute;left:3px;right:3px;top:-6px;height:2px;background:var(--acc-600);border-radius:2px}
+.plangrid thead .pgblockth,.plangrid thead .pgtotalth{text-align:left}
+.plangrid thead .pgtotalth{text-align:right;padding-right:8px}
+.plangrid td.pgblock{text-align:left;padding:0 10px 0 2px;font:600 10.5px var(--sans);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:sticky;left:0;background:var(--surface-2)}
+.plangrid td.pgblock small{display:block;font:400 8.5px var(--meta);color:var(--ink-mute);font-weight:400;margin-top:0}
+.plangrid tbody tr:hover td.pgblock{background:#f6f4ee}
+.plangrid td.pgcell{padding:0 1px;cursor:pointer}
+.plangrid td.pgcell:focus{outline:none}
+.plangrid td.pgcell:focus .pgbox{outline:1.5px solid var(--ink);outline-offset:-1.5px}
+.pgbox{position:relative;border-radius:5px;min-width:34px;height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--surface);transition:outline-color .1s}
+.pgcell .pgbox:hover{outline:1px solid var(--ink-3);outline-offset:-1px}
+.pgbox.pgedit{background:var(--surface-2)}
+.pgbox.empty{background:rgba(10,10,10,.035)}
+.pgbox.today{box-shadow:inset 0 0 0 2px var(--acc-600)}
+.pgbox.empty.today{background:rgba(138,100,55,.1);box-shadow:none}
+.pgbox.short{box-shadow:inset 2px 0 0 0 var(--neg)}
+.pgbox.today.short{box-shadow:inset 0 0 0 2px var(--acc-600),inset 2px 0 0 0 var(--neg)}
+.pgtop{display:flex;align-items:baseline;gap:2px;line-height:1}
+.pgfc{font:600 9.5px var(--sans);color:var(--ink);line-height:1;font-feature-settings:"tnum"}
+.pgac{font:400 8px var(--meta);color:var(--ink-4)}
+.pgwk{font:500 7.5px var(--mono);color:var(--ink-4);line-height:1;font-feature-settings:"tnum"}
+.pgbox.dark .pgfc{color:#fbf9f4}
+.pgbox.dark .pgac{color:#e7ddcc}
+.pgbox.dark .pgwk{color:#e7ddcc}
+.pgov{position:absolute;top:1px;right:1px;width:4px;height:4px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.pgbox.dark .pgov{background:#fbf9f4;box-shadow:0 0 0 2px rgba(10,10,10,.35)}
+.plangrid td.pgtotal{text-align:right;padding:0 8px;font:600 10.5px var(--sans);color:var(--ink)}
+.plangrid td.pgtotal small{font:400 9px var(--meta);color:var(--ink-mute);font-weight:400}
+.plangrid tfoot td{border-top:2px solid var(--hairline);padding-top:8px;font:600 10.5px var(--sans);color:var(--ink)}
+.plangrid tfoot td.pgfoot{text-align:center;padding:8px 4px 0}
+.plangrid tfoot td.pgfoot small{font:400 9px var(--meta);color:var(--ink-mute);font-weight:400}
+.plangrid tfoot td.pgfoot.today{color:var(--acc-700)}
+.plangrid tfoot td.pgfoot.short{box-shadow:inset 0 3px 0 0 var(--neg)}
+.plangrid tfoot .pgfootcost{display:block;font:400 8.5px var(--mono);color:var(--acc-600);margin-top:1px}
+.plangrid tfoot td.pgblock{position:sticky;left:0;background:var(--surface-2)}
+
+/* Quick inline edit (single click) and the fuller popover (double click) that
+   replace the old persistent "Set/Edit a Block-Week" card below the grid. */
+/* Fills the 32px .pgbox comfortably now that the live total moved out into the
+   floating popup below — before that move this only needed to leave room for
+   a second line in-cell, which left it looking thin on its own. */
+.pgquick{width:100%;min-width:0;max-width:100%;height:26px;border:1px solid var(--ink-3);border-radius:5px;text-align:center;
+  font:600 11px var(--sans);color:var(--ink);background:var(--surface-2);outline:none;padding:0}
+.pgpop{position:absolute;z-index:50;background:var(--surface-2);border-radius:12px;box-shadow:var(--shadow-hover);
+  padding:14px 16px;width:210px;display:flex;flex-direction:column;gap:9px}
+.pgpop[hidden]{display:none}
+.pgpop__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.pgpop__head b{font:600 12px var(--sans);color:var(--ink)}
+.pgpop__x{border:0;background:transparent;cursor:pointer;color:var(--ink-mute);font-size:16px;line-height:1;padding:0 2px}
+.pgpop label{display:flex;flex-direction:column;gap:3px;font:500 9px var(--sans);text-transform:uppercase;letter-spacing:1px;color:var(--ink-mute)}
+.pgpop label small{display:block;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint);margin-top:1px}
+.pgpop input{border:1px solid var(--hairline);background:var(--surface);border-radius:8px;padding:7px 9px;font:500 12px var(--sans);color:var(--ink);outline:none}
+.pgpop input:focus{border-color:var(--ink-3)}
+.pgpop__total{font:600 11.5px var(--sans);color:var(--ink);background:rgba(10,10,10,.035);border-radius:8px;padding:7px 9px;text-align:center;font-feature-settings:"tnum"}
+.pgpop__cost{font:600 11.5px var(--sans);color:var(--acc-700);background:var(--acc-100);border-radius:8px;padding:7px 9px;text-align:center;font-feature-settings:"tnum"}
+
+/* Floating "what this implies" readout while quick-entering a cell — replaces
+   trying to cram workers + cost into the tiny cell itself. Dark, tooltip-style,
+   non-interactive (pointer-events:none) so it never steals the click meant for
+   the input or the cell behind it, and sized to read at a glance, not squint at.
+   position:fixed (viewport-relative, not document-relative) so its placement
+   math never has to reason about scroll offset — showQuickTotal() below always
+   keeps it fully inside the visible viewport and clear of the cell it's for. */
+.pgqtot{position:fixed;z-index:60;background:var(--grad-ink);color:#fafaf6;border-radius:10px;
+  padding:8px 12px;box-shadow:var(--shadow-hover);pointer-events:none;white-space:nowrap;text-align:center}
+.pgqtot[hidden]{display:none}
+.pgqtot b{display:block;font:600 14px var(--sans);letter-spacing:-.2px;font-feature-settings:"tnum"}
+.pgqtot span{display:block;font:500 12px var(--mono);color:var(--acc-300);margin-top:2px;font-feature-settings:"tnum"}
+.pgpop .btn{align-self:flex-start;margin-top:2px}
+
+/* Secondary tables (Model Forecast) fold behind a native <details> so the tab
+   never shows two long grids at once — collapsed by default, and its own
+   rows default to blocks with activity too. */
+.foldcard{background:var(--surface-2);border-radius:14px;box-shadow:var(--shadow-card);padding:20px 22px;margin-bottom:20px}
+.foldcard summary{display:flex;align-items:baseline;justify-content:space-between;gap:14px;cursor:pointer;list-style:none}
+.foldcard summary::-webkit-details-marker{display:none}
+.foldcard summary::after{content:"Show ▾";font:500 10.5px var(--sans);color:var(--ink-mute);white-space:nowrap}
+.foldcard[open] summary::after{content:"Hide ▴"}
+.foldcard .tblwrap{margin-top:16px}
+
+/* .pill and its variants — byte-identical to avocado_shell.html's .pill family.
+   chip()/stChip() (below) emit these classes directly, replacing coffee's earlier
+   bespoke .tile__chip so every badge on the page shares one vocabulary with avocado. */
+.pill{display:inline-block;font:600 8.5px var(--sans);letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.pill--measured{background:var(--acc-100);color:var(--acc-700)}
+.pill--typed{background:#f0efe9;color:var(--ink-4)}
+.pill--estate{background:#f0efe9;color:var(--ink-4)}
+.pill--counted{background:var(--acc-500);color:#fff}
+.pill--warn{background:#fbf0dc;color:#8a5b12}
+.pill--neg{background:#fbe6e5;color:#8e2320}
+.pill--short{background:#fbe6e5;color:#8e2320}
+.pill--idle{background:#eef2f7;color:#3c5a78}
+
+.bar{height:6px;border-radius:99px;background:#eeede7;overflow:hidden;min-width:80px}
+.bar i{display:block;height:100%;background:var(--acc-500)}
+.bar i.over{background:var(--neg)}
+.up{color:var(--pos)} .down{color:var(--neg)}
+
+/* .figs/.fig__* — byte-identical to avocado_shell.html's, used by fig() (below) for
+   a secondary figure row inside a card, without a second full .kpi-grid around it. */
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:18px 24px;margin:2px 0 4px}
+.fig__label{font:500 9.5px var(--sans);text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-mute)}
+.fig__value{font:600 23px/1.15 var(--sans);color:var(--ink);letter-spacing:-.5px;margin-top:6px;font-feature-settings:"tnum";word-break:break-word}
+.fig__hint{font:400 11px var(--meta);color:var(--ink-mute);margin-top:4px}
+
+/* An empty/waiting card explains itself in a sentence, never as a row of zeros —
+   byte-identical to avocado_shell.html's .blank/.note. */
+.blank{padding:6px 0 2px;font:400 12.5px var(--meta);color:var(--ink-mute);max-width:74ch}
+.blank b{color:var(--ink-3);font-weight:600}
+.note{margin:14px 0 0;padding-top:13px;border-top:1px solid var(--hairline);font:400 12px var(--meta);color:var(--ink-mute)}
+.note b{color:var(--ink);font-weight:600}
+
+/* Ranked bars — inline SVG, no library, same technique as avocado-production's
+   rankBars(). Used by the Blocks and Labour cards. */
+.rank{display:block;width:100%;height:auto;max-width:100%}
+.rank .rk-l{font:500 11px var(--sans);fill:var(--ink-2)}
+.rank .rk-v{font:500 11px var(--mono);fill:var(--ink);text-anchor:end}
+.rank .rk-t{fill:#eeede7}
+.rank .rk-b{fill:var(--acc-500)}
+.rankfoot{font:400 11px var(--meta);color:var(--ink-mute);margin:2px 0 12px}
+
+/* Divider between two data sources inside one merged tab */
+.sectiondivider{display:flex;align-items:baseline;gap:12px;margin:26px 0 16px;padding-top:16px;border-top:1px solid var(--hairline)}
+.sectiondivider span{font:600 11px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink)}
+.sectiondivider small{font:400 11.5px var(--meta);color:var(--ink-mute)}
+.loading{display:flex;align-items:center;gap:10px;padding:22px;color:var(--ink-mute);font:500 12.5px var(--sans)}
+.spin{width:15px;height:15px;border:2px solid var(--hairline);border-top-color:var(--ink);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.errbox{background:rgba(196,48,43,0.07);color:var(--neg);border-radius:14px;padding:14px 18px;font:500 13px var(--sans);margin-bottom:18px}
-.emptybox{padding:26px;text-align:center;color:var(--ink-faint);font:400 13px var(--sans)}
+.errbox{background:#fbe6e5;color:#8e2320;border-radius:12px;padding:14px 18px;font:400 13px var(--meta);margin-bottom:18px}
+.emptybox{padding:26px;text-align:center;color:var(--ink-mute);font:400 13px var(--meta)}
 .panel{display:none}
 .panel.on{display:block}
 select.datepill,input.datepill{border:0;-webkit-appearance:none;appearance:none;cursor:pointer}
-input.datepill{min-width:140px}
+input.datepill{min-width:130px}
 
-/* ── Floating sidebar (SCP style: card, radius, shadow, collapse) ── */
-:root{--sbw:236px}
-body{padding-left:calc(var(--sbw) + 44px)}
+/* ── Left rail — same proportions/tokens as avocado-production's .sidebar ── */
+:root{--sbw:214px}
+body{padding-left:calc(var(--sbw) + 26px)}
 body.sb-collapsed{--sbw:64px}
-.sidebar{position:fixed;left:16px;top:16px;bottom:16px;width:var(--sbw);background:var(--surface-2);border-radius:22px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;padding:18px 12px;z-index:50;transition:width .15s}
-.sidebar__logo{display:flex;align-items:center;gap:10px;padding:6px 10px;margin-bottom:16px;text-decoration:none}
-.sidebar__logo img{height:26px;width:auto;max-width:100%}
-.sidebar__nav{flex:1;display:flex;flex-direction:column;gap:4px;overflow-y:auto;overflow-x:hidden}
-.snav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;font:500 13px var(--sans);color:var(--ink-4);cursor:pointer;border:0;background:transparent;text-align:left;white-space:nowrap;width:100%}
-.snav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;flex:none}
+.sidebar{position:fixed;left:16px;top:16px;bottom:16px;width:var(--sbw);background:var(--surface-2);border-radius:14px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;padding:16px 10px;z-index:50;transition:width .15s}
+.sidebar__logo{display:flex;align-items:center;gap:9px;padding:4px 8px;margin-bottom:14px;text-decoration:none;white-space:nowrap;overflow:hidden}
+.sidebar__logo img{height:24px;width:auto;max-width:100%}
+.sidebar__nav{flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden}
+.sidebar__nav::-webkit-scrollbar{width:4px}
+.sidebar__nav::-webkit-scrollbar-thumb{background:rgba(10,10,10,.14);border:0;border-radius:99px}
+.sidebar__nav{scrollbar-width:thin;scrollbar-color:rgba(10,10,10,.14) transparent}
+.snav{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font:500 11.5px var(--sans);color:var(--ink-4);cursor:pointer;border:0;background:transparent;text-align:left;white-space:nowrap;width:100%;text-decoration:none}
+.snav svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .snav:hover{background:rgba(10,10,10,0.05);color:var(--ink)}
-.snav.on{background:var(--grad-ink);color:#fafaf6}
+.snav.on{background:linear-gradient(135deg,var(--acc-600),var(--acc-700));color:#fafaf6}
+.snav.on:hover{color:#fafaf6}
 .sb-collapsed .snav span{display:none}
-.sb-sec{padding:12px 10px 5px;font:500 8px var(--sans);letter-spacing:1.3px;text-transform:uppercase;color:var(--ink-mute)}
+.sb-sec{padding:12px 10px 5px;font:500 8px var(--sans);letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mute)}
 .sb-collapsed .sb-sec{display:none}
-.sb-collapsed .sidebar{padding:18px 8px}
-.sidebar__foot{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--hairline);padding-top:10px}
-.sidebar__user{display:flex;align-items:center;gap:10px;padding:8px 12px;font:500 12px var(--sans);color:var(--ink-4);white-space:nowrap;overflow:hidden}
+.sb-collapsed .sidebar{padding:16px 8px}
+.sb-collapsed .snav{justify-content:center;padding:9px 0}
+.sidebar__foot{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--hairline);padding-top:10px}
+.sidebar__user{display:flex;align-items:center;gap:10px;padding:8px 10px;font:500 11.5px var(--sans);color:var(--ink-4);white-space:nowrap;overflow:hidden}
 .sb-collapsed .sidebar__user span{display:none}
 .sidebar__resizer{position:absolute;top:0;right:-6px;width:12px;height:100%;cursor:ew-resize}
-.page{max-width:none;margin:0;padding:34px 40px 80px}
+.page{max-width:1480px;margin:0;padding:30px 36px 72px}
 /* form controls in the design language */
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-.field label{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:1.6px;color:var(--ink-mute)}
-.field input,.field select{border:1px solid var(--hairline);background:var(--surface);border-radius:12px;padding:11px 14px;font:500 13px var(--sans);color:var(--ink);outline:none}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font:500 9.5px var(--sans);text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-mute)}
+.field input,.field select{border:1px solid var(--hairline);background:var(--surface);border-radius:9px;padding:9px 12px;font:500 12.5px var(--sans);color:var(--ink);outline:none}
 .field input:focus,.field select:focus{border-color:var(--ink-3)}
-.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0 16px}
-.btn{border:0;background:var(--grad-ink);color:#fafaf6;font:600 13px var(--sans);padding:12px 22px;border-radius:999px;cursor:pointer;box-shadow:0 4px 14px rgba(10,10,10,.2)}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 14px}
+.btn{border:0;background:var(--grad-ink);color:#fafaf6;font:600 12px var(--sans);padding:10px 18px;border-radius:999px;cursor:pointer;box-shadow:0 4px 14px rgba(10,10,10,.2)}
 .btn:disabled{opacity:.5;cursor:default}
 .btn--ghost{background:rgba(10,10,10,0.05);color:var(--ink);box-shadow:none}
-.btn--sm{padding:7px 14px;font-size:12px}
+.btn--sm{padding:6px 12px;font-size:11px}
 .view{display:none}.view.on{display:block}
-.winput{width:110px;border:1px solid var(--hairline);border-radius:10px;padding:8px 10px;font:600 13px var(--sans);text-align:right}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--grad-ink);color:#fafaf6;padding:14px 22px;border-radius:14px;font:500 13px var(--sans);box-shadow:var(--shadow-hover);z-index:99;opacity:0;pointer-events:none;transition:opacity .25s}
+.winput{width:100px;border:1px solid var(--hairline);border-radius:9px;padding:7px 9px;font:600 12.5px var(--sans);text-align:right}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--grad-ink);color:#fafaf6;padding:12px 18px;border-radius:10px;font:500 12px var(--sans);box-shadow:var(--shadow-hover);z-index:99;opacity:0;pointer-events:none;transition:opacity .25s}
 .toast.show{opacity:1}
-@media(max-width:900px){body{padding-left:0}.sidebar{display:none}}
+
+/* On a narrow screen the rail is icons only, whatever the saved preference says —
+   same breakpoint and behaviour as avocado_shell.html's rail, not a full hide. */
+@media (max-width:1080px){
+  body{--sbw:64px}
+  .snav span{display:none}
+  .sidebar{padding:16px 8px}
+  .snav{justify-content:center;padding:9px 0}
+}
+@media (max-width:700px){
+  .page{padding:22px 16px 60px}
+  .card{padding:18px 16px}
+  .card__head{flex-direction:column;gap:6px}
+  .card__head .meta{max-width:none}
+}
 
 /* card-cell grid — table without borders: each cell a shaded block + shadow */
-.cgrid{display:flex;flex-direction:column;gap:10px;margin:14px 0}
-.cgrid__row{display:grid;gap:10px;align-items:stretch}
-.cgrid__head .cgrid__cell{background:transparent;box-shadow:none;padding:0 16px;font:500 10px var(--sans);text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-mute)}
-.cgrid__cell{background:var(--surface);border-radius:14px;box-shadow:var(--shadow-card);padding:12px 16px;display:flex;align-items:center;min-height:46px}
-.cgrid__cell input,.cgrid__cell select{border:0;background:transparent;width:100%;font:600 13px var(--sans);color:var(--ink);outline:none}
+.cgrid{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.cgrid__row{display:grid;gap:8px;align-items:stretch}
+.cgrid__head .cgrid__cell{background:transparent;box-shadow:none;padding:0 14px;font:500 9px var(--sans);text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-mute)}
+.cgrid__cell{background:var(--surface);border-radius:10px;box-shadow:var(--shadow-card);padding:10px 14px;display:flex;align-items:center;min-height:40px}
+.cgrid__cell input,.cgrid__cell select{border:0;background:transparent;width:100%;font:600 12.5px var(--sans);color:var(--ink);outline:none}
 .cgrid__cell input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
-.cgrid__cell.is-label{font:600 13px var(--sans);color:var(--ink)}
-.cgrid__cell.is-calc{justify-content:flex-end;font:600 14px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums;background:var(--surface-2)}
-.cgrid__x{border:0;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:16px;padding:0 4px}
+.cgrid__cell.is-label{font:600 12.5px var(--sans);color:var(--ink)}
+.cgrid__cell.is-calc{justify-content:flex-end;font:600 13px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums;background:var(--surface-2)}
+.cgrid__x{border:0;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:15px;padding:0 4px}
 .cgrid__x:hover{color:var(--neg)}
-.addrow{border:1px dashed var(--ink-faint);background:transparent;border-radius:14px;padding:10px;font:500 12px var(--sans);color:var(--ink-mute);cursor:pointer;width:100%}
+.addrow{border:1px dashed var(--ink-faint);background:transparent;border-radius:10px;padding:9px;font:500 11.5px var(--sans);color:var(--ink-mute);cursor:pointer;width:100%}
 .addrow:hover{color:var(--ink);border-color:var(--ink-3)}
 /* searchable dropdown */
 .combo{position:relative;display:block;width:100%}
 .combo__input::placeholder{color:var(--ink-faint);font-weight:500}
-.combo__panel{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:200;max-height:260px;overflow-y:auto;background:var(--surface-2);border-radius:12px;box-shadow:var(--shadow-hover);padding:6px;min-width:180px}
+.combo__panel{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:200;max-height:250px;overflow-y:auto;background:var(--surface-2);border-radius:10px;box-shadow:var(--shadow-hover);padding:6px;min-width:170px}
 .combo.open .combo__panel{display:block}
-.combo__opt{padding:9px 12px;border-radius:8px;font:500 13px var(--sans);color:var(--ink-3);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combo__opt{padding:8px 10px;border-radius:7px;font:500 12.5px var(--sans);color:var(--ink-3);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .combo__opt:hover{background:rgba(10,10,10,0.06);color:var(--ink)}
 .combo__opt.active{background:var(--grad-ink);color:#fafaf6}
+
+/* Plans get printed for the field crew. */
+@media print{
+  body{background:#fff;padding-left:0}
+  .sidebar,.pagehead__tools,.tabs{display:none}
+  .page{max-width:none;padding:0}
+  .card{box-shadow:none;border:1px solid var(--hairline);break-inside:avoid}
+  .kpi{box-shadow:none;border:1px solid var(--hairline)}
+}
 </style></head><body>
 <aside class="sidebar" id="sidebar">
   <a class="sidebar__logo" href="/app" title="Back to Desk"><img alt="Upande" src="data:image/png;base64,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"/></a>
@@ -333,8 +493,9 @@ body.sb-collapsed{--sbw:64px}
     <button class="tab" data-tab="milled">Milled</button>
     <button class="tab" data-tab="dispatch">Dispatch</button>
     <button class="tab" data-tab="invoiced">Invoiced</button>
-    <button class="tab" data-tab="planner">Daily Planner</button>
+    <button class="tab" data-tab="workplan">Planner</button>
     <button class="tab" data-tab="payments">Payments</button>
+    <button class="tab" data-tab="comparison">Comparison</button>
   </div>
 
   <!-- OVERVIEW -->
@@ -369,27 +530,65 @@ body.sb-collapsed{--sbw:64px}
     <div class="kpi-grid" id="pr-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
   </div>
 
-  <!-- DAILY PLANNER -->
-  <div class="panel" id="p-planner">
-    <div id="pl-err"></div>
-    <div class="kpi-grid" id="pl-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+  <!-- PLANNER (merged: revised-forecast labour plan + flowering-model forecast) -->
+  <div class="panel" id="p-workplan">
+    <div id="wp-err"></div>
+    <div class="seasonstrip" id="wp-strip"><div class="loading"><div class="spin"></div>Loading…</div></div>
+
     <div class="card card--padded">
-      <div class="card__head"><h3>Set Weekly Forecast</h3><div class="meta">what a block expects to deliver — the same Coffee Forecast Override pickers set from Kahawa Trail</div></div>
-      <div class="formgrid">
-        <div class="field"><label>Block</label><select id="pl-block"></select></div>
-        <div class="field"><label>Week</label><select id="pl-week"></select></div>
-        <div class="field"><label>Expected (kg cherry)</label><input type="number" id="pl-kg" min="0" step="0.1"></div>
-      </div>
-      <button class="btn" id="pl-submit">Save Forecast</button>
+      <div class="card__head"><h3>Block &times; Week</h3><div class="meta gridmeta" id="wp-gridmeta">forecast kg, actual in brackets, workers needed on its own line &mdash; click a cell for a quick number, double-click for the full fields</div></div>
+      <div class="plangridwrap"><table class="plangrid" id="wp-grid"></table></div>
     </div>
+
     <div class="card card--padded">
-      <div class="card__head"><h3>Weekly Forecast vs Actual</h3><div class="meta">expected cherry vs weighbridge, by block</div></div>
-      <div class="tblwrap"><table class="tbl"><thead><tr id="pl-fchead"><th>Block</th></tr></thead><tbody id="pl-fcbody"></tbody></table></div>
+      <div class="card__head"><h3 title="What management set as the season's goal, from the Coffee Budget, next to what this window's block plans add up to.">Season budget</h3></div>
+      <div id="wp-budget"></div>
     </div>
+
+    <div class="card card--padded">
+      <div class="card__head"><h3 title="Cherry received against the revised forecast, per block, this window. Only blocks carrying both a forecast and a receipt are scored.">Forecast vs actual</h3></div>
+      <div id="wp-actual"></div>
+    </div>
+
+    <div class="card card--padded">
+      <div class="card__head"><h3 title="Which blocks carry the plan this window, ranked by revised forecast kg.">Blocks</h3></div>
+      <div id="wp-blockschart"></div>
+    </div>
+
+    <div class="card card--padded">
+      <div class="card__head"><h3 title="Workers needed this window, per block, at the kg/worker rate in effect.">Labour</h3></div>
+      <div id="wp-labourchart"></div>
+    </div>
+
     <div class="card card--padded">
       <div class="card__head"><h3>Pick Now</h3><div class="meta">blocks overdue a picking round</div></div>
       <div class="tblwrap"><table class="tbl"><thead><tr><th>Block</th><th>Last Picked</th><th class="num">Days Since</th><th class="num">At-Risk (KES)</th></tr></thead><tbody id="pl-alerts"></tbody></table></div>
     </div>
+
+    <div class="sectiondivider"><span>Model Forecast</span><small>Coffee Forecast Override — the flowering-model number a picker sets from Kahawa Trail, a different figure from the revised forecast above. Read-only here — set it from Kahawa Trail in the field.</small></div>
+
+    <div id="pl-err"></div>
+    <div class="figs" id="pl-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
+
+    <details class="foldcard" id="pl-fcdetails">
+      <summary class="card__head"><h3>Weekly Forecast vs Actual</h3><div class="meta gridmeta" id="pl-fcmeta">expected cherry vs weighbridge, by block</div></summary>
+      <div class="tblwrap"><table class="tbl"><thead><tr id="pl-fchead"><th>Block</th></tr></thead><tbody id="pl-fcbody"></tbody></table></div>
+    </details>
+  </div>
+
+  <div class="pgpop" id="wp-pop" hidden>
+    <div class="pgpop__head"><b id="wp-pop-title"></b><button type="button" class="pgpop__x" id="wp-pop-close">&times;</button></div>
+    <label>Revised forecast (kg cherry)<input type="number" id="wp-pop-kg" min="0" step="1"></label>
+    <label>Kg / worker<small>blank = farm default</small><input type="number" id="wp-pop-rate" min="0" step="0.1"></label>
+    <label>Workers needed<small>blank = computed</small><input type="number" id="wp-pop-workers" min="0" step="0.1"></label>
+    <div class="pgpop__total" id="wp-pop-total">— workers</div>
+    <div class="pgpop__cost" id="wp-pop-cost">—</div>
+    <button type="button" class="btn btn--sm" id="wp-pop-save">Save</button>
+  </div>
+
+  <div class="pgqtot" id="wp-qtot" hidden>
+    <b id="wp-qtot-wk"></b>
+    <span id="wp-qtot-cost"></span>
   </div>
 
   <!-- PAYMENTS -->
@@ -403,6 +602,53 @@ body.sb-collapsed{--sbw:64px}
     <div class="card card--padded">
       <div class="card__head"><h3>Payments</h3><div class="meta" id="pay-cnt"></div></div>
       <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Harvester</th><th class="num">Buckets</th><th class="num">Rate</th><th class="num">Total (KES)</th><th>Status</th></tr></thead><tbody id="pay-body"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- COMPARISON — budget vs forecast vs actual, and planned vs paid labour
+       cost, for the WHOLE active season (the Planner tab's own grid only
+       shows a rolling 8-week window; Production's KPIs are farm-level only). -->
+  <div class="panel" id="p-comparison">
+    <div id="comp-err"></div>
+    <div class="cmp-head">
+      <p class="pagehead__sub" id="comp-season-sub" style="margin:0">Loading…</p>
+      <div class="seg" id="comp-seg" role="tablist">
+        <button type="button" class="seg__opt on" data-view="block" role="tab">By Block</button>
+        <button type="button" class="seg__opt" data-view="week" role="tab">By Week</button>
+        <button type="button" class="seg__opt" data-view="cost" role="tab">Labour Cost</button>
+      </div>
+    </div>
+
+    <!-- BY BLOCK -->
+    <div class="cmp-view on" id="cmp-view-block">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Season Budget vs Forecast vs Actual</h3><div class="meta">whole season, all blocks</div></div>
+        <div class="figs" id="cmp-block-figs"></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>Blocks</h3><div class="meta">ranked by actual received (or forecast, or budget, where nothing's been received yet) · bar note reads budget &middot; forecast &middot; actual</div></div>
+        <div id="cmp-block-chart"></div>
+      </div>
+    </div>
+
+    <!-- BY WEEK -->
+    <div class="cmp-view" id="cmp-view-week">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Forecast vs Actual, by Week</h3><div class="meta">whole season · kg cherry</div></div>
+        <div class="tblwrap"><table class="tbl" id="cmp-week-tbl"></table></div>
+      </div>
+    </div>
+
+    <!-- LABOUR COST -->
+    <div class="cmp-view" id="cmp-view-cost">
+      <div class="card card--padded">
+        <div class="card__head"><h3>Planned vs Paid Labour Cost</h3><div class="meta" id="cmp-cost-meta">whole season</div></div>
+        <div class="figs" id="cmp-cost-figs"></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>By Week</h3><div class="meta">planned = forecast kg &times; picker rate · paid = submitted Coffee Payments</div></div>
+        <div class="tblwrap"><table class="tbl" id="cmp-cost-tbl"></table></div>
+      </div>
     </div>
   </div>
 
@@ -717,6 +963,7 @@ function fd(s) {
   return isNaN(d) ? String(s).slice(0, 10) : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
 }
 function esc(s) { return String(s == null ? "—" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function sum(a) { return (a || []).reduce(function (t, v) { return t + (v || 0); }, 0); }
 
 /* ── design-system renderers (ufd-modern-3 visual language) ─────────────── */
 var RAMP = ["#f2e9dc", "#e3d2b7", "#c9a878", "#a8824d", "#8a6437", "#6f4e29", "#53381c"];
@@ -733,6 +980,14 @@ function kpiCard(label, value, unit, trend, trendCls, sparkPts) {
   return '<div class="kpi">' + spark + '<div class="kpi__label">' + label + '</div><div class="kpi__value">' + value +
     '</div><div class="kpi__unit">' + unit + '</div>' +
     (trend ? '<div class="kpi__trend ' + (trendCls || "flat") + '">' + trend + "</div>" : "") + "</div>";
+}
+
+// A lighter figure — same voice as a KPI, without a card of its own around it. For
+// numbers that belong inside an existing card (avocado-production's own pattern).
+function fig(label, value, hint, cls) {
+  return '<div><div class="fig__label">' + label + '</div><div class="fig__value' +
+    (cls ? " " + cls : "") + '">' + value + '</div>' +
+    '<div class="fig__hint">' + (hint || "") + "</div></div>";
 }
 function sparkPath(vals, w, h) {
   var mx = Math.max.apply(null, vals.concat(1));
@@ -843,7 +1098,7 @@ function funnel(el, stages) {
   }).join("") + "</div>";
 }
 
-function chip(cls, text) { return '<span class="tile__chip' + (cls ? " " + cls : "") + '">' + esc(text) + "</span>"; }
+function chip(cls, text) { return '<span class="pill pill--' + (cls || "measured") + '">' + esc(text) + "</span>"; }
 function stChip(state) {
   if (["Received", "Weighed", "Completed", "Paid", "Ready"].indexOf(state) !== -1) return chip("", state);
   if (["Cancelled", "Overdue", "High"].indexOf(state) !== -1) return chip("neg", state);
@@ -1032,37 +1287,63 @@ function loadInvoiced() {
   }).catch(function (e) { $("i-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
 }
 
+// Same "don't cost a row if a block is idle" filter as the planner grid —
+// the Model Forecast table defaults to blocks with a set/received figure in
+// the window, folded behind #pl-fcdetails (closed by default) besides.
+var SHOW_ALL_FC = false, LAST_FC = null;
+function renderForecastTable(d) {
+  var weeks = d.weeks || [], blocks = d.blocks || [], nowIdx = d.this_week_index;
+  $("pl-fchead").innerHTML = "<th>Block</th>" + weeks.map(function (w, i) {
+    return '<th class="num"' + (i === nowIdx ? ' style="background:rgba(10,10,10,0.04)"' : "") + '>' + esc(w.start_label) + "</th>";
+  }).join("");
+
+  var active = blocks.filter(function (b) {
+    return (b.expected || []).some(function (v) { return v != null; }) || (b.actual || []).some(function (v) { return v != null; });
+  });
+  var rows = (SHOW_ALL_FC || !active.length) ? blocks : active;
+
+  $("pl-fcmeta").innerHTML = !active.length
+    ? "no block has a forecast set in this window yet"
+    : active.length === blocks.length
+    ? "all " + blocks.length + " blocks forecast this window"
+    : active.length + " of " + blocks.length + " blocks forecast this window · " +
+      '<a class="gridtoggle" href="#">' + (SHOW_ALL_FC ? "show forecast only" : "show all " + blocks.length) + "</a>";
+
+  $("pl-fcbody").innerHTML = rows.map(function (b) {
+    return "<tr><td>" + esc((b.block || "").split(" - ")[0]) + "</td>" + weeks.map(function (w, i) {
+      var exp = (b.expected || [])[i], act = (b.actual || [])[i];
+      return '<td class="num">' + (exp == null ? "—" : n(exp)) + (act != null ? " <small>(" + n(act) + ")</small>" : "") + "</td>";
+    }).join("") + "</tr>";
+  }).join("") || '<tr><td colspan="' + (weeks.length + 1) + '"><div class="emptybox">No block forecasts yet.</div></td></tr>';
+}
+$("pl-fcmeta") && $("pl-fcmeta").addEventListener("click", function (e) {
+  var a = e.target.closest && e.target.closest(".gridtoggle");
+  if (!a) return;
+  e.preventDefault();
+  SHOW_ALL_FC = !SHOW_ALL_FC;
+  renderForecastTable(LAST_FC);
+});
+
 function loadPlanner() {
   $("pl-err").innerHTML = "";
   api("get_daily_planner", {}).then(function (d) {
     if (d.available === false) {
       $("pl-kpis").innerHTML = '<div class="emptybox">Coffee Production module not set up on this site.</div>';
-      $("pl-fchead").innerHTML = "<th>Block</th>"; $("pl-fcbody").innerHTML = ""; $("pl-alerts").innerHTML = "";
+      $("pl-fchead").innerHTML = "<th>Block</th>"; $("pl-fcbody").innerHTML = ""; $("pl-fcmeta").innerHTML = ""; $("pl-alerts").innerHTML = "";
       return;
     }
-    var k = d.kpis, weeks = d.weeks || [], blocks = d.blocks || [], nowIdx = d.this_week_index;
+    LAST_FC = d;
+    var k = d.kpis;
     $("pl-kpis").innerHTML =
-      kpiCard("This Week Forecast", n(k.this_week_expected_kg), "kg cherry expected") +
-      kpiCard("This Week Actual", n(k.this_week_actual_kg), "kg cherry received") +
-      kpiCard("Variance", k.variance_pct == null ? "—" : (k.variance_pct >= 0 ? "+" : "") + n(k.variance_pct, 1) + "%",
-        "vs this week's forecast", k.variance_pct == null ? null : (k.variance_pct >= 0 ? "ahead" : "behind"),
-        k.variance_pct == null ? "flat" : (k.variance_pct >= 0 ? "up" : "down")) +
-      kpiCard("Ripe & Unpicked", n(k.overdue_blocks), "blocks overdue", k.overdue_blocks ? "cherry at risk" : "all clear",
+      fig("This Week Forecast", n(k.this_week_expected_kg), "kg cherry expected") +
+      fig("This Week Actual", n(k.this_week_actual_kg), "kg cherry received") +
+      fig("Variance", k.variance_pct == null ? "—" : (k.variance_pct >= 0 ? "+" : "") + n(k.variance_pct, 1) + "%",
+        "vs this week's forecast" + (k.variance_pct == null ? "" : k.variance_pct >= 0 ? " · ahead" : " · behind"),
+        k.variance_pct == null ? "" : (k.variance_pct >= 0 ? "up" : "down")) +
+      fig("Ripe & Unpicked", n(k.overdue_blocks), "blocks overdue" + (k.overdue_blocks ? " · cherry at risk" : " · all clear"),
         k.overdue_blocks ? "down" : "up");
 
-    opt($("pl-block"), blocks.map(function (b) { return b.block; }));
-    opt($("pl-week"), weeks.map(function (w) { return { start: w.start, span: w.span }; }), "start", "span");
-    if (nowIdx != null && weeks[nowIdx]) $("pl-week").value = weeks[nowIdx].start;
-
-    $("pl-fchead").innerHTML = "<th>Block</th>" + weeks.map(function (w, i) {
-      return '<th class="num"' + (i === nowIdx ? ' style="background:rgba(10,10,10,0.04)"' : "") + '>' + esc(w.start_label) + "</th>";
-    }).join("");
-    $("pl-fcbody").innerHTML = blocks.map(function (b) {
-      return "<tr><td>" + esc((b.block || "").split(" - ")[0]) + "</td>" + weeks.map(function (w, i) {
-        var exp = (b.expected || [])[i], act = (b.actual || [])[i];
-        return '<td class="num">' + (exp == null ? "—" : n(exp)) + (act != null ? " <small>(" + n(act) + ")</small>" : "") + "</td>";
-      }).join("") + "</tr>";
-    }).join("") || '<tr><td colspan="' + (weeks.length + 1) + '"><div class="emptybox">No block forecasts yet.</div></td></tr>';
+    renderForecastTable(d);
 
     $("pl-alerts").innerHTML = (d.alerts || []).map(function (r) {
       return "<tr><td>" + esc((r.block || "").split(" - ")[0]) + "</td><td>" + fd(r.last_picked) +
@@ -1070,15 +1351,6 @@ function loadPlanner() {
     }).join("") || '<tr><td colspan="4"><div class="emptybox">No overdue blocks.</div></td></tr>';
   }).catch(function (e) { $("pl-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
 }
-$("pl-submit") && $("pl-submit").addEventListener("click", function () {
-  var block = $("pl-block").value, week = $("pl-week").value, kg = $("pl-kg").value;
-  if (!block || !week || !kg) { toast("Pick a block, week and kg"); return; }
-  post("pickupapi.submit_weekly_forecast", { block: block, week_start: week, kg_cherry: kg }).then(function () {
-    toast("Forecast saved for " + block);
-    $("pl-kg").value = "";
-    loadPlanner();
-  }).catch(function (e) { toast(e.message); });
-});
 
 function loadPayments() {
   $("pay-err").innerHTML = "";
@@ -1104,6 +1376,123 @@ function loadPayments() {
   }).catch(function (e) { $("pay-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
 }
 
+/* ── comparison tab ─────────────────────────────────────────────────────────
+   Budget vs forecast vs actual, and planned vs paid labour cost, for the
+   WHOLE active season. Three genuinely different lenses on one dataset —
+   spatial (blocks), time (weeks), money (cost) — so a segmented pill fits
+   the shape better than a dropdown or a single crowded page. */
+var COMP_DATA = null, COMP_VIEW = "block";
+
+function switchCompView(view) {
+  COMP_VIEW = view;
+  document.querySelectorAll("#comp-seg .seg__opt").forEach(function (b) {
+    b.classList.toggle("on", b.dataset.view === view);
+  });
+  document.querySelectorAll(".cmp-view").forEach(function (p) {
+    p.classList.toggle("on", p.id === "cmp-view-" + view);
+  });
+}
+document.querySelectorAll("#comp-seg .seg__opt").forEach(function (btn) {
+  btn.addEventListener("click", function () { switchCompView(btn.dataset.view); });
+});
+
+function renderBlockView(d) {
+  var s = d.summary || {};
+  var diff = (s.actual_kg || 0) - (s.budget_kg || 0);
+  var pct = s.budget_kg ? Math.abs(diff / s.budget_kg * 100) : null;
+  $("cmp-block-figs").innerHTML = [
+    fig("Budget", n(s.budget_kg), "kg cherry · season target, all blocks"),
+    fig("Forecast", n(s.forecast_kg), "kg cherry · Planner's revised forecast, whole season"),
+    fig("Actual", n(s.actual_kg), "kg cherry · weighbridge, season to date"),
+    fig("Actual vs budget", (diff >= 0 ? "+" : "−") + n(Math.abs(diff)),
+      (pct == null ? "no budget set" : (diff >= 0 ? "+" : "−") + pct.toFixed(1) + "% " + (diff >= 0 ? "over" : "under") + " budget"),
+      diff >= 0 ? "up" : "down")
+  ].join("");
+
+  var rows = (d.blocks || []).filter(function (r) { return r.budget_kg || r.forecast_kg || r.actual_kg; });
+  var el = $("cmp-block-chart");
+  if (!rows.length) {
+    el.innerHTML = '<div class="emptybox">No block has a budget, forecast or receipt yet this season.</div>';
+    return;
+  }
+  var chart = rankBars(rows.slice(0, 12).map(function (r) {
+    return {
+      label: (r.block || "").split(" - ")[0],
+      value: r.actual_kg || r.forecast_kg || r.budget_kg,
+      note: n(r.budget_kg) + " · " + n(r.forecast_kg) + " · " + n(r.actual_kg) + " kg"
+    };
+  }));
+  el.innerHTML = chart + (rows.length > 12 ? "<div class='rankfoot'>Top 12 of " + rows.length + " blocks</div>" : "");
+}
+
+function renderWeekView(d) {
+  var rows = (d.weeks || []).filter(function (w) { return w.forecast_kg || w.actual_kg; });
+  var tbl = $("cmp-week-tbl");
+  if (!rows.length) {
+    tbl.innerHTML = "";
+    tbl.parentNode.innerHTML = '<div class="emptybox">No week this season has a forecast or a receipt yet.</div>';
+    return;
+  }
+  var peak = Math.max.apply(null, rows.map(function (w) { return Math.max(w.forecast_kg || 0, w.actual_kg || 0); }).concat([1]));
+  tbl.innerHTML = "<thead><tr><th>Week of</th><th class='num'>Forecast</th><th class='num'>Actual</th><th>Of forecast</th></tr></thead><tbody>" +
+    rows.map(function (w) {
+      var p = w.forecast_kg && w.actual_kg != null ? (w.actual_kg / w.forecast_kg * 100) : null;
+      return "<tr><td class='b'>" + esc(w.start_label) + "</td><td class='num'>" + (w.forecast_kg ? n(w.forecast_kg) : "—") +
+        "</td><td class='num b'>" + (w.actual_kg != null ? n(w.actual_kg) : "—") + "</td><td>" +
+        (p == null ? "<span class='muted'>—</span>"
+          : "<div class='bar' style='min-width:150px'><i class='" + (p > 100 ? "over" : "") + "' style='width:" +
+            Math.min(p, 100).toFixed(1) + "%'></i></div> " + p.toFixed(0) + "%") +
+        "</td></tr>";
+    }).join("") + "</tbody>";
+}
+
+function renderCostView(d) {
+  var c = d.cost || {};
+  var diff = (c.paid_kes || 0) - (c.planned_kes || 0);
+  var pct = c.planned_kes ? Math.abs(diff / c.planned_kes * 100) : null;
+  $("cmp-cost-meta").textContent = "whole season · at KES " + n(c.picker_rate_per_kg, 2) + " / kg picked";
+  $("cmp-cost-figs").innerHTML = [
+    fig("Planned cost", "KES " + n(c.planned_kes), "forecast kg &times; picker rate, whole season"),
+    fig("Actually paid", "KES " + n(c.paid_kes), "submitted Coffee Payments, whole season"),
+    fig("Variance", (diff >= 0 ? "+" : "−") + "KES " + n(Math.abs(diff)),
+      (pct == null ? "no planned cost yet" : (diff >= 0 ? "+" : "−") + pct.toFixed(1) + "% " + (diff >= 0 ? "over plan" : "under plan")),
+      diff >= 0 ? "down" : "up")
+  ].join("");
+
+  var rows = (d.weeks || []).filter(function (w) { return w.planned_kes || w.paid_kes; });
+  var tbl = $("cmp-cost-tbl");
+  if (!rows.length) {
+    tbl.innerHTML = "";
+    tbl.parentNode.innerHTML = '<div class="emptybox">No week this season has a planned cost or a payment yet.</div>';
+    return;
+  }
+  tbl.innerHTML = "<thead><tr><th>Week of</th><th class='num'>Planned (KES)</th><th class='num'>Paid (KES)</th><th>Of planned</th></tr></thead><tbody>" +
+    rows.map(function (w) {
+      var p = w.planned_kes && w.paid_kes != null ? (w.paid_kes / w.planned_kes * 100) : null;
+      return "<tr><td class='b'>" + esc(w.start_label) + "</td><td class='num'>" + (w.planned_kes ? n(w.planned_kes) : "—") +
+        "</td><td class='num b'>" + (w.paid_kes != null ? n(w.paid_kes) : "—") + "</td><td>" +
+        (p == null ? "<span class='muted'>—</span>"
+          : "<div class='bar' style='min-width:150px'><i class='" + (p > 100 ? "over" : "") + "' style='width:" +
+            Math.min(p, 100).toFixed(1) + "%'></i></div> " + p.toFixed(0) + "%") +
+        "</td></tr>";
+    }).join("") + "</tbody>";
+}
+
+function loadComparison() {
+  $("comp-err").innerHTML = "";
+  api("comparisonapi.get_comparison", {}).then(function (d) {
+    COMP_DATA = d;
+    if (!d.season) {
+      $("comp-season-sub").textContent = "No active Coffee Season — set one to see this season's comparison.";
+      return;
+    }
+    $("comp-season-sub").textContent = d.season + " · " + fd(d.start_date) + " – " + fd(d.end_date);
+    renderBlockView(d);
+    renderWeekView(d);
+    renderCostView(d);
+  }).catch(function (e) { $("comp-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
 function loadProduction() {
   $("pr-err").innerHTML = "";
   var args = {};
@@ -1125,10 +1514,528 @@ function loadProduction() {
   }).catch(function (e) { $("pr-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
 }
 
+// key -> {block, week, revised_forecast_kg, kg_per_worker, workers_needed, is_override},
+// filled on every render so a cell click/dblclick can read back what it's editing.
+var PLAN_CELLS = {};
+
+function loadWorkplan() {
+  $("wp-err").innerHTML = "";
+  // Returned so the grid's keyboard-nav chain (quick-entry -> Enter -> next
+  // cell) can wait for the fresh render before it looks up where to go next.
+  return api("plannerapi.get_planner_grid", {}).then(function (d) {
+    renderSeasonStrip(d);
+    renderPlanGrid(d);
+    renderBudget(d);
+    renderActualCard(d);
+    renderBlocksChart(d);
+    renderLabourChart(d);
+  }).catch(function (e) { $("wp-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
+}
+
+// Ranked bars, biggest first, drawn against the biggest — same technique as
+// avocado-production's rankBars(): inline SVG, no library, 720-wide viewBox
+// the CSS scales to the card.
+function rankBars(items) {
+  var W = 720, H = 21, LAB = 150, VAL = 210, track = W - LAB - VAL;
+  var max = Math.max.apply(null, items.map(function (i) { return i.value; }).concat([1]));
+  return '<svg class="rank" viewBox="0 0 ' + W + " " + (items.length * H) + '" role="img">' +
+    items.map(function (it, i) {
+      var y = i * H, w = it.value > 0 ? Math.max(it.value / max * track, 2) : 0;
+      var lab = it.label.length > 20 ? it.label.slice(0, 19) + "…" : it.label;
+      return '<text class="rk-l" x="0" y="' + (y + 14) + '"><title>' + esc(it.label) + "</title>" +
+        esc(lab) + "</text>" +
+        '<rect class="rk-t" x="' + LAB + '" y="' + (y + 5) + '" width="' + track +
+          '" height="9" rx="4.5"/>' +
+        (w ? '<rect class="rk-b" x="' + LAB + '" y="' + (y + 5) + '" width="' + w.toFixed(1) +
+             '" height="9" rx="4.5"/>' : "") +
+        '<text class="rk-v" x="' + W + '" y="' + (y + 14) + '">' + esc(it.note) + "</text>";
+    }).join("") + "</svg>";
+}
+
+// Budget vs this window's plan — mirrors avocado-production's renderBudget().
+// resolve_season_target_kg falls back to Coffee Season.target_cherry_kg when no
+// Coffee Budget doc exists yet; budget_set says which one summary carries, so the
+// card can say so plainly instead of presenting a fallback as a real budget.
+function renderBudget(d) {
+  var s = d.summary || {}, el = $("wp-budget");
+  if (!s.season_target_kg) {
+    el.innerHTML = "<div class='blank'>No season target is set yet — neither a " +
+      "<a href='/app/coffee-budget/new'>Coffee Budget</a> nor a Coffee Season target. " +
+      "Add one to see it measured here.</div>";
+    return;
+  }
+  var fc = s.window_forecast_kg || 0;
+  var shareOfBudget = s.season_target_kg ? fc / s.season_target_kg * 100 : null;
+  var figs = [
+    fig("Budget", n(s.season_target_kg), (d.season || "season") +
+      (s.budget_set ? " · Coffee Budget" : " · Coffee Season fallback target, no Coffee Budget doc yet")),
+    fig("Window forecast", n(fc), (d.weeks || []).length + "-week window, revised forecast"),
+    fig("Received", n(s.window_actual_kg), "same window, weighbridge"),
+    fig("Window share of budget", shareOfBudget == null ? "—" : shareOfBudget.toFixed(1) + "%",
+      "this window's forecast as a share of the full-season budget — not a per-window pace target")
+  ];
+  el.innerHTML = "<div class='figs'>" + figs.join("") + "</div>";
+}
+
+// Per-block totals for the window currently on the grid — shared by the
+// Forecast-vs-actual card, the Blocks chart and the grid's own row totals.
+function windowBlockTotals(d) {
+  return (d.blocks || []).map(function (b) {
+    var fc = 0, ac = 0, seenAc = false, workers = 0;
+    (b.cells || []).forEach(function (c) {
+      fc += c.revised_forecast_kg || 0;
+      workers += c.workers_needed || 0;
+      if (c.actual_kg != null) { ac += c.actual_kg; seenAc = true; }
+    });
+    return { block: b.block, variety: b.variety, fc: fc, ac: seenAc ? ac : null, workers: workers };
+  });
+}
+
+// Forecast vs actual, per block, this window — mirrors avocado-production's
+// renderActual(): only blocks with BOTH a forecast and a receipt are scored, a
+// block with a forecast but nothing weighed yet is "waiting", not a failure.
+function renderActualCard(d) {
+  var rows = windowBlockTotals(d), el = $("wp-actual");
+  var totalFc = sum(rows.map(function (r) { return r.fc; }));
+  var totalAc = sum(rows.filter(function (r) { return r.ac != null; }).map(function (r) { return r.ac; }));
+  var nFc = rows.filter(function (r) { return r.fc > 0; }).length;
+
+  if (!totalAc) {
+    el.innerHTML = "<div class='blank'>No cherry has been received against this window's plan yet. " +
+      (totalFc ? "Forecast <b>" + n(totalFc) + " kg</b> across <b>" + nFc + " block" + (nFc === 1 ? "" : "s") + "</b>."
+                : "No block carries a forecast this window either.") + "</div>";
+    return;
+  }
+
+  var diff = totalAc - totalFc;
+  var perf = totalFc > 0 ? totalAc / totalFc * 100 : null;
+  var scored = rows.filter(function (r) { return r.fc > 0 && r.ac != null && r.ac > 0; })
+    .map(function (r) { r.pct = r.ac / r.fc * 100; return r; })
+    .sort(function (a, b) { return b.pct - a.pct; });
+  var best = scored[0], worst = scored.length > 1 ? scored[scored.length - 1] : null;
+  var waiting = rows.filter(function (r) { return r.fc > 0 && r.ac == null; });
+
+  var figs = [
+    fig("Received", n(totalAc), n(totalAc) + " kg over " + rows.filter(function (r) { return r.ac != null; }).length +
+      " block" + (rows.filter(function (r) { return r.ac != null; }).length === 1 ? "" : "s") + " this window"),
+    fig("Against forecast", (diff >= 0 ? "+" : "−") + n(Math.abs(diff)),
+      (diff >= 0 ? "+" : "−") + n(Math.abs(diff)) + " kg, " + (totalFc ? (Math.abs(diff) / totalFc * 100).toFixed(1) + "% " : "") +
+      (diff >= 0 ? "more than forecast" : "short of forecast"), diff >= 0 ? "up" : "down"),
+    fig("Performance", perf == null ? "—" : perf.toFixed(1) + "%",
+      perf == null ? "no forecast to measure against" : "forecast was " + n(totalFc) + " kg this window")
+  ];
+  if (best) figs.push(fig("Best block", esc((best.block || "").split(" - ")[0]), best.pct.toFixed(1) + "% of its forecast", "up"));
+  if (worst) figs.push(fig("Weakest block", esc((worst.block || "").split(" - ")[0]), worst.pct.toFixed(1) + "% of its forecast", worst.pct < 100 ? "down" : ""));
+
+  el.innerHTML = "<div class='figs'>" + figs.join("") + "</div>" +
+    (waiting.length
+      ? "<div class='note'><b>Forecast but not yet received: " + waiting.length + " block" + (waiting.length === 1 ? "" : "s") + ".</b> " +
+        waiting.slice(0, 8).map(function (r) { return esc((r.block || "").split(" - ")[0]) + " (" + n(r.fc) + ")"; }).join(" · ") +
+        (waiting.length > 8 ? " and " + (waiting.length - 8) + " more" : "") + "</div>"
+      : "<div class='note'>Every block with a forecast this window has a receipt against it.</div>");
+}
+
+function renderBlocksChart(d) {
+  var rows = windowBlockTotals(d).filter(function (r) { return r.fc > 0; });
+  rows.sort(function (a, b) { return b.fc - a.fc; });
+  var el = $("wp-blockschart");
+  if (!rows.length) {
+    el.innerHTML = "<div class='emptybox'>No block has a revised forecast set in this window yet.</div>";
+    return;
+  }
+  var chart = rankBars(rows.slice(0, 12).map(function (r) {
+    return { label: (r.block || "").split(" - ")[0], value: r.fc,
+      note: n(r.fc) + " kg" + (r.ac != null ? " · " + n(r.ac) + " in" : "") };
+  }));
+  el.innerHTML = chart + (rows.length > 12 ? "<div class='rankfoot'>Top 12 of " + rows.length + " forecasting blocks</div>" : "");
+}
+
+function renderLabourChart(d) {
+  var rows = windowBlockTotals(d).filter(function (r) { return r.workers > 0; })
+    .map(function (r) { return { block: r.block, workers: r.workers, rate: r.workers ? r.fc / r.workers : 0 }; });
+  rows.sort(function (a, b) { return b.workers - a.workers; });
+  var el = $("wp-labourchart");
+  if (!rows.length) {
+    el.innerHTML = "<div class='emptybox'>No labour has been computed for this window — set a revised forecast on a block to see workers needed.</div>";
+    return;
+  }
+  var chart = rankBars(rows.slice(0, 12).map(function (r) {
+    return { label: (r.block || "").split(" - ")[0], value: r.workers,
+      note: Math.round(r.workers) + " workers · " + n(Math.round(r.rate)) + " kg/wk" };
+  }));
+  el.innerHTML = chart + (rows.length > 12 ? "<div class='rankfoot'>Top 12 of " + rows.length + " blocks needing labour</div>" : "");
+}
+
+// The calendar-header strip: a dark, KPI-weight card — the tab's one bold
+// moment — with farm figures woven in (not boxed KPI cards) over a gradient
+// progress rail and a flagged "Today" marker, standing in for season position.
+function renderSeasonStrip(d) {
+  var s = d.summary || {}, weeks = d.weeks || [], nowIdx = d.this_week_index;
+  var figs = '<div class="seasonstrip__figs">' +
+    seasonFig(s.season_target_kg ? n(s.season_target_kg) : "—", "Season Target",
+      s.season_target_kg ? "kg cherry · Coffee Budget" : "no budget set yet") +
+    seasonFig(n(s.window_forecast_kg), weeks.length + "-Week Forecast", "kg cherry") +
+    seasonFig(n(s.window_actual_kg), "Received", "kg cherry, same weeks") +
+    '</div>';
+  var ticks = weeks.map(function (w, i) {
+    return '<div class="seasonstrip__tick' + (i === nowIdx ? ' now' : '') + '">' + esc(w.start_label) + '</div>';
+  }).join("");
+  var track = '<div class="seasonstrip__track"></div>';
+  if (nowIdx != null && weeks.length) {
+    var pct = ((nowIdx + 0.5) / weeks.length) * 100;
+    track = '<div class="seasonstrip__track"><div class="seasonstrip__fill" style="width:' + pct.toFixed(1) + '%"></div>' +
+      '<div class="seasonstrip__flag" style="left:' + pct.toFixed(1) + '%">Today</div></div>';
+  }
+  $("wp-strip").innerHTML = figs + '<div class="seasonstrip__rail">' + track + '<div class="seasonstrip__ticks">' + ticks + '</div></div>';
+}
+function seasonFig(val, label, unit) {
+  return '<div class="seasonstrip__fig"><i>' + esc(label) + '</i><b>' + val + '</b><span>' + esc(unit) + '</span></div>';
+}
+
+function planHasActivity(b) {
+  return b.cells.some(function (c) { return c.revised_forecast_kg != null || c.actual_kg != null || c.workers_needed != null; });
+}
+
+// The grid itself: blocks × weeks, cell shade = workers_needed (page's own
+// --acc-100..700 ramp), forecast/actual figures inside, a dot for a hand-set
+// workers_needed, a ring on the current week, and shortfall as a left edge —
+// with a footer row (farm totals) and a trailing column (each block's window
+// total) so the two old tables live inside this one instrument. Defaults to
+// blocks with activity in the window only (GitHub-graph density: an idle
+// block doesn't cost a row) — SHOW_ALL_BLOCKS reveals the rest on demand.
+var SHOW_ALL_BLOCKS = false, LAST_GRID = null;
+// (rows, cols) of the grid as last rendered — lets keyboard nav find/stay in
+// bounds without re-deriving it from the DOM on every arrow press.
+var GRID_DIMS = { rows: 0, cols: 0 };
+function renderPlanGrid(d) {
+  LAST_GRID = d;
+  var allBlocks = d.blocks || [], weeks = d.weeks || [], nowIdx = d.this_week_index, totals = d.week_totals || [];
+  PLAN_CELLS = {};
+  if (!allBlocks.length || !weeks.length) {
+    $("wp-grid").innerHTML = '<tr><td><div class="emptybox">No active blocks.</div></td></tr>';
+    $("wp-gridmeta").innerHTML = "";
+    GRID_DIMS = { rows: 0, cols: 0 };
+    return;
+  }
+  var maxW = 0;
+  allBlocks.forEach(function (b) { b.cells.forEach(function (c) { if (c.workers_needed > maxW) maxW = c.workers_needed; }); });
+
+  var active = allBlocks.filter(planHasActivity);
+  var blocks = (SHOW_ALL_BLOCKS || !active.length) ? allBlocks : active;
+  GRID_DIMS = { rows: blocks.length, cols: weeks.length };
+
+  $("wp-gridmeta").innerHTML = !active.length
+    ? "no block has a plan set in this window yet — showing all " + allBlocks.length + " to set one"
+    : active.length === allBlocks.length
+    ? "all " + allBlocks.length + " blocks have a plan this window"
+    : active.length + " of " + allBlocks.length + " blocks have a plan this window · " +
+      '<a class="gridtoggle" href="#">' + (SHOW_ALL_BLOCKS ? "show planned only" : "show all " + allBlocks.length) + "</a>";
+
+  var thead = "<thead><tr><th class=\"pgblockth\">Block</th>" + weeks.map(function (w, i) {
+    return '<th' + (i === nowIdx ? ' class="today"' : "") + '>Wk ' + esc(w.week) + '<small>' + esc(w.start_label) + '</small></th>';
+  }).join("") + '<th class="pgtotalth">Window</th></tr></thead>';
+
+  var body = blocks.map(function (b, row) {
+    var rowFc = 0, rowAc = 0, seenAc = false;
+    var cells = b.cells.map(function (c, col) {
+      var key = b.block + "|" + weeks[col].start;
+      PLAN_CELLS[key] = { block: b.block, week: weeks[col].start, revised_forecast_kg: c.revised_forecast_kg,
+        kg_per_worker: c.kg_per_worker, workers_needed: c.workers_needed, is_override: c.is_override };
+      rowFc += c.revised_forecast_kg || 0;
+      if (c.actual_kg != null) { rowAc += c.actual_kg; seenAc = true; }
+      return planCellHtml(c, col === nowIdx, maxW, key, row, col);
+    }).join("");
+    return '<tr><td class="pgblock">' + esc((b.block || "").split(" - ")[0]) + '<small>' + esc(b.variety) + '</small></td>' +
+      cells + '<td class="pgtotal">' + (rowFc ? n(rowFc) : "—") + (seenAc ? ' <small>(' + n(rowAc) + ')</small>' : "") + '</td></tr>';
+  }).join("");
+
+  // Same picker-wage figure as the per-cell/popup readout (forecast kg x the
+  // farm's picker_rate_per_kg) — what the farm total in cash implies, not just
+  // in kilograms.
+  var wageRate = (LAST_GRID && LAST_GRID.picker_rate_per_kg) || 0;
+  var footCells = weeks.map(function (w, i) {
+    var t = totals[i] || {};
+    var short = t.forecast_kg && t.actual_kg != null && t.actual_kg < t.forecast_kg;
+    var cost = t.forecast_kg && wageRate ? n(t.forecast_kg * wageRate) : null;
+    return '<td class="pgfoot' + (i === nowIdx ? ' today' : "") + (short ? ' short' : "") + '">' +
+      (t.forecast_kg ? n(t.forecast_kg) : "—") + (t.actual_kg != null ? ' <small>(' + n(t.actual_kg) + ')</small>' : "") +
+      (cost ? '<div class="pgfootcost">KES ' + cost + '</div>' : "") + '</td>';
+  }).join("");
+  var s = d.summary || {};
+  var windowCost = s.window_forecast_kg && wageRate ? n(s.window_forecast_kg * wageRate) : null;
+  var foot = '<tfoot><tr><td class="pgblock">Farm total</td>' + footCells + '<td class="pgtotal">' +
+    (s.window_forecast_kg ? n(s.window_forecast_kg) : "—") +
+    (s.window_actual_kg != null ? ' <small>(' + n(s.window_actual_kg) + ')</small>' : "") +
+    (windowCost ? '<div class="pgfootcost">KES ' + windowCost + '</div>' : "") + '</td></tr></tfoot>';
+
+  $("wp-grid").innerHTML = thead + "<tbody>" + body + "</tbody>" + foot;
+}
+$("wp-gridmeta") && $("wp-gridmeta").addEventListener("click", function (e) {
+  var a = e.target.closest && e.target.closest(".gridtoggle");
+  if (!a) return;
+  e.preventDefault();
+  SHOW_ALL_BLOCKS = !SHOW_ALL_BLOCKS;
+  if (LAST_GRID) renderPlanGrid(LAST_GRID);
+});
+
+function planCellHtml(c, isToday, maxW, key, row, col) {
+  // tabindex="-1" keeps 700+ cells out of the page's normal Tab order (an
+  // accessibility non-starter at this scale) while still letting script move
+  // focus into and around the grid once a user has clicked into it.
+  var attrs = ' data-key="' + esc(key) + '" data-row="' + row + '" data-col="' + col + '" tabindex="-1"';
+  if (c.revised_forecast_kg == null && c.actual_kg == null) {
+    return '<td class="pgcell empty"' + attrs + '><div class="pgbox empty' + (isToday ? " today" : "") +
+      '" title="no plan this week"></div></td>';
+  }
+  var idx = c.workers_needed && maxW ? Math.min(RAMP.length - 1, Math.ceil((c.workers_needed / maxW) * RAMP.length) - 1) : -1;
+  var cls = "pgbox" + (idx >= 4 ? " dark" : "") + (isToday ? " today" : "") +
+    (c.revised_forecast_kg && c.actual_kg != null && c.actual_kg < c.revised_forecast_kg ? " short" : "");
+  var style = idx >= 0 ? ' style="background:' + RAMP[idx] + '"' : "";
+  var title = c.workers_needed
+    ? n(c.workers_needed, 1) + (c.is_override ? " workers · set by hand" : " workers · computed")
+    : "no labour set";
+  return '<td class="pgcell"' + attrs + '><div class="' + cls + '"' + style + ' title="' + esc(title) + '">' +
+    '<div class="pgtop"><span class="pgfc">' + (c.revised_forecast_kg == null ? "—" : n(c.revised_forecast_kg)) + '</span>' +
+    (c.actual_kg != null ? '<span class="pgac">(' + n(c.actual_kg) + ')</span>' : "") + '</div>' +
+    (c.workers_needed ? '<span class="pgwk">' + Math.round(c.workers_needed) + ' wkr</span>' : "") +
+    (c.is_override ? '<span class="pgov" title="workers needed set by hand"></span>' : "") +
+    '</div></td>';
+}
+// Single click = immediate quick-entry, no delay: the input replaces the cell
+// synchronously so typing starts the instant it's clicked. Double click still
+// means "open the popover" — its second click lands on the input the first
+// click just created, so the dblclick handler cancels that transient edit
+// (discarding whatever the two clicks' worth of time might have typed — never
+// enough to matter) and opens the popover on the same cell instead.
+$("wp-grid") && $("wp-grid").addEventListener("click", function (e) {
+  var td = e.target.closest && e.target.closest(".pgcell");
+  if (!td || !td.dataset.key || td.querySelector(".pgquick")) return;
+  td = cancelOtherEdits(td);
+  if (td) startEdit(td);
+});
+$("wp-grid") && $("wp-grid").addEventListener("dblclick", function (e) {
+  var td = e.target.closest && e.target.closest(".pgcell");
+  if (!td || !td.dataset.key) return;
+  td = cancelOtherEdits(td);
+  if (td) openCellPopover(td);
+});
+
+function cellAt(row, col) {
+  return $("wp-grid").querySelector('td.pgcell[data-row="' + row + '"][data-col="' + col + '"]');
+}
+// Standard spreadsheet split: Enter commits and moves DOWN (next block, same
+// week — Shift+Enter goes up), Tab commits and moves RIGHT (next week, same
+// block — Shift+Tab goes left). Neither wraps to the next/previous row/column;
+// hitting an edge just stops there.
+function downCellCoords(row, col) { return row + 1 < GRID_DIMS.rows ? { row: row + 1, col: col } : null; }
+function upCellCoords(row, col) { return row - 1 >= 0 ? { row: row - 1, col: col } : null; }
+function rightCellCoords(row, col) { return col + 1 < GRID_DIMS.cols ? { row: row, col: col + 1 } : null; }
+function leftCellCoords(row, col) { return col - 1 >= 0 ? { row: row, col: col - 1 } : null; }
+// A click straight into a different cell while another is still mid-edit reads
+// as "never mind" on the abandoned one — re-rendering to discard it (rather
+// than trying to save-then-reload it first) avoids a race against the cell
+// being clicked into. Returns the fresh reference to `td` post-render.
+function cancelOtherEdits(td) {
+  var openInput = $("wp-grid").querySelector(".pgquick");
+  if (!openInput || openInput.closest(".pgcell") === td) return td;
+  var row = td.dataset.row, col = td.dataset.col;
+  hideQuickTotal();
+  if (LAST_GRID) renderPlanGrid(LAST_GRID);
+  return cellAt(row, col);
+}
+// Floating readout while quick-entering — a generous 14px clear of the cell,
+// preferring above it, then below, then (if the cell is hard against both
+// edges of the viewport — rare) pinned near the top of the viewport, but
+// always fully on-screen and never touching the cell/input it's for. Viewport-
+// relative (position:fixed, see CSS) so this never has to reconcile document
+// scroll offset against the cell's own viewport-relative rect — the class of
+// bug that a scroll-adjusted position:absolute is easy to get subtly wrong.
+// Re-measured on every keystroke since its width changes with the numbers in it.
+function showQuickTotal(td) {
+  var el = $("wp-qtot");
+  el.hidden = false;
+  var r = td.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight, gap = 14;
+  var top;
+  if (r.top - h - gap >= 8) top = r.top - h - gap;
+  else if (r.bottom + h + gap <= window.innerHeight - 8) top = r.bottom + gap;
+  else top = 8;
+  var left = r.left + r.width / 2 - w / 2;
+  var maxLeft = document.documentElement.clientWidth - w - 8;
+  el.style.top = top + "px";
+  el.style.left = Math.max(8, Math.min(left, maxLeft)) + "px";
+}
+function hideQuickTotal() { var el = $("wp-qtot"); if (el) el.hidden = true; }
+// Spreadsheet-style: arrow keys move the selection; typing a digit straight
+// into a selected-but-not-editing cell starts entering it immediately — no
+// separate click-to-open-input step. Up/Down are left alone while an input is
+// actually focused (its own keydown handler below owns them, since number
+// inputs use them as the native increment/decrement).
+$("wp-grid") && $("wp-grid").addEventListener("keydown", function (e) {
+  var td = e.target.closest && e.target.closest("td.pgcell");
+  if (!td || td.querySelector(".pgquick")) return;
+  var row = Number(td.dataset.row), col = Number(td.dataset.col);
+  var moved = null;
+  if (e.key === "ArrowRight") moved = { row: row, col: Math.min(col + 1, GRID_DIMS.cols - 1) };
+  else if (e.key === "ArrowLeft") moved = { row: row, col: Math.max(col - 1, 0) };
+  else if (e.key === "ArrowDown") moved = { row: Math.min(row + 1, GRID_DIMS.rows - 1), col: col };
+  else if (e.key === "ArrowUp") moved = { row: Math.max(row - 1, 0), col: col };
+  else if (e.key === "Enter") { e.preventDefault(); startEdit(td); return; }
+  else if (/^[0-9.]$/.test(e.key)) { e.preventDefault(); startEdit(td, e.key); return; }
+  else if (e.key === "Backspace" || e.key === "Delete") { e.preventDefault(); startEdit(td, ""); return; }
+  if (moved) { e.preventDefault(); var el = cellAt(moved.row, moved.col); if (el) el.focus(); }
+});
+
+// startEdit(td) opens with the existing value selected (ready to overwrite by
+// typing, or keep with Enter/Tab). startEdit(td, "5") — from typing a digit on
+// a selected cell — opens with that keystroke already the whole value, cursor
+// after it, exactly as if the digit had landed straight in an always-open input.
+function startEdit(td, typed) {
+  var c = PLAN_CELLS[td.dataset.key];
+  if (!c) return;
+  closeCellPopover();
+  var row = Number(td.dataset.row), col = Number(td.dataset.col);
+  var val = typed !== undefined ? typed : (c.revised_forecast_kg != null ? c.revised_forecast_kg : "");
+  var workerRate = c.kg_per_worker || (LAST_GRID && LAST_GRID.default_kg_per_worker) || 0;
+  var wageRate = (LAST_GRID && LAST_GRID.picker_rate_per_kg) || 0;
+  // type="text" (not "number") deliberately: Chrome refuses setSelectionRange
+  // on type="number" inputs, which is exactly what's needed to land the caret
+  // after a just-typed digit so more digits append rather than insert at 0.
+  // inputmode="decimal" still gets a numeric keyboard on mobile; the digits-only
+  // filter below does what the native number type would have validated for us.
+  td.innerHTML = '<div class="pgbox pgedit"><input type="text" inputmode="decimal" class="pgquick" value="' +
+    esc(val) + '"></div>';
+  var inp = td.querySelector(".pgquick");
+  // Live labour + cash readout in the floating popup, not crammed into the
+  // cell itself — updates as soon as a digit changes, not only after save: the
+  // workers a forecast this size needs, and what to actually request in cash
+  // to pay them (kg x the picker wage rate, not the kg/worker productivity
+  // rate above).
+  function updateTotal() {
+    var cleaned = inp.value.replace(/[^0-9.]/g, "");
+    if (cleaned !== inp.value) { var pos = inp.selectionStart - (inp.value.length - cleaned.length); inp.value = cleaned; inp.setSelectionRange(pos, pos); }
+    var v = Number(cleaned) || 0;
+    $("wp-qtot-wk").textContent = v && workerRate ? Math.round(v / workerRate) + " workers" : "— workers";
+    $("wp-qtot-cost").textContent = v && wageRate ? "KES " + n(v * wageRate) + " to pay pickers" : "";
+    showQuickTotal(td);
+  }
+  updateTotal();
+  inp.addEventListener("input", updateTotal);
+  inp.focus();
+  if (typed === undefined) inp.select(); else { var L = inp.value.length; inp.setSelectionRange(L, L); }
+  var settled = false;
+
+  // After a commit, re-find the target cell in whatever just re-rendered (a
+  // full reload on save, or the same grid on a no-op/cancel) and either drop
+  // straight back into edit mode there (Enter/Tab) or just select it (Escape,
+  // plain blur, or nowhere left to go).
+  function afterSettle(moveTo) {
+    var target = moveTo || { row: row, col: col };
+    var el = cellAt(target.row, target.col);
+    if (!el) return;
+    if (moveTo) startEdit(el); else el.focus();
+  }
+  function settle(save, moveTo) {
+    if (settled) return;
+    settled = true;
+    hideQuickTotal();
+    if (!save) { if (LAST_GRID) renderPlanGrid(LAST_GRID); afterSettle(moveTo); return; }
+    var v = inp.value;
+    if (v === "" || Number(v) === (c.revised_forecast_kg || 0)) {
+      if (LAST_GRID) renderPlanGrid(LAST_GRID);
+      afterSettle(moveTo);
+      return;
+    }
+    post("plannerapi.save_forecast_cell", { block: c.block, week_start: c.week, revised_forecast_kg: v }).then(function () {
+      toast("Saved " + (c.block || "").split(" - ")[0]);
+      loadWorkplan().then(function () { afterSettle(moveTo); });
+    }).catch(function (e) { toast(e.message); if (LAST_GRID) renderPlanGrid(LAST_GRID); afterSettle(null); });
+  }
+  inp.addEventListener("blur", function () { settle(true, null); });
+  inp.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      settle(true, e.shiftKey ? upCellCoords(row, col) : downCellCoords(row, col));
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      settle(true, e.shiftKey ? leftCellCoords(row, col) : rightCellCoords(row, col));
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      settle(false, null);
+    }
+    e.stopPropagation();
+  });
+}
+
+function popoverEffectiveWorkers() {
+  var kg = Number($("wp-pop-kg").value) || 0;
+  var overrideW = $("wp-pop-workers").value;
+  if (overrideW !== "") return { workers: Number(overrideW), byHand: true };
+  var rate = Number($("wp-pop-rate").value) || (LAST_GRID && LAST_GRID.default_kg_per_worker) || 0;
+  return { workers: kg && rate ? kg / rate : null, rate: rate };
+}
+function updatePopoverTotal() {
+  var r = popoverEffectiveWorkers();
+  $("wp-pop-total").textContent = !r.workers ? "— workers"
+    : Math.round(r.workers) + " workers" + (r.byHand ? " · set by hand" : r.rate ? " · at " + n(r.rate) + " kg/worker" : "");
+  // What to actually request in cash to pay pickers for this cell's forecast —
+  // kg x the wage rate (Coffee Production Settings > Picker Rate per kg), a
+  // different figure from the kg/worker productivity rate above.
+  var kg = Number($("wp-pop-kg").value) || 0;
+  var wageRate = (LAST_GRID && LAST_GRID.picker_rate_per_kg) || 0;
+  $("wp-pop-cost").textContent = kg && wageRate ? "KES " + n(kg * wageRate) + " to pay pickers" : "—";
+}
+
+function openCellPopover(td) {
+  var c = PLAN_CELLS[td.dataset.key];
+  if (!c) return;
+  var pop = $("wp-pop");
+  $("wp-pop-title").textContent = (c.block || "").split(" - ")[0] + " · " + c.week;
+  $("wp-pop-kg").value = c.revised_forecast_kg != null ? c.revised_forecast_kg : "";
+  $("wp-pop-rate").value = c.kg_per_worker != null ? c.kg_per_worker : "";
+  $("wp-pop-workers").value = c.is_override && c.workers_needed != null ? c.workers_needed : "";
+  pop.dataset.key = td.dataset.key;
+  pop.hidden = false;
+  updatePopoverTotal();
+  var r = td.getBoundingClientRect();
+  var maxLeft = window.scrollX + document.documentElement.clientWidth - 226;
+  pop.style.top = (r.bottom + window.scrollY + 6) + "px";
+  pop.style.left = Math.max(8, Math.min(r.left + window.scrollX, maxLeft)) + "px";
+  $("wp-pop-kg").focus();
+}
+function closeCellPopover() { var pop = $("wp-pop"); if (pop) pop.hidden = true; }
+["wp-pop-kg", "wp-pop-rate", "wp-pop-workers"].forEach(function (id) {
+  $(id) && $(id).addEventListener("input", updatePopoverTotal);
+});
+$("wp-pop-close") && $("wp-pop-close").addEventListener("click", closeCellPopover);
+$("wp-pop-save") && $("wp-pop-save").addEventListener("click", function () {
+  var pop = $("wp-pop"), c = PLAN_CELLS[pop.dataset.key];
+  if (!c) return;
+  var kg = $("wp-pop-kg").value, rate = $("wp-pop-rate").value, workers = $("wp-pop-workers").value;
+  if (!kg) { toast("Enter a revised forecast"); return; }
+  var args = { block: c.block, week_start: c.week, revised_forecast_kg: kg };
+  if (rate) args.kg_per_worker = rate;
+  if (workers) args.workers_needed = workers;
+  post("plannerapi.save_forecast_cell", args).then(function () {
+    toast("Saved " + (c.block || "").split(" - ")[0]);
+    closeCellPopover();
+    loadWorkplan();
+  }).catch(function (e) { toast(e.message); });
+});
+document.addEventListener("click", function (e) {
+  var pop = $("wp-pop");
+  if (!pop || pop.hidden) return;
+  if (pop.contains(e.target) || (e.target.closest && e.target.closest(".pgcell"))) return;
+  closeCellPopover();
+});
+
 /* ── routing ─────────────────────────────────────────────────────────────── */
+// Planner and Daily Planner used to be separate tabs; the tab is merged but the
+// two loaders still read different endpoints (revised forecast vs the flowering
+// model), so both fire when the single tab opens.
+function loadPlannerTab() { loadWorkplan(); loadPlanner(); }
 var LOADERS = { overview: loadOverview, production: loadProduction, harvested: loadHarvested, drying: loadDrying,
-  milled: loadMilled, dispatch: loadDispatch, invoiced: loadInvoiced, planner: loadPlanner,
-  payments: loadPayments };
+  milled: loadMilled, dispatch: loadDispatch, invoiced: loadInvoiced,
+  workplan: loadPlannerTab, payments: loadPayments, comparison: loadComparison };
 var loaded = {}, active = "overview";
 
 function switchTab(tab) {

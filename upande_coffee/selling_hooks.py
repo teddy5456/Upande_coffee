@@ -4,7 +4,7 @@
 # Shared Delivery Note / Sales Invoice coffee logic, gated on the Business
 # Unit name containing "endebess". Other business units are never touched.
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import frappe
 from frappe import _
@@ -135,26 +135,50 @@ def _item_stock_uom(item_code, default="Nos"):
 	return frappe.db.get_value("Item", item_code, "stock_uom") or default
 
 
-def _harvest_week(on_date):
-	"""Week number since the start of harvest. Week 1 is the week containing
-	the active Coffee Season's Week One Start (falling back to its Start
-	Date); weeks roll over on Mondays, so "this week" means the same thing
-	on the form as it does on the estate.
+def _october_week_one(on_date):
+	"""Monday that starts the first week of October for the season `on_date`
+	falls in. October 1st itself is mid-week most years, so week 1 begins on
+	the Monday of the week that contains it — 1 Oct 2026 is a Thursday, so
+	the 2026/27 season's week 1 starts Mon 29 Sep 2026."""
 
-	No active Coffee Season configured — fall back to the ISO week so a save
-	is never blocked; set up the season to get true harvest weeks."""
+	def monday_of_october(year):
+		first = date(year, 10, 1)
+		return first - timedelta(days=first.weekday())
+
+	this_year = monday_of_october(on_date.year)
+	return this_year if on_date >= this_year else monday_of_october(on_date.year - 1)
+
+
+def _harvest_week(on_date):
+	"""Week number within the coffee season. Weeks roll over on Mondays, so
+	"this week" means the same thing on the form as it does on the estate.
+
+	Week 1 always restarts at the first week of October. Inside a season the
+	active Coffee Season's Week One Start (falling back to its Start Date)
+	overrides that origin, which is how a season that began part-way through
+	October keeps its historical numbering — but only until the next October
+	rollover, which always resets to 01.
+
+	No active Coffee Season — the October rule alone applies, so numbering is
+	still right out of the box instead of falling back to the ISO week (which
+	silently produced 39EM… in September instead of 49EM…)."""
+	on_date = getdate(on_date)
+	origin = _october_week_one(on_date)
+
 	season = frappe.db.get_value(
 		"Coffee Season",
 		{"is_active": 1},
 		["week_one_start", "start_date"],
 		as_dict=True,
 	)
-	origin = season and (season.week_one_start or season.start_date)
-	on_date = getdate(on_date)
-	if not origin:
-		return on_date.isocalendar()[1]
-	origin = getdate(origin)
-	origin -= timedelta(days=origin.weekday())  # Monday of the harvest's first week
+	anchor = season and (season.week_one_start or season.start_date)
+	if anchor:
+		anchor = getdate(anchor)
+		anchor -= timedelta(days=anchor.weekday())  # Monday of the season's first week
+		# Only honour the season anchor until the next October reset passes it.
+		if anchor > origin:
+			origin = anchor
+
 	return max(1, (on_date - origin).days // 7 + 1)
 
 

@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 
@@ -9,6 +10,57 @@ class Harvester(Document):
             # created directly and via the label tool never collide.
             base = frappe.get_single("Coffee QR Sequence").get_next(1)
             self.harvester_id = f"HARVESTER-{base + 1}"
+
+    def validate(self):
+        self._pull_employee_details()
+        self._one_harvester_per_employee()
+
+    def _one_harvester_per_employee(self):
+        """An employee carries one QR identity, so refuse a second Harvester
+        for them instead of quietly printing two cards for one picker."""
+        if not self.employee:
+            return
+        existing = frappe.db.get_value(
+            "Harvester", {"employee": self.employee, "name": ["!=", self.name]}, "name"
+        )
+        if existing:
+            frappe.throw(
+                _("Employee {0} already has harvester {1}.").format(self.employee, existing),
+                title=_("Duplicate Harvester"),
+            )
+
+    def _pull_employee_details(self):
+        """Copy identifying details off the linked Employee.
+
+        Lives here rather than in the label tool so picking an employee gives
+        a fully populated Harvester however the record is created — label
+        print, desk form or import.
+        """
+        if not self.employee:
+            return
+
+        emp = frappe.db.get_value(
+            "Employee",
+            self.employee,
+            ["employee_number", "employee_name"],
+            as_dict=True,
+        )
+        if not emp:
+            return
+
+        if not self.employee_id:
+            self.employee_id = emp.employee_number
+
+        if not self.national_id:
+            # National ID has no fixed fieldname across Upande sites; take the
+            # first one this site actually has rather than assuming.
+            meta = frappe.get_meta("Employee")
+            for candidate in ("custom_national_id", "national_id", "custom_id_number", "ic_no"):
+                if meta.has_field(candidate):
+                    value = frappe.db.get_value("Employee", self.employee, candidate)
+                    if value:
+                        self.national_id = value
+                        break
 
     def after_save(self):
         self._render_qr()
