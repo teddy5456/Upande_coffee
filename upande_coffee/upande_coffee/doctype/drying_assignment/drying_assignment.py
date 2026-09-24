@@ -280,6 +280,12 @@ def on_submit_create_repack(doc, method):
     se = frappe.new_doc("Stock Entry")
     se.stock_entry_type = "Repack"
     se.posting_date = doc.end_date or frappe.utils.today()
+    # Same fix as Harvest Pickup's stock entry: without this Frappe overwrites
+    # posting_date with the submit-time moment, silently misdating any repack
+    # submitted after end_date (the normal case — drying finishes, someone
+    # marks it Completed and submits a day or more later).
+    se.set_posting_time = 1
+    se.posting_time = "12:00:00"
     se.company = COMPANY
     se.remarks = f"Auto-created from Drying Assignment {doc.name}: Cherry -> Parchment"
 

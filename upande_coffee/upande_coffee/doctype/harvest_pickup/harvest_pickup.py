@@ -89,6 +89,12 @@ def on_submit_create_stock_entry(doc, method):
 	se = frappe.new_doc("Stock Entry")
 	se.stock_entry_type = "Material Receipt"
 	se.posting_date = doc.date
+	# Without this, Frappe silently overwrites posting_date with the current
+	# moment on insert (see StockController) — invisible when Receive happens
+	# same-day as the pickup, but every pickup approved a day or more later
+	# posted its cherry on the approval date instead of the pickup date.
+	se.set_posting_time = 1
+	se.posting_time = "12:00:00"
 	se.company = company
 	se.remarks = f"Cherry received from harvest pickup {doc.name} on {doc.date}"
 	se.append(
