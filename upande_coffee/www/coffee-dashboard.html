@@ -56,7 +56,7 @@ a{color:inherit}
 .pagehead__eyebrow{font:500 9.5px var(--sans);text-transform:uppercase;letter-spacing:2px;color:var(--ink-mute)}
 .pagehead__title{margin:4px 0 0;font:600 32px/1.05 var(--sans);color:var(--ink);letter-spacing:-.6px}
 .pagehead__sub{margin:6px 0 0;font:400 12.5px var(--meta);color:var(--ink-mute)}
-.pagehead__tools{display:flex;gap:8px;align-items:center}
+.pagehead__tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
 /* Toggle / pill controls */
 .datepill{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:999px;padding:8px 14px;font:500 12px var(--sans);color:var(--ink);box-shadow:var(--shadow-card)}
@@ -480,6 +480,15 @@ body.sb-collapsed{--sbw:64px}
     </div>
     <div class="pagehead__tools">
       <select class="datepill" id="f-season"><option value="">All seasons</option></select>
+      <div class="seg" id="f-presets" role="tablist">
+        <button type="button" class="seg__opt" data-preset="today" role="tab">Today</button>
+        <button type="button" class="seg__opt" data-preset="yesterday" role="tab">Yesterday</button>
+        <button type="button" class="seg__opt" data-preset="7d" role="tab">Last 7 Days</button>
+        <button type="button" class="seg__opt" data-preset="season" role="tab">This Season</button>
+        <button type="button" class="seg__opt" data-preset="lastseason" role="tab">Last Season</button>
+        <button type="button" class="seg__opt" data-preset="year" role="tab">This Year</button>
+        <button type="button" class="seg__opt" data-preset="lastyear" role="tab">Last Year</button>
+      </div>
       <input type="date" class="datepill" id="f-from" title="From date">
       <input type="date" class="datepill" id="f-to" title="To date">
       <button class="iconbtn" id="btn-refresh" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
@@ -951,6 +960,67 @@ function api(fn, args) {
 function ranges() {
   return { season: $("f-season").value, from_date: $("f-from").value, to_date: $("f-to").value };
 }
+
+/* ── date presets ────────────────────────────────────────────────────────
+   Season boundaries reuse Coffee Season.start_date/end_date (SEASONS, filled
+   in from the get_seasons() boot call below) rather than guessing at date
+   math — same source of truth as _active_season_name()/the Planner strip. */
+var SEASONS = [];
+var ACTIVE_PRESET = null;
+
+function toISO(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function activeSeasonRecord() {
+  return SEASONS.filter(function (s) { return s.is_active; })[0] || null;
+}
+function lastSeasonRecord() {
+  var act = activeSeasonRecord();
+  if (!act) return null;
+  var asc = SEASONS.slice().sort(function (a, b) { return (a.start_date || "").localeCompare(b.start_date || ""); });
+  var idx = asc.findIndex(function (s) { return s.name === act.name; });
+  return idx > 0 ? asc[idx - 1] : null;
+}
+function presetRange(key) {
+  var today = new Date();
+  switch (key) {
+    case "today": return { from: toISO(today), to: toISO(today) };
+    case "yesterday": var y = addDays(today, -1); return { from: toISO(y), to: toISO(y) };
+    case "7d": return { from: toISO(addDays(today, -6)), to: toISO(today) };
+    case "season": {
+      var s = activeSeasonRecord();
+      return s ? { from: s.start_date, to: s.end_date || toISO(today) } : null;
+    }
+    case "lastseason": {
+      var l = lastSeasonRecord();
+      return l ? { from: l.start_date, to: l.end_date || l.start_date } : null;
+    }
+    case "year": return { from: today.getFullYear() + "-01-01", to: today.getFullYear() + "-12-31" };
+    case "lastyear": return { from: (today.getFullYear() - 1) + "-01-01", to: (today.getFullYear() - 1) + "-12-31" };
+  }
+  return null;
+}
+function renderPresetActive() {
+  document.querySelectorAll("#f-presets .seg__opt").forEach(function (b) {
+    b.classList.toggle("on", b.dataset.preset === ACTIVE_PRESET);
+  });
+}
+function applyPreset(key) {
+  var r = presetRange(key);
+  if (!r) { toast("No " + (key === "lastseason" ? "prior season" : "season") + " on record"); return; }
+  $("f-from").value = r.from;
+  $("f-to").value = r.to;
+  ACTIVE_PRESET = key;
+  renderPresetActive();
+  reloadAll();
+}
+document.querySelectorAll("#f-presets .seg__opt").forEach(function (btn) {
+  btn.addEventListener("click", function () { applyPreset(btn.dataset.preset); });
+});
+["f-from", "f-to"].forEach(function (id) {
+  $(id).addEventListener("change", function () { ACTIVE_PRESET = null; renderPresetActive(); });
+});
 
 /* ── formatting ──────────────────────────────────────────────────────────── */
 function n(v, d) {
@@ -2056,6 +2126,7 @@ $("f-to").addEventListener("change", reloadAll);
 /* ── boot ────────────────────────────────────────────────────────────────── */
 api("get_seasons", {}).then(function (d) {
   var sel = $("f-season"), activeSeason = "";
+  SEASONS = d.seasons || [];
   (d.seasons || []).forEach(function (s) {
     var o = document.createElement("option");
     o.value = s.name; o.textContent = s.season_name || s.name;

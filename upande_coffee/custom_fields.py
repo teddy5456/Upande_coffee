@@ -398,17 +398,33 @@ def remove_legacy_fields():
 # Fields other Upande apps make mandatory on shared doctypes. They were written
 # when Roses was the only business unit on the site, so they are reqd=1 with no
 # condition and block every Coffee document. Scoping them to Roses leaves the
-# Roses forms exactly as they were (same red asterisk, same client-side block,
-# which is how Upande Packhouse already scopes custom_truck_details and
-# custom_s_number) while letting Coffee save.
+# Roses forms exactly as they were (same red asterisk, same client-side block).
 _FOREIGN_MANDATORY = {
 	"Sales Order": [
 		"custom_shipping_agent",
 		"custom_delivery_point",
 		"custom_consignee",
+		# Owned by upande_packhouse, reqd=1 with no condition at all — blocks
+		# every Coffee SO save (confirmed live against real Endebess SOs).
+		"custom_order_name",
 	],
 }
 _ROSES_ONLY = 'eval: doc.business_unit == "Roses"'
+
+# custom_s_number / custom_truck_details are ALSO Packhouse fields, already
+# "scoped" to Roses — but their condition references `custom_business_unit`,
+# which has never existed on Sales Order (the real field is `business_unit`),
+# so the eval is always undefined/falsy in the desk form and, empirically,
+# still enforced server-side too — Coffee SOs get blocked by them exactly as
+# if they had no condition at all. Not an operator's intentional override to
+# preserve: a condition that can never reference a real field is a bug, so
+# fix the reference in place rather than route it through the "no condition"
+# path above (which would skip these since mandatory_depends_on is already set).
+_BROKEN_BUSINESS_UNIT_REF = "custom_business_unit"
+_FIX_BUSINESS_UNIT_REF = [
+	("Sales Order", "custom_s_number"),
+	("Sales Order", "custom_truck_details"),
+]
 
 
 def relax_foreign_mandatory_fields():
@@ -434,6 +450,32 @@ def relax_foreign_mandatory_fields():
 				"Custom Field",
 				name,
 				{"reqd": 0, "mandatory_depends_on": _ROSES_ONLY},
+				update_modified=False,
+			)
+			frappe.clear_cache(doctype=doctype)
+
+	for doctype, fieldname in _FIX_BUSINESS_UNIT_REF:
+		name = f"{doctype}-{fieldname}"
+		if not frappe.db.exists("Custom Field", name):
+			continue
+		current = frappe.db.get_value(
+			"Custom Field", name, ["reqd", "mandatory_depends_on"], as_dict=True
+		)
+		condition = current.mandatory_depends_on or ""
+		# Keyed off reqd, not the exact wording of the condition, so this stays
+		# idempotent whether the condition still has the broken field
+		# reference, was already corrected by a prior run, or is missing
+		# entirely — reqd=1 is the actual problem in every one of those cases.
+		if current.reqd:
+			fixed_condition = (
+				condition.replace(_BROKEN_BUSINESS_UNIT_REF, "business_unit")
+				if _BROKEN_BUSINESS_UNIT_REF in condition
+				else (condition or _ROSES_ONLY)
+			)
+			frappe.db.set_value(
+				"Custom Field",
+				name,
+				{"reqd": 0, "mandatory_depends_on": fixed_condition},
 				update_modified=False,
 			)
 			frappe.clear_cache(doctype=doctype)
