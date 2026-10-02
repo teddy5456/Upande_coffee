@@ -104,10 +104,10 @@ doc_events = {
 # required_apps = []
 
 # Coffee gets a launcher icon on the /apps screen; it opens the ops dashboard.
+# No custom logo -- falls back to Frappe's default initial-letter badge.
 add_to_apps_screen = [
 	{
 		"name": "upande_coffee",
-		"logo": "/assets/upande_coffee/images/coffee-logo.png",
 		"title": "Coffee",
 		"route": "/coffee-dashboard",
 	}
