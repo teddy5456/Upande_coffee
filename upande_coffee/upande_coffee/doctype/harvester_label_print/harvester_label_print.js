@@ -22,6 +22,7 @@ frappe.ui.form.on("Harvester Label Print", {
 			return;
 		}
 		frm.__generating = true;
+		listen_for_background_completion(frm);
 		frappe.call({
 			method: "upande_coffee.upande_coffee.label_generation.generate_labels",
 			args: { label_doc_name: frm.doc.name },
@@ -29,6 +30,16 @@ frappe.ui.form.on("Harvester Label Print", {
 			freeze_message: __("Generating harvester QR labels..."),
 			callback: (r) => {
 				frm.__generating = false;
+				if (r.message && r.message.queued) {
+					// Large batch — running in the background rather than
+					// blocking this request until it times out. The realtime
+					// listener picks up the "done" event when it finishes.
+					frappe.show_alert({
+						message: __("Large batch — generating labels in the background. You'll be notified here when they're ready."),
+						indicator: "blue",
+					}, 10);
+					return;
+				}
 				frm.reload_doc().then(() => {
 					if (r.message && r.message.count) {
 						frappe.show_alert({
@@ -46,8 +57,27 @@ frappe.ui.form.on("Harvester Label Print", {
 	},
 });
 
+function listen_for_background_completion(frm) {
+	if (frm.__listening_for_labels) {
+		return;
+	}
+	frm.__listening_for_labels = true;
+	frappe.realtime.on("harvester_label_print_done", (data) => {
+		if (!data || data.name !== frm.doc.name) {
+			return;
+		}
+		frm.reload_doc().then(() => {
+			frappe.show_alert({
+				message: __("{0} label(s) generated. Opening print view...", [data.count]),
+				indicator: "green",
+			});
+			open_print(frm);
+		});
+	});
+}
+
 function preferred_format(frm) {
-	return frm.doc.action === "Empty QR Range"
+	return frm.doc.action === "Empty QR Range" || frm.doc.action === "Reprint Existing"
 		? "Harvester QR - Blank"
 		: "Harvester QR - Employee Card";
 }

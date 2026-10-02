@@ -1,6 +1,15 @@
+import json
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
+
+
+def qr_url_for(harvester_id):
+    """External QR image URL for a harvester — shared with label_generation.py
+    so bulk label printing never has to render/store a QR PNG locally."""
+    qr_data = json.dumps({"harvester_id": harvester_id})
+    return f"https://api.qrserver.com/v1/create-qr-code/?data={frappe.utils.quote(qr_data)}&size=200x200"
 
 
 class Harvester(Document):
@@ -68,9 +77,7 @@ class Harvester(Document):
     def _render_qr(self):
         if not self.harvester_id:
             return
-        import json
-        qr_data = json.dumps({"harvester_id": self.harvester_id})
-        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?data={frappe.utils.quote(qr_data)}&size=200x200"
+        qr_url = qr_url_for(self.harvester_id)
         html = f"""
         <div style="display:flex;flex-direction:column;align-items:center;padding:16px;
                     background:#fdf6ee;border-radius:12px;border:1px solid #d7a96b;text-align:center;">

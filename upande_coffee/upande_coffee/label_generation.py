@@ -2,52 +2,16 @@
 # For license information, please see license.txt
 """Generate harvester QR label cards for a Harvester Label Print document.
 
-Mirrors the ``upande_kaitet`` ``gen_label_id`` convention: build a QR PNG with the
-``qrcode`` library, store it as a File, and record a child row that the print
-formats iterate over.
+QR images are an external api.qrserver.com URL (same one Harvester's own
+qr_display uses) rather than a locally rendered PNG + File record — a batch of
+a few hundred cards used to time out the web request doing that render/write
+per harvester; a URL is free to build and needs no file I/O at all.
 """
-
-import json
-import os
-import time
-
-import qrcode
 
 import frappe
 from frappe import _
 
-
-def _make_qr(harvester_id, label_doc_name, index):
-    """Render the QR PNG for one harvester and return its public file URL."""
-    payload = json.dumps({"harvester_id": harvester_id})
-
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=6,
-        border=2,
-    )
-    qr.add_data(payload)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-
-    qr_dir = frappe.utils.get_files_path("qr_codes")
-    os.makedirs(qr_dir, exist_ok=True)
-
-    file_name = f"{label_doc_name}_{int(time.time())}_{index}.png"
-    img.save(os.path.join(qr_dir, file_name))
-
-    file_doc = frappe.get_doc(
-        {
-            "doctype": "File",
-            "file_url": f"/files/qr_codes/{file_name}",
-            "attached_to_doctype": "Harvester Label Print",
-            "attached_to_name": label_doc_name,
-            "is_private": 0,
-        }
-    )
-    file_doc.insert(ignore_permissions=True)
-    return file_doc.file_url
+from upande_coffee.upande_coffee.doctype.harvester.harvester import qr_url_for
 
 
 def _harvester_for_employee(employee):
@@ -72,10 +36,15 @@ def _resolve_harvesters(doc):
         qty = int(doc.qty or 0)
         if qty < 1:
             frappe.throw(_("Enter a Number of Cards greater than zero."))
+        # Reserve the whole block in one shot: Coffee QR Sequence.get_next(n)
+        # takes a single row lock and commit for the batch, instead of one
+        # per harvester (which is what made large ranges slow — each of
+        # those is a serialized SELECT ... FOR UPDATE plus its own commit).
+        base = frappe.get_single("Coffee QR Sequence").get_next(qty)
         harvesters = []
-        for _i in range(qty):
-            h = frappe.get_doc({"doctype": "Harvester"})
-            h.insert()
+        for i in range(qty):
+            h = frappe.get_doc({"doctype": "Harvester", "harvester_id": f"HARVESTER-{base + 1 + i}"})
+            h.insert(ignore_permissions=True)
             harvesters.append(h)
         return harvesters
 
@@ -98,19 +67,64 @@ def _resolve_harvesters(doc):
             frappe.throw(_("No valid employees in the table."))
         return harvesters
 
+    if action == "Reprint Existing":
+        # Reprints a label for a harvester that already exists — nothing is
+        # created. Useful for a lost/damaged physical card.
+        if not doc.existing_harvester:
+            frappe.throw(_("Select a Harvester to reprint."))
+        return [frappe.get_doc("Harvester", doc.existing_harvester)]
+
     frappe.throw(_("Unknown mode: {0}").format(action))
+
+
+# Past this many, a batch risks outrunning the web request timeout, so it
+# moves to a background job instead. QR images are now free (external URL,
+# no local render/file write), so the only per-harvester cost left is the
+# doc insert itself — this can sit much higher than it could when each one
+# also wrote a PNG to disk.
+BACKGROUND_THRESHOLD = 300
+
+
+def _expected_count(doc):
+    if doc.action == "Empty QR Range":
+        return int(doc.qty or 0)
+    if doc.action == "Employee Table":
+        return len({row.employee for row in (doc.employee_rows or []) if row.employee})
+    return 1
 
 
 @frappe.whitelist()
 def generate_labels(label_doc_name):
-    """Create/link Harvester records for the chosen mode and build label rows."""
+    """Create/link Harvester records for the chosen mode and build label rows.
+
+    Large batches (bulk "Empty QR Range" runs especially) are enqueued instead
+    of run inline — see BACKGROUND_THRESHOLD."""
     doc = frappe.get_doc("Harvester Label Print", label_doc_name)
     doc.check_permission("write")
 
+    if _expected_count(doc) > BACKGROUND_THRESHOLD:
+        frappe.enqueue(
+            "upande_coffee.upande_coffee.label_generation._generate_labels_job",
+            queue="long",
+            timeout=3600,
+            label_doc_name=label_doc_name,
+            user=frappe.session.user,
+        )
+        return {"queued": True}
+
+    count = _generate_labels_job(label_doc_name)
+    return {"count": count, "queued": False}
+
+
+def _generate_labels_job(label_doc_name, user=None):
+    """Does the actual work of generate_labels — runs either inline or as a
+    background job. `user` is who to notify when queued; inline calls don't
+    need it since the caller is still waiting on the response."""
+    doc = frappe.get_doc("Harvester Label Print", label_doc_name)
     harvesters = _resolve_harvesters(doc)
 
     doc.set("labels", [])
-    for index, h in enumerate(harvesters, start=1):
+    for h in harvesters:
         emp_name = emp_number = None
         if h.employee:
             emp_name, emp_number = frappe.db.get_value(
@@ -124,11 +138,18 @@ def generate_labels(label_doc_name):
                 "employee": h.employee,
                 "employee_name": emp_name,
                 "employee_number": emp_number,
-                "qr_code_image": _make_qr(h.harvester_id, label_doc_name, index),
+                "qr_code_image": qr_url_for(h.harvester_id),
             },
         )
 
     doc.flags.ignore_validate_update_after_submit = True
-    doc.save()
+    doc.save(ignore_permissions=bool(user))
     frappe.db.commit()
-    return {"count": len(doc.labels)}
+
+    if user:
+        frappe.publish_realtime(
+            "harvester_label_print_done",
+            {"name": label_doc_name, "count": len(doc.labels)},
+            user=user,
+        )
+    return len(doc.labels)

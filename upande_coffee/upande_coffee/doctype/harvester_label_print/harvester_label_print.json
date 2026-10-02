@@ -16,6 +16,8 @@
   "employee",
   "table_section",
   "employee_rows",
+  "reprint_section",
+  "existing_harvester",
   "result_section",
   "labels"
  ],
@@ -26,7 +28,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Mode",
-   "options": "Empty QR Range\nEmployee Card\nEmployee Table",
+   "options": "Empty QR Range\nEmployee Card\nEmployee Table\nReprint Existing",
    "reqd": 1
   },
   {
@@ -79,6 +81,21 @@
    "fieldtype": "Table",
    "label": "Employees",
    "options": "Harvester Label Employee"
+  },
+  {
+   "depends_on": "eval:doc.action == 'Reprint Existing'",
+   "fieldname": "reprint_section",
+   "fieldtype": "Section Break",
+   "label": "Reprint Existing"
+  },
+  {
+   "depends_on": "eval:doc.action == 'Reprint Existing'",
+   "description": "Reprints this harvester's existing QR — nothing new is created.",
+   "fieldname": "existing_harvester",
+   "fieldtype": "Link",
+   "label": "Harvester",
+   "mandatory_depends_on": "eval:doc.action == 'Reprint Existing'",
+   "options": "Harvester"
   },
   {
    "collapsible": 1,
