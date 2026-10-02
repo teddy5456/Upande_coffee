@@ -57,6 +57,27 @@
     "next_state": "Received",
     "allowed": "Coffee Harvest Manager",
     "allow_self_approval": 1
+   },
+   {
+    "state": "Draft",
+    "action": "Weigh",
+    "next_state": "Weighed",
+    "allowed": "Weighbridge Attendant",
+    "allow_self_approval": 1
+   },
+   {
+    "state": "Draft",
+    "action": "Weigh",
+    "next_state": "Weighed",
+    "allowed": "Coffee Harvest Manager",
+    "allow_self_approval": 1
+   },
+   {
+    "state": "Weighed",
+    "action": "Receive",
+    "next_state": "Received",
+    "allowed": "Coffee Receiver",
+    "allow_self_approval": 1
    }
   ],
   "modified": "2026-07-16 12:00:00"

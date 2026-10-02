@@ -120,14 +120,24 @@ def workflow_action(name, action, weights=None):
 
 @frappe.whitelist()
 def receivable_pickups():
-	"""Weighed pickups waiting to be confirmed as arrived at the mill."""
-	return frappe.get_all(
+	"""Weighed pickups waiting to be confirmed as arrived at the mill.
+
+	Deliberately leaves out bucket count and weight: receiving counts buckets
+	independently as an integrity check (see receive_pickup), so the expected
+	number must not be visible beforehand. Tractor and blocks are the only
+	context the receiver needs to find the right load."""
+	pickups = frappe.get_all(
 		"Harvest Pickup",
 		filters={"docstatus": 0, "workflow_state": "Weighed"},
-		fields=["name", "date", "tractor", "total_buckets", "total_weight_kg", "workflow_state"],
+		fields=["name", "date", "tractor", "workflow_state"],
 		order_by="date asc, creation asc",
 		limit_page_length=50,
 	)
+	for p in pickups:
+		p["blocks"] = frappe.get_all(
+			"Harvest Pickup Detail", filters={"parent": p.name}, fields=["block"], pluck="block"
+		)
+	return pickups
 
 
 @frappe.whitelist()
@@ -147,24 +157,32 @@ def recent_received_pickups(limit=10):
 
 
 @frappe.whitelist(methods=["POST"])
-def receive_pickup(name, received_weight_kg, received_bag_count):
-	"""Confirm cherry has physically arrived at the wet mill: record the
-	re-weighed total and bag count, then drive the "Receive" workflow
-	transition, which submits the document and moves stock using this actual
-	weight (see on_submit_create_stock_entry)."""
+def receive_pickup(name, reported_bucket_count):
+	"""Confirm cherry has physically arrived at the wet mill.
+
+	The receiver's whole job is to count buckets as they unload and report
+	the number — they never see the field's recorded count or weight
+	beforehand (see receivable_pickups), so this is an independent check, not
+	a rubber stamp. It must match the pickup's real total exactly or
+	receiving is refused outright. Once it matches, the field weight is used
+	as-is (no re-weigh) and the "Receive" workflow transition submits the
+	document and moves stock, same as before."""
 	doc = frappe.get_doc("Harvest Pickup", name)
 	if doc.workflow_state != "Weighed":
 		frappe.throw(_("Pickup {0} must be Weighed before it can be received.").format(name))
 	if doc.received:
 		frappe.throw(_("Pickup {0} has already been received.").format(name))
 
-	received_weight_kg = flt(received_weight_kg)
-	if received_weight_kg <= 0:
-		frappe.throw(_("Received weight must be greater than 0."))
+	reported = cint(reported_bucket_count)
+	if reported <= 0:
+		frappe.throw(_("Enter the number of buckets received."))
+	if reported != cint(doc.total_buckets):
+		frappe.throw(
+			_("Bucket count does not match this pickup's record. Recount, or contact the field team if buckets are missing.")
+		)
 
-	doc.db_set("received_weight_kg", received_weight_kg, update_modified=False)
-	doc.db_set("received_bag_count", cint(received_bag_count), update_modified=False)
-	doc.db_set("weight_variance_kg", received_weight_kg - flt(doc.total_weight_kg), update_modified=False)
+	doc.db_set("received_weight_kg", flt(doc.total_weight_kg), update_modified=False)
+	doc.db_set("weight_variance_kg", 0, update_modified=False)
 	doc.db_set("received_by", frappe.session.user, update_modified=False)
 	doc.db_set("received_at", now_datetime(), update_modified=False)
 	doc.db_set("received", 1, update_modified=False)
@@ -182,8 +200,6 @@ def receive_pickup(name, received_weight_kg, received_bag_count):
 		"received_at": doc.received_at,
 		"received_by": doc.received_by,
 		"received_weight_kg": doc.received_weight_kg,
-		"received_bag_count": doc.received_bag_count,
-		"weight_variance_kg": doc.weight_variance_kg,
 		"stock_entry": stock_entry,
 	}
 
@@ -295,17 +311,3 @@ def weekly_forecast_vs_actual(block=None, weeks_back=4, weeks_ahead=8):
 			for b in blocks
 		],
 	}
-
-
-@frappe.whitelist()
-def submit_pickup(name):
-	"""Submit by name only.
-
-	frappe.client.submit takes a doc dict and reconstructs it via
-	frappe.get_doc(dict) -- for a dict holding only {doctype, name} that
-	builds a brand-new, entirely blank in-memory document (every other field
-	None) rather than loading the real record, so submitting it either fails
-	validation outright or hits Frappe's own modified-timestamp conflict
-	check. Loading by name first avoids that trap altogether.
-	"""
-	frappe.get_doc("Harvest Pickup", name).submit()

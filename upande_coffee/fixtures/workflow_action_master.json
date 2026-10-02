@@ -22,5 +22,11 @@
   "name": "Receive",
   "workflow_action_name": "Receive",
   "modified": "2026-07-16 12:00:00"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Weigh",
+  "workflow_action_name": "Weigh",
+  "modified": "2026-10-02 12:00:00"
  }
 ]
