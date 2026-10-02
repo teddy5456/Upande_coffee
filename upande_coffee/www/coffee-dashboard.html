@@ -679,15 +679,9 @@ body.sb-collapsed{--sbw:64px}
       <div class="card__head"><h3>Recent Pickups</h3><div class="meta">weighbridge · workflow</div></div>
       <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Pickup</th><th class="num">Buckets</th><th class="num">Weight (kg)</th><th class="num">Avg kg/Bucket</th><th>State</th></tr></thead><tbody id="h-pickups"></tbody></table></div>
     </div>
-    <div class="row-2-eq">
-      <div class="card card--padded">
-        <div class="card__head"><h3>Harvest Log</h3><div class="meta" id="h-logcnt"></div></div>
-        <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Harvester</th><th>Block</th><th class="num">Buckets</th><th>Picked</th><th>Paid</th></tr></thead><tbody id="h-log"></tbody></table></div>
-      </div>
-      <div class="card card--padded">
-        <div class="card__head"><h3>Payments</h3><div class="meta" id="h-paycnt"></div></div>
-        <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Harvester</th><th class="num">Buckets</th><th class="num">Rate</th><th class="num">Total (KES)</th></tr></thead><tbody id="h-pay"></tbody></table></div>
-      </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Payments</h3><div class="meta" id="h-paycnt"></div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>Harvester</th><th class="num">Buckets</th><th class="num">Rate</th><th class="num">Total (KES)</th></tr></thead><tbody id="h-pay"></tbody></table></div>
     </div>
   </div>
 
@@ -1119,7 +1113,10 @@ function barChart(el, labels, values, height) {
   values.forEach(function (v, i) {
     var h = (v / mx) * (B - T);
     var x = XL + i * gap + (gap - bw) / 2;
-    bars += '<rect x="' + x.toFixed(1) + '" y="' + (B - h).toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) + '" rx="6" fill="url(#' + gid + ')"/>';
+    bars += '<rect x="' + x.toFixed(1) + '" y="' + (B - h).toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) +
+      '" rx="6" fill="url(#' + gid + ')"><title>' + esc(labels[i]) + ": " + n(v) + "</title></rect>";
+    bars += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (B - h - 6).toFixed(1) +
+      '" text-anchor="middle" font-family="Poppins" font-size="9.5" font-weight="600" fill="#3a3a34">' + n(v) + "</text>";
     xl += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (B + 18) + '" text-anchor="middle" font-family="Poppins" font-size="10" fill="#9a9a92">' + esc(labels[i]) + "</text>";
   });
   var ticks = [1, 2, 3].map(function (k) {
@@ -1183,12 +1180,13 @@ function loadOverview() {
     $("ov-kpis").innerHTML =
       kpiCard("Season Target", n(est.target_cherry_kg), "kg cherry · " + (est.season_name || "no active season"),
         est.blocks + " blocks", "flat") +
-      kpiCard("Harvested", n(h.total_buckets), "buckets · " + n(h.total_weight_kg) + " kg received",
-        "↑ " + n(h.today_buckets) + " <small>today</small>", "up",
+      kpiCard("Harvested", n(h.total_weight_kg), "kg · " + n(h.total_buckets) + " buckets received",
+        "↑ " + n(h.today_buckets) + " <small>buckets today</small>", "up",
         (h.daily_buckets || []).map(function (r) { return r.count || 0; })) +
       kpiCard("On Drying Tables", n(dr.total_debes), "debes across types",
         (dr.readiness.ready || 0) + " tables ready", dr.readiness.ready ? "up" : "flat") +
-      kpiCard("Clean Coffee", n(d.clean.output_kg), "kg milled output", null) +
+      kpiCard("Clean Coffee", n(d.clean.output_kg), "kg milled output" +
+        (d.clean.estimated_kg ? " · est. " + n(d.clean.estimated_kg) + " kg this season" : ""), null) +
       kpiCard("Dispatched", n(d.dispatch.total_weight_kg), "kg · " + d.dispatch.shipments + " shipments",
         "KES " + n(d.invoices.total_billed) + " <small>invoiced</small>",
         d.invoices.outstanding > 0 ? "flat" : "up");
@@ -1232,12 +1230,6 @@ function loadHarvested() {
       return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.name) + '</td><td class="num">' + n(r.total_buckets) +
         '</td><td class="num">' + n(r.total_weight_kg) + '</td><td class="num">' + n(avg, 1) + "</td><td>" + stChip(r.workflow_state) + "</td></tr>";
     }).join("") || '<tr><td colspan="6"><div class="emptybox">No pickups.</div></td></tr>';
-    $("h-logcnt").textContent = (d.logs || []).length + " records";
-    $("h-log").innerHTML = (d.logs || []).map(function (r) {
-      return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.harvester_id) + "</td><td>" + esc((r.block || "").split(" - ")[0]) +
-        '</td><td class="num">' + n(r.bucket_count) + "</td><td>" + chip(r.picked_up ? "" : "warn", r.picked_up ? "Yes" : "No") +
-        "</td><td>" + chip(r.paid ? "" : "warn", r.paid ? "Yes" : "No") + "</td></tr>";
-    }).join("") || '<tr><td colspan="6"><div class="emptybox">No records.</div></td></tr>';
     $("h-paycnt").textContent = (d.payments || []).length + " payments";
     $("h-pay").innerHTML = (d.payments || []).map(function (r) {
       return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.harvester_id) + '</td><td class="num">' + n(r.total_buckets) +

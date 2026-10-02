@@ -10,6 +10,7 @@
   "column_break_hs",
   "milled_store_warehouse",
   "bag_weight_kg",
+  "expected_yield_pct",
   "milling_section",
   "parchment_item",
   "column_break_ms",
@@ -59,6 +60,14 @@
    "fieldname": "bag_weight_kg",
    "fieldtype": "Float",
    "label": "Bag Weight (kg)",
+   "non_negative": 1
+  },
+  {
+   "default": "20",
+   "description": "Expected clean coffee out of cherry in, as a percentage -- used only to show an estimated clean coffee figure on the dashboard (forecast cherry x this %), not for any accounting entry.",
+   "fieldname": "expected_yield_pct",
+   "fieldtype": "Float",
+   "label": "Expected Cherry-to-Clean Yield (%)",
    "non_negative": 1
   },
   {

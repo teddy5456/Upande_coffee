@@ -109,13 +109,15 @@ def get_overview(from_date=None, to_date=None, season=None):
 		"Coffee Season", {"is_active": 1}, "name"
 	)
 	active_name = frappe.db.get_value("Coffee Season", season_key, "season_name") if season_key else None
+	target_cherry_kg = resolve_season_target_kg(season_key)
+	yield_pct = flt(frappe.db.get_single_value("Coffee Settings", "expected_yield_pct")) or 20
 
 	return {
 		"estimate": {
 			# Coffee Budget (top-down, by block) wins where one exists for this
 			# season; Coffee Season.target_cherry_kg is the fallback for a
 			# season nobody has budgeted yet. See productionapi.resolve_season_target_kg.
-			"target_cherry_kg": resolve_season_target_kg(season_key),
+			"target_cherry_kg": target_cherry_kg,
 			"season_name": active_name,
 			"blocks": frappe.db.count("Warehouse", {"warehouse_type": "Block", "disabled": 0}),
 		},
@@ -131,7 +133,12 @@ def get_overview(from_date=None, to_date=None, season=None):
 			"by_type": [{"type": k, "debes": v} for k, v in sorted(by_type.items())],
 			"readiness": readiness,
 		},
-		"clean": {"output_kg": clean_kg},
+		"clean": {
+			"output_kg": clean_kg,
+			# Forward-looking estimate from the season's forecast cherry, not a
+			# measured figure -- see Coffee Settings.expected_yield_pct.
+			"estimated_kg": target_cherry_kg * yield_pct / 100 if target_cherry_kg else 0,
+		},
 		"dispatch": {"total_weight_kg": dispatch_kg, "shipments": shipments},
 		"invoices": {"total_billed": billed, "outstanding": outstanding},
 	}
