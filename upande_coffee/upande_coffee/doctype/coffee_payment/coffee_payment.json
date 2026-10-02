@@ -16,7 +16,8 @@
   "rate",
   "total_payment",
   "paid",
-  "remark"
+  "remark",
+  "harvest_log_names"
  ],
  "fields": [
   {
@@ -82,6 +83,13 @@
    "fieldname": "remark",
    "fieldtype": "Small Text",
    "label": "Remark"
+  },
+  {
+   "description": "JSON array of the exact Harvest Log names this payment covers, set by the caller (e.g. Kahawa Trail's getUnpaidBucketsForHarvester). on_submit/on_cancel mark exactly these by name instead of re-deriving \"unpaid logs for harvester+date\", which bundled buckets from older unpaid days into today's date-only match and left them to be paid again later. Falls back to the old by-date match when blank (desk-created payments, or any other caller that doesn't set it).",
+   "fieldname": "harvest_log_names",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Harvest Log Names (internal)"
   }
  ],
  "is_submittable": 1,
