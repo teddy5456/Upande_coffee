@@ -295,3 +295,17 @@ def weekly_forecast_vs_actual(block=None, weeks_back=4, weeks_ahead=8):
 			for b in blocks
 		],
 	}
+
+
+@frappe.whitelist()
+def submit_pickup(name):
+	"""Submit by name only.
+
+	frappe.client.submit takes a doc dict and reconstructs it via
+	frappe.get_doc(dict) -- for a dict holding only {doctype, name} that
+	builds a brand-new, entirely blank in-memory document (every other field
+	None) rather than loading the real record, so submitting it either fails
+	validation outright or hits Frappe's own modified-timestamp conflict
+	check. Loading by name first avoids that trap altogether.
+	"""
+	frappe.get_doc("Harvest Pickup", name).submit()

@@ -36,12 +36,17 @@ class CoffeePayment(Document):
             )
 
     def on_submit(self):
-        """Mark harvest logs for this harvester on this date as paid."""
+        """Mark harvest logs for this harvester on this date as paid.
+
+        Pickers are paid for buckets as soon as they're logged — pickup is a
+        later, separate step (getting the coffee off the farm) and has no
+        bearing on whether they've been paid for it.
+        """
         harvester = self.harvester_id
         date = self.date
         logs = frappe.get_all(
             "Harvest Log",
-            filters={"harvester_id": harvester, "date": date, "paid": 0, "picked_up": 1},
+            filters={"harvester_id": harvester, "date": date, "paid": 0},
             fields=["name"],
         )
         for log in logs:
@@ -60,3 +65,17 @@ class CoffeePayment(Document):
         for log in logs:
             frappe.db.set_value("Harvest Log", log.name, "paid", 0, update_modified=False)
         self.db_set("paid", 0, update_modified=False)
+
+
+@frappe.whitelist()
+def submit_coffee_payment(name):
+    """Submit by name only.
+
+    frappe.client.submit takes a doc dict and reconstructs it via
+    frappe.get_doc(dict) -- for a dict holding only {doctype, name} that
+    builds a brand-new, entirely blank in-memory document (every other field
+    None) rather than loading the real record, so submitting it either fails
+    validation outright or hits Frappe's own modified-timestamp conflict
+    check. Loading by name first avoids that trap altogether.
+    """
+    frappe.get_doc("Coffee Payment", name).submit()
