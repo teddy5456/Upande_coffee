@@ -57,6 +57,7 @@ a{color:inherit}
 .pagehead__title{margin:4px 0 0;font:600 32px/1.05 var(--sans);color:var(--ink);letter-spacing:-.6px}
 .pagehead__sub{margin:6px 0 0;font:400 12.5px var(--meta);color:var(--ink-mute)}
 .pagehead__tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.globaltools{margin-bottom:22px}
 
 /* Toggle / pill controls */
 .datepill{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:999px;padding:8px 14px;font:500 12px var(--sans);color:var(--ink);box-shadow:var(--shadow-card)}
@@ -471,27 +472,30 @@ body.sb-collapsed{--sbw:64px}
 </aside>
 <div class="toast" id="toast"></div>
 <div class="page">
+<!-- Global period toolbar — same control set on every sidebar view, not just
+     the Dashboard tabs, so Weighbridge/Stock/etc. all have it available too. -->
+<div class="pagehead__tools globaltools" id="global-tools">
+  <select class="datepill" id="f-season"><option value="">All seasons</option></select>
+  <select class="datepill" id="f-presets">
+    <option value="">Custom range</option>
+    <option value="today">Today</option>
+    <option value="yesterday">Yesterday</option>
+    <option value="7d">Last 7 Days</option>
+    <option value="season">This Season</option>
+    <option value="lastseason">Last Season</option>
+    <option value="year">This Year</option>
+    <option value="lastyear">Last Year</option>
+  </select>
+  <input type="date" class="datepill" id="f-from" title="From date">
+  <input type="date" class="datepill" id="f-to" title="To date">
+  <button class="iconbtn" id="btn-refresh" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+</div>
 <div class="view on" id="v-dashboard">
   <div class="pagehead">
     <div>
       <div class="pagehead__eyebrow">Kaitet · Endebess · <span id="season-eyebrow">Season</span></div>
       <h1 class="pagehead__title">Coffee</h1>
       <p class="pagehead__sub" id="page-sub">Harvest, drying, milling, dispatch and invoicing — live</p>
-    </div>
-    <div class="pagehead__tools">
-      <select class="datepill" id="f-season"><option value="">All seasons</option></select>
-      <div class="seg" id="f-presets" role="tablist">
-        <button type="button" class="seg__opt" data-preset="today" role="tab">Today</button>
-        <button type="button" class="seg__opt" data-preset="yesterday" role="tab">Yesterday</button>
-        <button type="button" class="seg__opt" data-preset="7d" role="tab">Last 7 Days</button>
-        <button type="button" class="seg__opt" data-preset="season" role="tab">This Season</button>
-        <button type="button" class="seg__opt" data-preset="lastseason" role="tab">Last Season</button>
-        <button type="button" class="seg__opt" data-preset="year" role="tab">This Year</button>
-        <button type="button" class="seg__opt" data-preset="lastyear" role="tab">Last Year</button>
-      </div>
-      <input type="date" class="datepill" id="f-from" title="From date">
-      <input type="date" class="datepill" id="f-to" title="To date">
-      <button class="iconbtn" id="btn-refresh" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
     </div>
   </div>
   <div class="tabs" id="tabs">
@@ -996,22 +1000,23 @@ function presetRange(key) {
   return null;
 }
 function renderPresetActive() {
-  document.querySelectorAll("#f-presets .seg__opt").forEach(function (b) {
-    b.classList.toggle("on", b.dataset.preset === ACTIVE_PRESET);
-  });
+  $("f-presets").value = ACTIVE_PRESET || "";
 }
 function applyPreset(key) {
+  if (!key) { ACTIVE_PRESET = null; return; }
   var r = presetRange(key);
-  if (!r) { toast("No " + (key === "lastseason" ? "prior season" : "season") + " on record"); return; }
+  if (!r) {
+    toast("No " + (key === "lastseason" ? "prior season" : "season") + " on record");
+    renderPresetActive();
+    return;
+  }
   $("f-from").value = r.from;
   $("f-to").value = r.to;
   ACTIVE_PRESET = key;
   renderPresetActive();
   reloadAll();
 }
-document.querySelectorAll("#f-presets .seg__opt").forEach(function (btn) {
-  btn.addEventListener("click", function () { applyPreset(btn.dataset.preset); });
-});
+$("f-presets").addEventListener("change", function () { applyPreset($("f-presets").value); });
 ["f-from", "f-to"].forEach(function (id) {
   $(id).addEventListener("change", function () { ACTIVE_PRESET = null; renderPresetActive(); });
 });
