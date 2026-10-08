@@ -17,8 +17,6 @@
 # that need". All three read the same weighbridge actuals so they can never
 # disagree about what actually happened.
 
-import json
-
 import frappe
 from frappe import _
 from frappe.utils import add_days, cint, flt, getdate, nowdate
@@ -62,30 +60,6 @@ def _season_targets(season):
 	}
 
 
-def _payment_status_map(pairs):
-	"""{(block, (year, week)): "not_requested"|"pending"|"approved"|"rejected"}
-	from whichever Block Payment Request covers that block/week — what the
-	grid greys out (or restores) a cell for."""
-	if not pairs:
-		return {}
-	lo, hi = _week_monday(*pairs[0]), _week_monday(*pairs[-1])
-	rows = frappe.db.sql(
-		"""
-		SELECT b.block, r.week_start, r.workflow_state
-		FROM `tabBlock Payment Request` r
-		JOIN `tabBlock Payment Request Block` b ON b.parent = r.name
-		WHERE r.week_start BETWEEN %s AND %s AND r.docstatus < 2
-		""",
-		(lo, hi), as_dict=True,
-	)
-	out = {}
-	for r in rows:
-		state = r.workflow_state or "Draft"
-		status = "approved" if state == "Approved" else "rejected" if state == "Rejected" else "pending"
-		out[(r.block, _iso(r.week_start))] = status
-	return out
-
-
 @frappe.whitelist()
 def get_planner_grid(start_year=None, start_week=None, weeks=WINDOW_WEEKS, season=None):
 	"""Every block x week in the window: revised forecast, actual, and the
@@ -108,7 +82,6 @@ def get_planner_grid(start_year=None, start_week=None, weeks=WINDOW_WEEKS, seaso
 	# as — a week that has since been weighed must not show stale zeros.
 	actuals = _actual_map(pairs)
 	records = coffee_tasks(pairs)
-	payment_status = _payment_status_map(pairs)
 
 	week_totals = [{"forecast_kg": 0.0, "actual_kg": 0.0, "workers_needed": 0.0} for _p in pairs]
 
@@ -133,7 +106,6 @@ def get_planner_grid(start_year=None, start_week=None, weeks=WINDOW_WEEKS, seaso
 				"computed_workers_needed": computed or None,
 				"workers_needed": workers or None,
 				"is_override": bool(override),
-				"payment_status": payment_status.get((b.block, pr), "not_requested"),
 			})
 			week_totals[i]["forecast_kg"] += revised
 			week_totals[i]["actual_kg"] += actual
@@ -269,88 +241,3 @@ def save_week_plan(week_start):
 	}
 
 
-def _approved_blocks(monday):
-	"""Blocks already authorized for this week — a block here is left alone
-	entirely: it can't be added to a new request (already authorized) and its
-	Approved document can't be edited (docstatus 1)."""
-	return set(frappe.db.sql(
-		"""
-		SELECT DISTINCT b.block
-		FROM `tabBlock Payment Request Block` b
-		JOIN `tabBlock Payment Request` r ON r.name = b.parent
-		WHERE r.week_start = %s AND r.docstatus = 1
-		""",
-		(monday,), pluck=True,
-	))
-
-
-def _pending_request(monday):
-	"""The one still-open (Draft/Pending .../not Rejected) request for this
-	week, if any — a block not yet Approved gets merged into this SAME
-	document rather than spawning a competing duplicate."""
-	name = frappe.db.get_value(
-		"Block Payment Request",
-		{"week_start": monday, "docstatus": 0, "workflow_state": ("!=", "Rejected")},
-		"name",
-	)
-	return frappe.get_doc("Block Payment Request", name) if name else None
-
-
-@frappe.whitelist(methods=["POST"])
-def create_payment_request(week_start, blocks=None, notes=None, requested_by=None):
-	"""Get-or-create the week's Block Payment Request for the given blocks
-	(every block with a forecast that week, if not given) — the dashboard's
-	"submit for payment" step. A block already covered by an open (Pending)
-	request gets its row refreshed in that SAME request; a block already
-	Approved is left alone. Recomputes forecast/labour/cost fresh from
-	Production Plan Task rather than trusting whatever the grid last
-	rendered."""
-	if isinstance(blocks, str):
-		blocks = json.loads(blocks) if blocks else None
-
-	year, week = _iso(getdate(week_start))
-	monday = _week_monday(year, week)
-	wanted = blocks or [b.block for b in _blocks()]
-	records = coffee_tasks([(year, week)], wanted)
-	approved = _approved_blocks(monday)
-
-	doc = _pending_request(monday) or frappe.new_doc("Block Payment Request")
-	if doc.is_new():
-		doc.week_start = monday
-		doc.requested_by = requested_by or frappe.db.get_value(
-			"Employee", {"user_id": frappe.session.user}, "name"
-		)
-	if notes:
-		doc.notes = notes
-
-	rows_by_block = {row.block: row for row in doc.blocks}
-	touched = 0
-	for block in wanted:
-		if block in approved:
-			continue
-		rec = records.get((block, (year, week)))
-		if not rec or not rec.target:
-			continue
-		doc.company = doc.company or frappe.db.get_value("Warehouse", block, "company")
-		workers = flt(rec.workers_needed) or round(flt(rec.target) / _effective_rate(rec.kg_per_worker), 1)
-		row = rows_by_block.get(block) or doc.append("blocks", {"block": block})
-		row.forecast_kg = rec.target
-		row.workers_needed = workers
-		rows_by_block[block] = row
-		touched += 1
-
-	if not touched:
-		return {"created": None, "message": _(
-			"Every block with a forecast this week is already pending approval or "
-			"already approved — nothing new to request."
-		)}
-	if not doc.requested_by:
-		frappe.throw(_("Your user has no linked Employee — set one before requesting payment."))
-
-	doc.insert(ignore_permissions=True) if doc.is_new() else doc.save(ignore_permissions=True)
-	return {
-		"created": doc.name,
-		"payment_request": doc.name,
-		"workflow_state": doc.workflow_state,
-		"total_amount_requested": doc.total_amount_requested,
-	}
