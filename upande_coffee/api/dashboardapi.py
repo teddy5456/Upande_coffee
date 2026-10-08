@@ -514,31 +514,44 @@ def get_payments(from_date=None, to_date=None, season=None):
 		order_by="date desc",
 		limit_page_length=200,
 	)
-	paid_total = sum(flt(p.total_payment) for p in payments if p.docstatus == 1)
-	pending = [p for p in payments if p.docstatus == 0]
 
-	by_harvester = {}
-	for p in payments:
-		if p.docstatus != 1:
-			continue
-		row = by_harvester.setdefault(
-			p.harvester_id, {"harvester_id": p.harvester_id, "total_paid": 0, "payments": 0, "last_date": None}
-		)
-		row["total_paid"] += flt(p.total_payment)
-		row["payments"] += 1
-		if not row["last_date"] or p.date > row["last_date"]:
-			row["last_date"] = p.date
+	# KPIs and the harvester breakdown must come from the FULL filtered set,
+	# not the 200-row page above -- a season easily holds 700+ payments, and
+	# deriving totals from the capped `payments` list silently undercounted
+	# total_paid/harvesters_paid once a range passed that cap.
+	paid_filters = dict(f, docstatus=1)
+	agg = frappe.get_all(
+		"Coffee Payment", filters=paid_filters,
+		fields=[
+			{"SUM": "total_payment", "as": "total"},
+			{"COUNT": "name", "as": "cnt"},
+			{"AVG": "rate", "as": "avgr"},
+		],
+	)[0]
+	pending_count = frappe.db.count("Coffee Payment", dict(f, docstatus=0))
+	by_harvester = frappe.get_all(
+		"Coffee Payment", filters=paid_filters,
+		group_by="harvester_id",
+		fields=[
+			"harvester_id",
+			{"SUM": "total_payment", "as": "total_paid"},
+			{"COUNT": "name", "as": "payments"},
+			{"MAX": "date", "as": "last_date"},
+		],
+		order_by="total_paid desc",
+		limit_page_length=0,
+	)
 
 	return {
 		"kpis": {
-			"total_paid": paid_total,
-			"payment_count": sum(1 for p in payments if p.docstatus == 1),
+			"total_paid": flt(agg.total),
+			"payment_count": int(agg.cnt or 0),
 			"harvesters_paid": len(by_harvester),
-			"pending_count": len(pending),
-			"avg_rate": _agg("Coffee Payment", dict(f, docstatus=1), "AVG", "rate"),
+			"pending_count": pending_count,
+			"avg_rate": flt(agg.avgr),
 		},
 		"payments": payments,
-		"by_harvester": sorted(by_harvester.values(), key=lambda r: -r["total_paid"]),
+		"by_harvester": by_harvester,
 	}
 
 
