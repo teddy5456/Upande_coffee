@@ -65,6 +65,16 @@ class DryingAssignment(Document):
                 frappe.throw(_("Row {0}: Debes cannot be negative.").format(row.idx))
             wanted.setdefault(row.drying_table, []).append(row)
 
+        if self.drying_status == "Completed":
+            # These rows are the original placement, already excluded from
+            # every OTHER document's _debes_on_table() the moment drying_status
+            # flips to Completed (see that function's own filter). Re-checking
+            # capacity here would compare this doc's own (already-placed, never
+            # changing) debes against whatever has since filled the table while
+            # this assignment sat waiting to be submitted — a guaranteed false
+            # "table full" the longer a Completed assignment goes un-submitted.
+            return
+
         for drying_table, rows in wanted.items():
             capacity = _table_capacity(drying_table)
             already_on_table = _debes_on_table(drying_table, exclude_assignment=self.name)
