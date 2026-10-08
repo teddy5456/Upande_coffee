@@ -243,6 +243,11 @@ a{color:inherit}
 .pgbox.empty.today{background:rgba(138,100,55,.1);box-shadow:none}
 .pgbox.short{box-shadow:inset 2px 0 0 0 var(--neg)}
 .pgbox.today.short{box-shadow:inset 0 0 0 2px var(--acc-600),inset 2px 0 0 0 var(--neg)}
+/* Payment-request status: pending greys a cell out (submitted, awaiting
+   approval — not meant to be re-edited mid-flight); approved restores full
+   colour with a positive edge, same technique as .pgbox.short's red one. */
+.pgbox.pending{opacity:.4;filter:grayscale(70%)}
+.pgbox.approved{box-shadow:inset 2px 0 0 0 var(--pos)}
 .pgtop{display:flex;align-items:baseline;gap:2px;line-height:1}
 .pgfc{font:600 9.5px var(--sans);color:var(--ink);line-height:1;font-feature-settings:"tnum"}
 .pgac{font:400 8px var(--meta);color:var(--ink-4)}
@@ -260,6 +265,12 @@ a{color:inherit}
 .plangrid tfoot td.pgfoot.today{color:var(--acc-700)}
 .plangrid tfoot td.pgfoot.short{box-shadow:inset 0 3px 0 0 var(--neg)}
 .plangrid tfoot .pgfootcost{display:block;font:400 8.5px var(--mono);color:var(--acc-600);margin-top:1px}
+.pgfootpay{display:block;margin-top:3px;font:600 8px var(--sans);text-transform:uppercase;letter-spacing:.4px}
+.pgfootpay.ask{color:var(--acc-600);cursor:pointer;text-decoration:underline;background:none;border:0;padding:0;font:inherit}
+.pgfootpay.pending{color:#8a5b12}
+.pgfootpay.approved{color:var(--pos)}
+.pgfootsave{display:block;margin-top:5px;font:600 8px var(--sans);text-transform:uppercase;letter-spacing:.4px;color:#fff;background:var(--acc-600);border:0;border-radius:3px;padding:3px 7px;cursor:pointer}
+.pgfootsave:hover{background:var(--acc-700)}
 .plangrid tfoot td.pgblock{position:sticky;left:0;background:var(--surface-2)}
 
 /* Quick inline edit (single click) and the fuller popover (double click) that
@@ -602,6 +613,13 @@ body.sb-collapsed{--sbw:64px}
   <div class="pgqtot" id="wp-qtot" hidden>
     <b id="wp-qtot-wk"></b>
     <span id="wp-qtot-cost"></span>
+  </div>
+
+  <div class="pgpop" id="wp-paypop" hidden>
+    <div class="pgpop__head"><b id="wp-paypop-title"></b><button type="button" class="pgpop__x" id="wp-paypop-close">&times;</button></div>
+    <div class="pgpop__total" id="wp-paypop-total">— kg</div>
+    <label>Notes<small>optional</small><input type="text" id="wp-paypop-notes" placeholder="e.g. weekly picker wages"></label>
+    <button type="button" class="btn btn--sm" id="wp-paypop-save">Request Payment</button>
   </div>
 
   <!-- PAYMENTS -->
@@ -1763,6 +1781,20 @@ function planHasActivity(b) {
   return b.cells.some(function (c) { return c.revised_forecast_kg != null || c.actual_kg != null || c.workers_needed != null; });
 }
 
+// A week's payment-request control reads the SAME cells the grid rendered
+// (every block, not just the ones currently shown) — approved only once
+// every forecasting block that week has been approved, pending if any is
+// still in flight, otherwise the week is still open to request.
+function weekPaymentStatus(allBlocks, col) {
+  var statuses = (allBlocks || [])
+    .filter(function (b) { return b.cells[col].revised_forecast_kg; })
+    .map(function (b) { return b.cells[col].payment_status; });
+  if (!statuses.length) return "empty";
+  if (statuses.every(function (s) { return s === "approved"; })) return "approved";
+  if (statuses.some(function (s) { return s === "pending"; })) return "pending";
+  return "not_requested";
+}
+
 // The grid itself: blocks × weeks, cell shade = workers_needed (page's own
 // --acc-100..700 ramp), forecast/actual figures inside, a dot for a hand-set
 // workers_needed, a ring on the current week, and shortfall as a left edge —
@@ -1824,9 +1856,16 @@ function renderPlanGrid(d) {
     var t = totals[i] || {};
     var short = t.forecast_kg && t.actual_kg != null && t.actual_kg < t.forecast_kg;
     var cost = t.forecast_kg && wageRate ? n(t.forecast_kg * wageRate) : null;
+    var pay = weekPaymentStatus(allBlocks, i);
+    var payHtml = !t.forecast_kg ? ""
+      : pay === "approved" ? '<div class="pgfootpay approved">Approved</div>'
+      : pay === "pending" ? '<div class="pgfootpay pending">Pending approval</div>'
+      : '<button type="button" class="pgfootpay ask" data-week="' + esc(w.start) + '">Request payment</button>';
+    var saveHtml = !t.forecast_kg ? ""
+      : '<button type="button" class="pgfootsave" data-week="' + esc(w.start) + '">Save week</button>';
     return '<td class="pgfoot' + (i === nowIdx ? ' today' : "") + (short ? ' short' : "") + '">' +
       (t.forecast_kg ? n(t.forecast_kg) : "—") + (t.actual_kg != null ? ' <small>(' + n(t.actual_kg) + ')</small>' : "") +
-      (cost ? '<div class="pgfootcost">KES ' + cost + '</div>' : "") + '</td>';
+      (cost ? '<div class="pgfootcost">KES ' + cost + '</div>' : "") + saveHtml + payHtml + '</td>';
   }).join("");
   var s = d.summary || {};
   var windowCost = s.window_forecast_kg && wageRate ? n(s.window_forecast_kg * wageRate) : null;
@@ -1856,11 +1895,13 @@ function planCellHtml(c, isToday, maxW, key, row, col) {
   }
   var idx = c.workers_needed && maxW ? Math.min(RAMP.length - 1, Math.ceil((c.workers_needed / maxW) * RAMP.length) - 1) : -1;
   var cls = "pgbox" + (idx >= 4 ? " dark" : "") + (isToday ? " today" : "") +
-    (c.revised_forecast_kg && c.actual_kg != null && c.actual_kg < c.revised_forecast_kg ? " short" : "");
+    (c.revised_forecast_kg && c.actual_kg != null && c.actual_kg < c.revised_forecast_kg ? " short" : "") +
+    (c.payment_status === "pending" ? " pending" : c.payment_status === "approved" ? " approved" : "");
   var style = idx >= 0 ? ' style="background:' + RAMP[idx] + '"' : "";
-  var title = c.workers_needed
+  var title = (c.workers_needed
     ? n(c.workers_needed, 1) + (c.is_override ? " workers · set by hand" : " workers · computed")
-    : "no labour set";
+    : "no labour set") + (c.payment_status === "pending" ? " · payment request pending approval"
+      : c.payment_status === "approved" ? " · payment approved" : "");
   return '<td class="pgcell"' + attrs + '><div class="' + cls + '"' + style + ' title="' + esc(title) + '">' +
     '<div class="pgtop"><span class="pgfc">' + (c.revised_forecast_kg == null ? "—" : n(c.revised_forecast_kg)) + '</span>' +
     (c.actual_kg != null ? '<span class="pgac">(' + n(c.actual_kg) + ')</span>' : "") + '</div>' +
@@ -2093,6 +2134,66 @@ document.addEventListener("click", function (e) {
   if (!pop || pop.hidden) return;
   if (pop.contains(e.target) || (e.target.closest && e.target.closest(".pgcell"))) return;
   closeCellPopover();
+});
+
+// "Request payment" popover — one per week, covering every block that week
+// already carries a forecast for (create_payment_request recomputes that set
+// itself; this popover only collects the notes).
+var PAY_WEEK = null;
+function openPayPopover(weekStart, anchorEl) {
+  PAY_WEEK = weekStart;
+  var col = (LAST_GRID.weeks || []).findIndex(function (w) { return w.start === weekStart; });
+  var w = (LAST_GRID.weeks || [])[col], t = (LAST_GRID.week_totals || [])[col] || {};
+  var wageRate = LAST_GRID.picker_rate_per_kg || 0;
+  $("wp-paypop-title").textContent = "Request payment · " + (w ? w.start_label : weekStart);
+  $("wp-paypop-total").textContent = (t.forecast_kg ? n(t.forecast_kg) + " kg cherry" : "—") +
+    (t.forecast_kg && wageRate ? " · KES " + n(t.forecast_kg * wageRate) : "");
+  $("wp-paypop-notes").value = "";
+  var pop = $("wp-paypop");
+  pop.hidden = false;
+  var r = anchorEl.getBoundingClientRect();
+  var maxLeft = window.scrollX + document.documentElement.clientWidth - 226;
+  pop.style.top = (r.bottom + window.scrollY + 6) + "px";
+  pop.style.left = Math.max(8, Math.min(r.left + window.scrollX, maxLeft)) + "px";
+  $("wp-paypop-notes").focus();
+}
+function closePayPopover() { var pop = $("wp-paypop"); if (pop) pop.hidden = true; }
+$("wp-grid") && $("wp-grid").addEventListener("click", function (e) {
+  var a = e.target.closest && e.target.closest(".pgfootpay.ask");
+  if (!a) return;
+  e.preventDefault();
+  openPayPopover(a.dataset.week, a);
+});
+// "Save week" — writes the week's grid straight into a Draft Coffee Harvest
+// Plan (one row per block with a forecast). Stays a Draft: no popover, no
+// confirmation needed, since nothing financial happens until the Harvest
+// Plan itself is later submitted as its own, separate step.
+$("wp-grid") && $("wp-grid").addEventListener("click", function (e) {
+  var btn = e.target.closest && e.target.closest(".pgfootsave");
+  if (!btn) return;
+  e.preventDefault();
+  btn.disabled = true;
+  post("plannerapi.save_week_plan", { week_start: btn.dataset.week }).then(function (r) {
+    toast(r.harvest_plan ? "Saved " + r.harvest_plan : (r.message || "Nothing to save"));
+    loadWorkplan();
+  }).catch(function (e) { btn.disabled = false; toast(e.message); });
+});
+$("wp-paypop-close") && $("wp-paypop-close").addEventListener("click", closePayPopover);
+$("wp-paypop-save") && $("wp-paypop-save").addEventListener("click", function () {
+  if (!PAY_WEEK) return;
+  var args = { week_start: PAY_WEEK };
+  if ($("wp-paypop-notes").value) args.notes = $("wp-paypop-notes").value;
+  post("plannerapi.create_payment_request", args).then(function (r) {
+    toast("Payment request " + r.payment_request + " created");
+    closePayPopover();
+    loadWorkplan();
+  }).catch(function (e) { toast(e.message); });
+});
+document.addEventListener("click", function (e) {
+  var pop = $("wp-paypop");
+  if (!pop || pop.hidden) return;
+  if (pop.contains(e.target) || (e.target.closest && e.target.closest(".pgfootpay.ask"))) return;
+  closePayPopover();
 });
 
 /* ── routing ─────────────────────────────────────────────────────────────── */
