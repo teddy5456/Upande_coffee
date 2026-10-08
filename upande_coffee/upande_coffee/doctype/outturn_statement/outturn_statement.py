@@ -196,8 +196,15 @@ class OutturnStatement(Document):
 
     def _calculate_grade_weights(self):
         bag_kg = _bag_kg()
+        total = 0
         for row in self.table_cyvh:
             row.net_weight = (row.no_of_bags or 0) * bag_kg + (row.no_of_pockets or 0)
+            total += row.net_weight
+        # Output Weight is derived from the grade breakdown, not typed
+        # separately -- before_submit already treats the grade total as the
+        # ground truth (it throws if output_weight drifts from this same sum),
+        # so there was never a second, independent source for this number.
+        self.output_weight = total
 
     def _calculate_milling_loss(self):
         if self.parchment_weight and self.parchment_weight > 0 and self.output_weight is not None:
