@@ -1189,11 +1189,12 @@ function loadOverview() {
   $("ov-err").innerHTML = "";
   api("get_overview", ranges()).then(function (d) {
     var h = d.harvest, dr = d.drying, est = d.estimate;
+    var estCleanSuffix = d.clean.estimated_kg ? " <small>· est. " + n(d.clean.estimated_kg) + " kg clean</small>" : "";
     $("ov-kpis").innerHTML =
       kpiCard("Season Target", n(est.target_cherry_kg), "kg cherry · " + (est.season_name || "no active season"),
-        est.blocks + " blocks", "flat") +
+        est.blocks + " blocks" + estCleanSuffix, "flat") +
       kpiCard("Harvested", n(h.total_weight_kg), "kg · " + n(h.total_buckets) + " buckets received",
-        "↑ " + n(h.today_buckets) + " <small>buckets today</small>", "up",
+        "↑ " + n(h.today_buckets) + " <small>buckets today</small>" + estCleanSuffix, "up",
         (h.daily_buckets || []).map(function (r) { return r.count || 0; })) +
       kpiCard("On Drying Tables", n(dr.total_debes), "debes across types",
         (dr.readiness.ready || 0) + " tables ready", dr.readiness.ready ? "up" : "flat") +
