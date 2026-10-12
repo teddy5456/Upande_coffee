@@ -1,4 +1,46 @@
+// Output Weight is derived from the grade breakdown (see outturn_statement.py
+// _calculate_grade_weights) -- but that only runs on save. Without this, the
+// read-only Output Weight field just sits frozen while you type bags/pockets,
+// which looks exactly like the auto-sum stopped working.
+function outturn_bag_kg(frm) {
+	return frm.coffee_bag_kg || 60;
+}
+
+function outturn_recalc_row(frm, cdt, cdn) {
+	const row = frappe.get_doc(cdt, cdn);
+	const net = (row.no_of_bags || 0) * outturn_bag_kg(frm) + (row.no_of_pockets || 0);
+	frappe.model.set_value(cdt, cdn, "net_weight", net).then(() => outturn_recalc_total(frm));
+}
+
+function outturn_recalc_total(frm) {
+	const total = (frm.doc.table_cyvh || []).reduce((sum, r) => sum + (r.net_weight || 0), 0);
+	frm.set_value("output_weight", total);
+}
+
+frappe.ui.form.on("Outturn Details", {
+	no_of_bags(frm, cdt, cdn) {
+		outturn_recalc_row(frm, cdt, cdn);
+	},
+	no_of_pockets(frm, cdt, cdn) {
+		outturn_recalc_row(frm, cdt, cdn);
+	},
+	table_cyvh_remove(frm) {
+		outturn_recalc_total(frm);
+	},
+});
+
 frappe.ui.form.on("Outturn Statement", {
+	onload(frm) {
+		frappe.db.get_single_value("Coffee Settings", "bag_weight_kg").then((v) => {
+			frm.coffee_bag_kg = v || 60;
+		});
+		// Grade is a plain Link -> Item with no filter, so it listed every Item
+		// in the company (packaging, inputs, everything) instead of just the
+		// coffee grades (Coffee Grade AA, AB, ... -- item_group "Coffee-Grades").
+		frm.set_query("grade", "table_cyvh", () => ({
+			filters: { item_group: "Coffee-Grades" },
+		}));
+	},
 	refresh(frm) {
 		if (frm.doc.docstatus === 1) {
 			frm.add_custom_button(__("Outgrower Invoice"), function () {
