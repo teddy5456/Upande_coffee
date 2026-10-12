@@ -29,7 +29,35 @@ frappe.ui.form.on("Outturn Details", {
 	},
 });
 
+// Grower/outturn_number/parchment_weight are fetched from the linked Sales
+// Order server-side in _fetch_parchment_weight() -- but only on save. With no
+// client-side equivalent, they sit blank while filling out a new Normal
+// outturn, which looks exactly like "grower isn't being fetched" until you
+// save and reload.
+function outturn_fetch_from_so(frm) {
+	if (!frm.doc.custom_source_sales_order || frm.doc.outturn_type === "Super Outturn") return;
+	frappe.db.get_value("Sales Order", frm.doc.custom_source_sales_order, ["customer", "custom_outturn_number"]).then(({ message: so }) => {
+		if (!so) return;
+		if (!frm.doc.grower && so.customer) frm.set_value("grower", so.customer);
+		if (!frm.doc.outturn_number && so.custom_outturn_number) frm.set_value("outturn_number", so.custom_outturn_number);
+	});
+	if (!frm.doc.parchment_weight) {
+		frappe.db.get_list("Endebess Parchment Type", {
+			parent: frm.doc.custom_source_sales_order,
+			parenttype: "Sales Order",
+			fields: ["expected_weight_kg"],
+			limit: 0,
+		}).then((rows) => {
+			const total = (rows || []).reduce((sum, r) => sum + (r.expected_weight_kg || 0), 0);
+			if (total) frm.set_value("parchment_weight", total);
+		});
+	}
+}
+
 frappe.ui.form.on("Outturn Statement", {
+	custom_source_sales_order(frm) {
+		outturn_fetch_from_so(frm);
+	},
 	onload(frm) {
 		frappe.db.get_single_value("Coffee Settings", "bag_weight_kg").then((v) => {
 			frm.coffee_bag_kg = v || 60;
@@ -40,6 +68,9 @@ frappe.ui.form.on("Outturn Statement", {
 		frm.set_query("grade", "table_cyvh", () => ({
 			filters: { item_group: "Coffee-Grades" },
 		}));
+		// Covers a doc that already arrived with custom_source_sales_order set
+		// (e.g. created via a list-view action) before the user touches anything.
+		if (frm.doc.__islocal) outturn_fetch_from_so(frm);
 	},
 	refresh(frm) {
 		if (frm.doc.docstatus === 1) {
