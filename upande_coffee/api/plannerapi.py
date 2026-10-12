@@ -4,11 +4,18 @@
 # Payload for the /coffee-dashboard "Planner" tab: a weekly, per-block
 # labour plan, turned into a headcount via a simple kg-per-worker rate.
 #
-# Storage moved from the coffee-only Coffee Production Forecast doctype onto
-# Production Plan Form/Task -- the same doctype Roses uses for its own weekly
-# greenhouse task planning -- via upande_agriculture.coffee_plan's get-or-create
-# helper. Coffee Production Forecast itself is left in place, unused, rather
-# than deleted; nothing here reads or writes it any more.
+# Storage is Coffee Harvest Plan / Coffee Harvest Plan Block -- the same
+# doctype "Save week" writes (see save_week_plan below) and the one that
+# already raises a real Expense Claim on submit. There is no longer a
+# separate, coffee-only forecast doctype in the loop: Coffee Production
+# Forecast and the short-lived Production Plan Task detour are both dead,
+# left in place unused rather than deleted.
+#
+# One real regression from the Production Forecast era: kg_per_worker /
+# workers_needed overrides had a home there (per block/week) and don't on
+# Harvest Plan Block, which is a costing table, not a labour-planning one.
+# computed_workers_needed still works (forecast kg / the farm default rate);
+# a hand-set override just doesn't persist. Revisit if that's missed.
 #
 # This is deliberately NOT the flowering-model forecast (productiongrid.py)
 # or the Coffee Forecast Override a picker sets from Kahawa Trail
@@ -21,11 +28,76 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, cint, flt, getdate, nowdate
 
-from upande_agriculture.coffee_plan import coffee_tasks, upsert_coffee_task
 from upande_coffee.api.productiongrid import _actual_map, _iso, _span, _week_monday
 from upande_coffee.api.productionapi import _active_season_name, _settings, resolve_season_target_kg
 
 WINDOW_WEEKS = 8
+
+
+def _kg_per_debe():
+	return flt(_settings().kg_per_debe) or 15.5
+
+
+def coffee_tasks(pairs, blocks=None):
+	"""{(block, (year, week)): row} sourced from Coffee Harvest Plan Block --
+	the plan whose week (from_date) is in the window, converted back to kg via
+	kg_per_debe. A Draft plan counts the same as an Approved/submitted one;
+	only a cancelled plan (docstatus 2) is excluded."""
+	if not pairs:
+		return {}
+	wanted_weeks = set(pairs)
+	lo, hi = _week_monday(*pairs[0]), _week_monday(*pairs[-1])
+	plans = frappe.get_all(
+		"Coffee Harvest Plan",
+		filters={"from_date": ["between", [lo, hi]], "docstatus": ["<", 2]},
+		fields=["name", "from_date"],
+	)
+	kg_per_debe = _kg_per_debe()
+	out = {}
+	for p in plans:
+		pr = _iso(p.from_date)
+		if pr not in wanted_weeks:
+			continue
+		rows = frappe.get_all(
+			"Coffee Harvest Plan Block", filters={"parent": p.name}, fields=["block", "expected_debes"],
+		)
+		for r in rows:
+			if blocks and r.block not in blocks:
+				continue
+			out[(r.block, pr)] = frappe._dict(
+				target=flt(r.expected_debes) * kg_per_debe, kg_per_worker=None, workers_needed=None,
+			)
+	return out
+
+
+def _week_plan(year, week):
+	"""Get-or-create the Draft Coffee Harvest Plan for this week."""
+	monday = _week_monday(year, week)
+	name = frappe.db.get_value("Coffee Harvest Plan", {"from_date": monday, "docstatus": 0}, "name")
+	if name:
+		return frappe.get_doc("Coffee Harvest Plan", name)
+	doc = frappe.new_doc("Coffee Harvest Plan")
+	doc.from_date = monday
+	doc.to_date = add_days(monday, 6)
+	doc.season = _active_season_name()
+	return doc
+
+
+def upsert_coffee_task(block, year, week, kg, kg_per_worker=None, workers_needed=None):
+	"""One block's row on that week's Draft Coffee Harvest Plan -- the quick-
+	edit cell's save path. kg_per_worker/workers_needed are accepted only for
+	call-site compatibility with the old signature; Harvest Plan Block has no
+	field for either (see the module docstring)."""
+	doc = _week_plan(year, week)
+	if not doc.company:
+		doc.company = frappe.db.get_value("Warehouse", block, "company")
+	kg_per_debe = _kg_per_debe()
+	wage_rate = flt(_settings().picker_rate_per_kg)
+	row = next((r for r in doc.blocks if r.block == block), None) or doc.append("blocks", {"block": block})
+	row.expected_debes = round(flt(kg) / kg_per_debe, 1) if kg_per_debe else 0
+	row.rate_per_debe = round(wage_rate * kg_per_debe, 2)
+	doc.insert(ignore_permissions=True) if doc.is_new() else doc.save(ignore_permissions=True)
+	return doc.name
 
 
 def _blocks():
