@@ -43,8 +43,7 @@ function outturn_fetch_from_so(frm) {
 	});
 	if (!frm.doc.parchment_weight) {
 		frappe.db.get_list("Endebess Parchment Type", {
-			parent: frm.doc.custom_source_sales_order,
-			parenttype: "Sales Order",
+			filters: { parent: frm.doc.custom_source_sales_order, parenttype: "Sales Order" },
 			fields: ["expected_weight_kg"],
 			limit: 0,
 		}).then((rows) => {
