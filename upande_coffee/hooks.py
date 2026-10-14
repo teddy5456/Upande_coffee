@@ -243,6 +243,11 @@ add_to_apps_screen = [
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+	# after the day's paying is done: post it out of the week's float
+	"cron": {"0 20 * * *": ["upande_coffee.api.payoutapi.post_daily"]},
+}
+
 # scheduler_events = {
 # 	"all": [
 # 		"upande_coffee.tasks.all"

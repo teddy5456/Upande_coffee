@@ -542,9 +542,16 @@ def get_payments(from_date=None, to_date=None, season=None):
 		limit_page_length=0,
 	)
 
+	split = _backdated_split(from_date, to_date)
+	for p in payments:
+		p["backdated_buckets"] = split["by_payment"].get(p.name, 0)
+
 	return {
 		"kpis": {
 			"total_paid": flt(agg.total),
+			"day_paid": split["day_paid"],
+			"backdated_paid": split["backdated_paid"],
+			"backdated_count": split["backdated_count"],
 			"payment_count": int(agg.cnt or 0),
 			"harvesters_paid": len(by_harvester),
 			"pending_count": pending_count,
@@ -552,6 +559,62 @@ def get_payments(from_date=None, to_date=None, season=None):
 		},
 		"payments": payments,
 		"by_harvester": by_harvester,
+		"by_day": split["by_day"],
+	}
+
+
+def _backdated_split(from_date, to_date):
+	"""Split money paid out into pay for buckets picked ON the pay day and
+	backdated pay for earlier days.
+
+	A picker can skip being paid on the 10th and collect on the 12th; the
+	Coffee Payment is dated the 12th and covers both days' buckets. Counting
+	it all as the 12th's pay overstates that day's labour cost. The day's own
+	share is the buckets that harvester logged on the pay date (capped at what
+	was paid); the remainder is backdated. Worked out from the Harvest Logs
+	rather than harvest_log_names because almost no payment records those."""
+	cond, params = ["cp.docstatus = 1"], {}
+	if from_date:
+		cond.append("cp.date >= %(f)s")
+		params["f"] = from_date
+	if to_date:
+		cond.append("cp.date <= %(t)s")
+		params["t"] = to_date
+	log_cond = " AND ".join(c.replace("cp.", "") for c in cond[1:]) or "1=1"
+	rows = frappe.db.sql(
+		f"""SELECT cp.name, cp.date, cp.total_buckets, cp.rate, cp.total_payment,
+			LEAST(cp.total_buckets, COALESCE(d.b, 0)) AS day_b
+		FROM `tabCoffee Payment` cp
+		LEFT JOIN (
+			SELECT harvester_id, date, SUM(bucket_count) AS b FROM `tabHarvest Log`
+			WHERE {log_cond} GROUP BY harvester_id, date
+		) d ON d.harvester_id = cp.harvester_id AND d.date = cp.date
+		WHERE {" AND ".join(cond)}""",
+		params,
+		as_dict=True,
+	)
+	by_payment, by_day = {}, {}
+	day_paid = backdated_paid = 0.0
+	for r in rows:
+		day_amt = flt(r.day_b) * flt(r.rate)
+		back_amt = flt(r.total_payment) - day_amt
+		day_paid += day_amt
+		back_buckets = int(r.total_buckets or 0) - int(r.day_b or 0)
+		d = by_day.setdefault(str(r.date), {"date": r.date, "paid": 0.0, "day_paid": 0.0,
+			"backdated_paid": 0.0, "backdated_payments": 0})
+		d["paid"] += flt(r.total_payment)
+		d["day_paid"] += day_amt
+		if back_buckets > 0:
+			by_payment[r.name] = back_buckets
+			backdated_paid += back_amt
+			d["backdated_paid"] += back_amt
+			d["backdated_payments"] += 1
+	return {
+		"day_paid": day_paid,
+		"backdated_paid": backdated_paid,
+		"backdated_count": len(by_payment),
+		"by_payment": by_payment,
+		"by_day": sorted(by_day.values(), key=lambda x: x["date"], reverse=True),
 	}
 
 

@@ -77,45 +77,59 @@ class CoffeePayment(Document):
         """Mark the harvest logs this payment covers as paid.
 
         Pickers are paid for buckets as soon as they're logged — pickup is a
-        later, separate step (getting the coffee off the farm) and has no
-        bearing on whether they've been paid for it.
+        later, separate step and has no bearing on payment.
 
-        Prefers the exact log names the caller supplied (harvest_log_names)
-        over re-deriving "unpaid logs for harvester+date": a harvester can
-        carry unpaid buckets from an earlier, never-picked-up day, and
-        getUnpaidBucketsForHarvester bundles those into today's total with
-        no date filter of its own. Matching by date alone would then only
-        mark TODAY's logs paid, leaving the older ones still unpaid and
-        liable to be bundled into — and paid for — a second time later.
-        Falls back to the by-date match when nothing was supplied (desk-
-        created payments, or any other caller that doesn't set it).
+        Uses the exact log names the caller supplied (harvest_log_names) when
+        present. Otherwise takes the harvester's unpaid logs oldest first, up
+        to total_buckets: a picker who skipped pay on the 10th and collects on
+        the 12th is paid for both days, and matching "logs on the pay date"
+        only would leave the 10th's logs unpaid -- to be offered and paid a
+        second time on the next scan (355 buckets on Kaitet by 2026-10-14).
+        The chosen names are written back so cancel reverses exactly them.
         """
         names = self.get_harvest_log_names()
-        if names:
-            logs = [{"name": n} for n in names]
-        else:
-            logs = frappe.get_all(
-                "Harvest Log",
-                filters={"harvester_id": self.harvester_id, "date": self.date, "paid": 0},
-                fields=["name"],
-            )
-        for log in logs:
-            frappe.db.set_value("Harvest Log", log["name"] if isinstance(log, dict) else log.name, "paid", 1, update_modified=False)
+        if not names:
+            names = self.oldest_unpaid_logs()
+            self.db_set("harvest_log_names", json.dumps(names), update_modified=False)
+        for name in names:
+            frappe.db.set_value("Harvest Log", name, "paid", 1, update_modified=False)
         self.db_set("paid", 1, update_modified=False)
 
+    def oldest_unpaid_logs(self):
+        logs = frappe.get_all(
+            "Harvest Log",
+            filters={"harvester_id": self.harvester_id, "paid": 0, "date": ["<=", self.date]},
+            fields=["name", "bucket_count"],
+            order_by="date asc, creation asc",
+            limit_page_length=0,
+        )
+        names, left = [], self.total_buckets
+        for log in logs:
+            if left <= 0:
+                break
+            names.append(log.name)
+            left -= log.bucket_count or 0
+        return names
+
+    def before_cancel(self):
+        je = self.get("journal_entry")
+        if je and frappe.db.get_value("Journal Entry", je, "docstatus") == 1:
+            frappe.throw(
+                _("This payment is posted in Journal Entry {0}. Cancel that first.").format(je),
+                title=_("Already posted"),
+            )
+
     def on_cancel(self):
-        """Unmark harvest logs as paid on cancel — same targeting as on_submit."""
+        """Unmark exactly the logs this payment marked paid."""
         names = self.get_harvest_log_names()
-        if names:
-            logs = [{"name": n} for n in names]
-        else:
-            logs = frappe.get_all(
+        if names is None:
+            names = frappe.get_all(
                 "Harvest Log",
                 filters={"harvester_id": self.harvester_id, "date": self.date, "paid": 1},
-                fields=["name"],
+                pluck="name",
             )
-        for log in logs:
-            frappe.db.set_value("Harvest Log", log["name"] if isinstance(log, dict) else log.name, "paid", 0, update_modified=False)
+        for name in names:
+            frappe.db.set_value("Harvest Log", name, "paid", 0, update_modified=False)
         self.db_set("paid", 0, update_modified=False)
 
 

@@ -616,6 +616,10 @@ body.sb-collapsed{--sbw:64px}
     <div id="pay-err"></div>
     <div class="kpi-grid" id="pay-kpis"><div class="loading"><div class="spin"></div>Loading…</div></div>
     <div class="card card--padded">
+      <div class="card__head"><h3>By Pay Day</h3><div class="meta">backdated = buckets picked on an earlier day, paid out on this one</div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Pay Day</th><th class="num">Total Paid (KES)</th><th class="num">For That Day's Buckets</th><th class="num">Backdated</th><th class="num">Backdated Payments</th></tr></thead><tbody id="pay-byday"></tbody></table></div>
+    </div>
+    <div class="card card--padded">
       <div class="card__head"><h3>Paid by Harvester</h3><div class="meta">this range</div></div>
       <div class="tblwrap"><table class="tbl"><thead><tr><th>Harvester</th><th class="num">Payments</th><th class="num">Total (KES)</th><th>Last Paid</th></tr></thead><tbody id="pay-byharvester"></tbody></table></div>
     </div>
@@ -1246,6 +1250,7 @@ function loadHarvested() {
     $("h-paycnt").textContent = (d.payments || []).length + " payments";
     $("h-pay").innerHTML = (d.payments || []).map(function (r) {
       return "<tr><td>" + fd(r.date) + "</td><td>" + esc(r.harvester_id) + '</td><td class="num">' + n(r.total_buckets) +
+        (r.backdated_buckets ? ' <span class="meta">(' + r.backdated_buckets + " backdated)</span>" : "") +
         '</td><td class="num">' + n(r.rate) + '</td><td class="num">' + n(r.total_payment) + "</td></tr>";
     }).join("") || '<tr><td colspan="5"><div class="emptybox">No payments.</div></td></tr>';
   }).catch(function (e) { $("h-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
@@ -1433,10 +1438,17 @@ function loadPayments() {
     var k = d.kpis;
     $("pay-kpis").innerHTML =
       kpiCard("Paid Out", n(k.total_paid), "KES · " + k.payment_count + " payments", null) +
+      kpiCard("For the Day's Buckets", n(k.day_paid), "KES · picked on the day paid", null) +
+      kpiCard("Backdated", n(k.backdated_paid), "KES · " + k.backdated_count + " payments for earlier days", null) +
       kpiCard("Harvesters Paid", n(k.harvesters_paid), "in this range", null) +
       kpiCard("Avg Rate", n(k.avg_rate), "KES / bucket", null) +
       kpiCard("Pending", n(k.pending_count), "payments not yet submitted",
         k.pending_count ? "needs submit" : null, k.pending_count ? "down" : "flat");
+    $("pay-byday").innerHTML = (d.by_day || []).map(function (r) {
+      return "<tr><td>" + fd(r.date) + '</td><td class="num">' + n(r.paid) + '</td><td class="num">' + n(r.day_paid) +
+        '</td><td class="num">' + (r.backdated_paid ? n(r.backdated_paid) : "–") + '</td><td class="num">' +
+        (r.backdated_payments || "–") + "</td></tr>";
+    }).join("") || '<tr><td colspan="5"><div class="emptybox">No payments in this range.</div></td></tr>';
     var rows = (d.by_harvester || []);
     $("pay-byharvester").innerHTML = rows.map(function (r) {
       return "<tr><td>" + esc(r.harvester_id) + '</td><td class="num">' + n(r.payments) +
