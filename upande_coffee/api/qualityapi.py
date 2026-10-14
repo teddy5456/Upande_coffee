@@ -48,35 +48,47 @@ DEFAULT_CONTEXT = ["item", "warehouse", "batch"]
 
 @frappe.whitelist()
 def get_templates():
-	"""Every Quality Inspection Template with its parameters, limits and context.
+	"""Every coffee Quality Inspection Template with its parameters, limits and
+	context.
 
-	Returns all templates rather than a coffee-only allowlist: a template added
-	in the desk should appear in the app by itself. `numeric` decides whether
-	the client shows a number field or a free-text/select one, and min/max drive
-	the inline pass-fail hint before the record is even saved. `context` tells
-	the client which identity pickers to show — see TEMPLATE_CONTEXT.
+	Coffee-only by name prefix: this site also carries the dairy side's Milk and
+	Yoghurt templates, which have no business in a coffee app. A new "Coffee …"
+	template added in the desk still appears by itself. `numeric` decides
+	whether the client shows a number field or a text one, and min/max drive the
+	inline pass/fail hint before the record is saved. `context` tells the
+	client which identity pickers to show — see TEMPLATE_CONTEXT.
 	"""
-	out = []
-	for name in frappe.get_all("Quality Inspection Template", pluck="name", order_by="name"):
-		doc = frappe.get_doc("Quality Inspection Template", name)
-		out.append({
-			"template": name,
-			"context": TEMPLATE_CONTEXT.get(name, DEFAULT_CONTEXT),
-			"parameters": [
-				{
-					"specification": r.specification,
-					"parameter_group": r.parameter_group,
-					"numeric": int(r.numeric or 0),
-					"min_value": flt(r.min_value),
-					"max_value": flt(r.max_value),
-					"value": r.value,
-					"formula_based_criteria": int(r.formula_based_criteria or 0),
-					"acceptance_formula": r.acceptance_formula,
-				}
-				for r in doc.item_quality_inspection_parameter
-			],
+	names = frappe.get_all(
+		"Quality Inspection Template", filters={"name": ["like", "Coffee%"]}, pluck="name", order_by="name"
+	)
+	if not names:
+		return []
+	params = frappe.get_all(
+		"Item Quality Inspection Parameter",
+		filters={"parent": ["in", names], "parenttype": "Quality Inspection Template"},
+		fields=[
+			"parent", "specification", "parameter_group", "numeric", "min_value", "max_value",
+			"value", "formula_based_criteria", "acceptance_formula",
+		],
+		order_by="idx asc",
+		limit_page_length=0,
+	)
+	by_tpl = {}
+	for r in params:
+		by_tpl.setdefault(r.parent, []).append({
+			"specification": r.specification,
+			"parameter_group": r.parameter_group,
+			"numeric": int(r.numeric or 0),
+			"min_value": flt(r.min_value),
+			"max_value": flt(r.max_value),
+			"value": r.value,
+			"formula_based_criteria": int(r.formula_based_criteria or 0),
+			"acceptance_formula": r.acceptance_formula,
 		})
-	return out
+	return [
+		{"template": n, "context": TEMPLATE_CONTEXT.get(n, DEFAULT_CONTEXT), "parameters": by_tpl.get(n, [])}
+		for n in names
+	]
 
 
 def _item_warehouse_stock_entry(item_code, warehouse):
@@ -113,6 +125,9 @@ def _dry_mill_stock_entry(sales_order=None):
 	settings = frappe.get_cached_doc("Coffee Settings")
 	dry_mill = settings.get("dry_mill_warehouse")
 
+	# Every lookup below is filtered on item_code, which the 6M-row ledger can
+	# index. The previous LIKE-on-COALESCE and the Stock Entry Detail scan by
+	# t_warehouse each took 30s+ on Kaitet and timed the save out.
 	if sales_order:
 		outturn = frappe.db.get_value(
 			"Outturn Statement",
@@ -124,24 +139,25 @@ def _dry_mill_stock_entry(sales_order=None):
 			rows = frappe.db.sql(
 				"""SELECT sle.voucher_no
 				FROM `tabStock Ledger Entry` sle
-				LEFT JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sle.serial_and_batch_bundle
-				WHERE sle.voucher_type = 'Stock Entry' AND sle.is_cancelled = 0
-				  AND COALESCE(sbe.batch_no, sle.batch_no) LIKE %(pat)s
+				JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sle.serial_and_batch_bundle
+				WHERE sle.item_code IN %(items)s AND sle.voucher_type = 'Stock Entry'
+				  AND sle.is_cancelled = 0 AND sbe.batch_no LIKE %(pat)s
 				ORDER BY sle.posting_date DESC, sle.creation DESC LIMIT 1""",
-				{"pat": f"{outturn}-%"},
+				{"items": tuple(_coffee_items()) or ("",), "pat": f"{outturn}-%"},
 			)
 			if rows:
 				return rows[0][0]
 
-	if not dry_mill:
+	parchment = settings.get("parchment_item")
+	if not (dry_mill and parchment):
 		return None
 	rows = frappe.db.sql(
-		"""SELECT sed.parent
-		FROM `tabStock Entry Detail` sed
-		JOIN `tabStock Entry` se ON se.name = sed.parent
-		WHERE se.docstatus = 1 AND sed.t_warehouse = %(w)s
-		ORDER BY se.posting_date DESC, se.creation DESC LIMIT 1""",
-		{"w": dry_mill},
+		"""SELECT sle.voucher_no
+		FROM `tabStock Ledger Entry` sle
+		WHERE sle.item_code = %(i)s AND sle.warehouse = %(w)s AND sle.voucher_type = 'Stock Entry'
+		  AND sle.is_cancelled = 0 AND sle.actual_qty > 0
+		ORDER BY sle.posting_date DESC, sle.creation DESC LIMIT 1""",
+		{"i": parchment, "w": dry_mill},
 	)
 	return rows[0][0] if rows else None
 
@@ -221,34 +237,139 @@ def _resolve_reference(
 	)
 
 
+def _coffee_items():
+	"""{item_code: has_batch_no} for every coffee item: the Coffee item groups
+	plus the cherry/parchment items named in Coffee Settings (COFFEE-PARCHMENT
+	lives outside the coffee item groups)."""
+	settings = frappe.get_cached_doc("Coffee Settings")
+	items = {
+		r.name: int(r.has_batch_no or 0)
+		for r in frappe.get_all(
+			"Item",
+			filters={"item_group": ["like", "%offee%"], "disabled": 0},
+			fields=["name", "has_batch_no"],
+			limit_page_length=0,
+		)
+	}
+	for code in (settings.get("cherry_item"), settings.get("parchment_item")):
+		if code and code not in items:
+			items[code] = int(frappe.get_cached_value("Item", code, "has_batch_no") or 0)
+	return items
+
+
 @frappe.whitelist()
 def get_inspectable_stock(warehouse=None):
 	"""What is physically there to inspect: item + warehouse + batch + qty.
 
-	Unlike dryingapi.batch_stock this deliberately KEEPS batchless lines, since
-	coffee in the stores may have no batch and still needs inspecting. `batch_no`
-	comes back empty for those, and the client leaves the batch unset.
+	Coffee items only. The old version grouped the whole Stock Ledger (6M+
+	rows on Kaitet, every dairy and flower item included) and took over 30s —
+	long enough that the app's options call failed outright and every picker on
+	the Quality screen came up empty. Filtering on item_code uses the ledger's
+	item index, and the batch sums match ERPNext's own get_batch_qty.
+
+	Batchless lines are KEPT: coffee in the stores may have no batch and still
+	needs inspecting. `batch_no` comes back empty for those.
 	"""
-	conds = ["sle.is_cancelled = 0"]
-	params = {}
-	if warehouse:
-		conds.append("sle.warehouse = %(w)s")
-		params["w"] = warehouse
-	return frappe.db.sql(
-		"""SELECT sle.warehouse,
-			sle.item_code,
-			COALESCE(sbe.batch_no, sle.batch_no, '') AS batch_no,
-			SUM(COALESCE(sbe.qty, sle.actual_qty)) AS qty
-		FROM `tabStock Ledger Entry` sle
-		LEFT JOIN `tabSerial and Batch Entry` sbe
-			ON sbe.parent = sle.serial_and_batch_bundle
-		WHERE {conds}
-		GROUP BY sle.warehouse, sle.item_code, COALESCE(sbe.batch_no, sle.batch_no, '')
-		HAVING qty > 0
-		ORDER BY sle.warehouse, sle.item_code""".format(conds=" AND ".join(conds)),
-		params,
+	items = _coffee_items()
+	batched = tuple(c for c, b in items.items() if b)
+	plain = [c for c, b in items.items() if not b]
+	out = []
+
+	if batched:
+		conds = ["sle.item_code IN %(items)s", "sle.is_cancelled = 0"]
+		params = {"items": batched}
+		if warehouse:
+			conds.append("sle.warehouse = %(w)s")
+			params["w"] = warehouse
+		out += frappe.db.sql(
+			"""SELECT sle.warehouse, sle.item_code, sbe.batch_no, SUM(sbe.qty) AS qty
+			FROM `tabStock Ledger Entry` sle
+			JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sle.serial_and_batch_bundle
+			WHERE {conds}
+			GROUP BY sle.warehouse, sle.item_code, sbe.batch_no
+			HAVING qty > 0.001
+			ORDER BY sle.warehouse, sbe.batch_no DESC""".format(conds=" AND ".join(conds)),
+			params,
+			as_dict=True,
+		)
+
+	if plain:
+		filters = {"item_code": ["in", plain], "actual_qty": [">", 0]}
+		if warehouse:
+			filters["warehouse"] = warehouse
+		out += [
+			frappe._dict(warehouse=b.warehouse, item_code=b.item_code, batch_no="", qty=flt(b.actual_qty))
+			for b in frappe.get_all(
+				"Bin", filters=filters, fields=["warehouse", "item_code", "actual_qty"],
+				order_by="warehouse", limit_page_length=0,
+			)
+		]
+	return out
+
+
+@frappe.whitelist()
+def get_drying_tables():
+	"""Tables that have coffee on them right now, each with the batches on it.
+
+	Derived from live Drying Assignment rows (not Drying Table.current_batch,
+	which can only name one batch — 9 of the 41 occupied tables on Kaitet carry
+	two or more). Picking a table on the app then fills its batch in, and only
+	asks when there is genuinely more than one.
+
+	`read_today` + `last_reading` come from today's Coffee Drying inspections so
+	the moisture round can see which tables are still to do.
+	"""
+	rows = frappe.db.sql(
+		"""SELECT dte.drying_table AS tbl, da.batch, dte.coffee_type,
+			SUM(dte.debes_quantity) AS debes, MIN(da.start_date) AS since
+		FROM `tabDrying Table Entry` dte
+		JOIN `tabDrying Assignment` da ON da.name = dte.parent
+		WHERE dte.parenttype = 'Drying Assignment' AND da.docstatus < 2
+		  AND da.drying_status != 'Completed' AND IFNULL(da.batch, '') != ''
+		GROUP BY dte.drying_table, da.batch, dte.coffee_type""",
 		as_dict=True,
 	)
+	tables = {}
+	for r in rows:
+		t = tables.setdefault(r.tbl, {"table": r.tbl, "debes": 0, "since": r.since, "batches": {}})
+		t["debes"] += flt(r.debes)
+		if r.since and (not t["since"] or r.since < t["since"]):
+			t["since"] = r.since
+		b = t["batches"].setdefault(r.batch, {"batch": r.batch, "coffee_types": [], "debes": 0, "since": r.since})
+		b["debes"] += flt(r.debes)
+		if r.coffee_type and r.coffee_type not in b["coffee_types"]:
+			b["coffee_types"].append(r.coffee_type)
+		if r.since and (not b["since"] or r.since < b["since"]):
+			b["since"] = r.since
+
+	today = frappe.db.sql(
+		"""SELECT qi.custom_drying_table AS tbl, qir.reading_value, qir.status, qi.creation
+		FROM `tabQuality Inspection` qi
+		JOIN `tabQuality Inspection Reading` qir ON qir.parent = qi.name
+		WHERE qi.docstatus < 2 AND qi.report_date = %(d)s
+		  AND qi.quality_inspection_template = 'Coffee Drying' AND IFNULL(qi.custom_drying_table, '') != ''
+		ORDER BY qi.creation DESC""",
+		{"d": nowdate()},
+		as_dict=True,
+	)
+	latest = {}
+	for r in today:
+		latest.setdefault(r.tbl, r)
+
+	out = []
+	for name, t in tables.items():
+		last = latest.get(name)
+		out.append({
+			"table": name,
+			"debes": t["debes"],
+			"since": t["since"],
+			"batches": sorted(t["batches"].values(), key=lambda b: str(b["since"] or "")),
+			"read_today": bool(last),
+			"last_reading": {"value": last.reading_value, "status": last.status, "at": last.creation} if last else None,
+		})
+	# Numeric tables sort numerically (2 before 10), anything else after.
+	out.sort(key=lambda t: (0, int(t["table"])) if str(t["table"]).isdigit() else (1, str(t["table"])))
+	return out
 
 
 @frappe.whitelist(methods=["POST"])
@@ -408,12 +529,17 @@ def get_context_options():
 
 	return {
 		"stock": get_inspectable_stock(),
-		"drying_tables": frappe.get_all(
-			"Drying Table",
-			fields=["name", "table_id", "status", "current_batch"],
-			order_by="name",
-			limit_page_length=200,
-		),
+		# Only tables with coffee on them, in the old {name, current_batch}
+		# shape for app builds that predate get_drying_tables.
+		"drying_tables": [
+			{
+				"name": t["table"],
+				"table_id": t["table"],
+				"status": "Occupied",
+				"current_batch": t["batches"][0]["batch"] if t["batches"] else None,
+			}
+			for t in get_drying_tables()
+		],
 		# Open orders only: you inspect what is being milled now.
 		"sales_orders": frappe.get_all(
 			"Sales Order",
@@ -497,7 +623,7 @@ def list_inspections(template=None, from_date=None, to_date=None, drying_table=N
 		filters=filters,
 		fields=[
 			"name", "report_date", "status", "quality_inspection_template",
-			"item_code", "batch_no", "custom_drying_table", "inspected_by", "remarks",
+			"item_code", "batch_no", "custom_drying_table", "inspected_by", "remarks", "creation",
 		],
 		order_by="report_date desc, creation desc",
 		limit_page_length=frappe.utils.cint(limit) or 60,

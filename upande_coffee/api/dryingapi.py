@@ -39,15 +39,32 @@ def drying_tables():
 
 def _batch_stock_entry(batch_no):
 	"""Latest Stock Entry that moved this batch — used as the required
-	reference on the moisture Quality Inspection."""
+	reference on the moisture Quality Inspection.
+
+	Filters on the batch's item first. The old single query OR-ed sle.batch_no
+	against sbe.batch_no across a LEFT JOIN, which no index can serve: on
+	Kaitet's 6M-row ledger every Quality Inspection save took 30s+ and timed
+	out. Two indexed lookups instead — bundle-tracked batches, then the legacy
+	sle.batch_no column for entries from before batch bundles."""
+	item = frappe.db.get_value("Batch", batch_no, "item")
+	if not item:
+		return None
+	params = {"i": item, "b": batch_no}
 	rows = frappe.db.sql(
 		"""SELECT sle.voucher_no
 		FROM `tabStock Ledger Entry` sle
-		LEFT JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sle.serial_and_batch_bundle
-		WHERE sle.voucher_type = 'Stock Entry' AND sle.is_cancelled = 0
-		  AND (sle.batch_no = %(b)s OR sbe.batch_no = %(b)s)
+		JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sle.serial_and_batch_bundle
+		WHERE sle.item_code = %(i)s AND sle.voucher_type = 'Stock Entry' AND sle.is_cancelled = 0
+		  AND sbe.batch_no = %(b)s
 		ORDER BY sle.posting_date DESC, sle.creation DESC LIMIT 1""",
-		{"b": batch_no},
+		params,
+	) or frappe.db.sql(
+		"""SELECT sle.voucher_no
+		FROM `tabStock Ledger Entry` sle
+		WHERE sle.item_code = %(i)s AND sle.voucher_type = 'Stock Entry' AND sle.is_cancelled = 0
+		  AND sle.batch_no = %(b)s
+		ORDER BY sle.posting_date DESC, sle.creation DESC LIMIT 1""",
+		params,
 	)
 	return rows[0][0] if rows else None
 
