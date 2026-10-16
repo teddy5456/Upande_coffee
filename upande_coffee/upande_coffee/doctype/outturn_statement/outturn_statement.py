@@ -430,16 +430,20 @@ def on_cancel_reverse_milled_stock(doc, method):
 
 @frappe.whitelist()
 def create_delivery_note(outturn_name):
-    """Draft Delivery Note billing an EXTERNAL grower for what actually happened,
-    at the rates on their Sales Order:
+    """Draft Delivery Note billing an EXTERNAL grower for what actually
+    happened. Same maths as the old Milling Invoice print format:
 
-      Milling   = parchment actually milled (outturn parchment weight) / 1000 -> tonnes
-      Handling  = parchment actually received (submitted Coffee Intakes) / bag kg -> bags
-      Transport = same bags, only when the Sales Order has Include Transport ticked
+      Milling     = parchment milled (outturn parchment weight) / 1000      -> tonnes
+      Handling    = parchment received (submitted Coffee Intakes) / bag kg  -> bags
+      Export bags = grade bags + 1 per grade with pockets, issued from the
+                    bag store, VAT 16% on that line only
+      Transport   = output weight / bag kg, when the Sales Order (or the
+                    outturn) asks for transport
 
-    A Delivery Note rather than an invoice so jute bags added to it leave the
-    store; the Sales Invoice is then made from the DN. Estate (internal)
-    outturns are not charged."""
+    Rates: the grower's Sales Order line when it has one, else the Coffee
+    Settings price list (Endebess Milling Charges USD on Kaitet). A Delivery
+    Note rather than an invoice so the jute bags leave the store; the Sales
+    Invoice is made from the DN. Estate (internal) outturns are not charged."""
     doc = frappe.get_doc("Outturn Statement", outturn_name)
     if doc.docstatus != 1:
         frappe.throw(_("Submit the Outturn Statement before creating its Delivery Note."))
@@ -448,7 +452,7 @@ def create_delivery_note(outturn_name):
     ) in (0, 1):
         frappe.throw(_("Delivery Note {0} already exists for this outturn.").format(doc.linked_delivery_note))
     if not doc.get("custom_source_sales_order"):
-        frappe.throw(_("Set the Source Sales Order on this outturn first - the charges and rates come from it."))
+        frappe.throw(_("Set the Source Sales Order on this outturn first - the charges come from it."))
 
     so = frappe.get_doc("Sales Order", doc.custom_source_sales_order)
     if frappe.db.get_value("Customer", so.customer, "is_internal_customer"):
@@ -463,42 +467,54 @@ def create_delivery_note(outturn_name):
         so.name,
     )[0][0])
     arrived_from = "received on Coffee Intake"
-    milled = flt(doc.parchment_weight)
+    milled, output = flt(doc.parchment_weight), flt(doc.output_weight)
     if not arrived:
         arrived, arrived_from = milled, "no submitted Coffee Intake, so the outturn parchment weight"
+    export_bags = sum((g.no_of_bags or 0) + (1 if (g.no_of_pockets or 0) > 0 else 0) for g in doc.table_cyvh)
+    bag_item = frappe.db.get_value("Item", {"item_name": "Coffee Jute Bags", "disabled": 0}, "name")
+    vat_template, vat_account = _vat_16(so.company)
 
+    # (item, keyword to find it on the SO, qty, description, warehouse, item tax template)
     specs = [
-        (settings.endebess_milling_item, "milling", milled / 1000, f"Milling - {milled} kg parchment milled"),
+        (settings.endebess_milling_item, "milling", milled / 1000, f"Milling - {milled} kg parchment milled", None, None),
         (settings.endebess_handling_item, "handling", arrived / bag_kg,
-            f"Handling - {arrived} kg {arrived_from} / {bag_kg} kg bags"),
+            f"Handling - {arrived} kg {arrived_from} / {bag_kg} kg bags", None, None),
     ]
-    if so.get("custom_transport_expenses"):
-        specs.append((settings.endebess_transport_item, "transport", arrived / bag_kg,
-            f"Transport - {arrived} kg / {bag_kg} kg bags"))
+    if bag_item and export_bags:
+        specs.append((bag_item, "bag", export_bags,
+            f"Export bags - {export_bags} (grade bags + 1 per grade with pockets), VAT 16%",
+            _fullest_bin(bag_item, so.company), vat_template))
+    if so.get("custom_transport_expenses") or doc.get("transport_expenses"):
+        specs.append((settings.endebess_transport_item, "transport", output / bag_kg,
+            f"Transport - {output} kg clean / {bag_kg} kg bags", None, None))
 
     dn = frappe.new_doc("Delivery Note")
     dn.update({
         "customer": so.customer, "company": so.company, "currency": so.currency,
-        "conversion_rate": so.conversion_rate or 1, "selling_price_list": so.selling_price_list,
-        "price_list_currency": so.price_list_currency, "plc_conversion_rate": so.plc_conversion_rate or 1,
+        "conversion_rate": so.conversion_rate or 1,
+        "selling_price_list": settings.endebess_price_list or so.selling_price_list,
         "posting_date": frappe.utils.nowdate(),
-        "instructions": f"Milling charges for outturn {doc.outturn_number or doc.name} ({so.name}). "
-            "Add the jute bags issued to the grower as extra rows - they leave the store with this note.",
+        "instructions": f"Milling charges for outturn {doc.outturn_number or doc.name} ({so.name}): "
+            f"{arrived} kg received, {milled} kg milled, {output} kg clean.",
     })
-    for code, word, qty, description in specs:
-        line = _so_line(so, code, word)
+    # same rate both ways, or a USD note bills 45.10 for a 45.00 charge
+    dn.price_list_currency = frappe.db.get_value("Price List", dn.selling_price_list, "currency")
+    if dn.price_list_currency == dn.currency:
+        dn.plc_conversion_rate = dn.conversion_rate
+
+    for code, word, qty, description, warehouse, tax_template in specs:
+        line = None if word == "bag" else _so_line(so, code, word)
         code = line.item_code if line else code
         if not code:
             continue
-        rate = flt(line.rate) if line else 0
-        if not rate and so.selling_price_list:
-            rate = flt(frappe.db.get_value(
-                "Item Price", {"item_code": code, "price_list": so.selling_price_list}, "price_list_rate"))
-        dn.append("items", {
-            "item_code": code, "qty": flt(qty, 3), "conversion_factor": 1, "rate": rate,
-            "uom": (line.uom if line else None) or frappe.db.get_value("Item", code, "stock_uom"),
-            "description": description,
-        })
+        row = {"item_code": code, "qty": flt(qty, 3), "description": description,
+            "warehouse": warehouse, "item_tax_template": tax_template}
+        if line and flt(line.rate) > 0:
+            row.update(rate=flt(line.rate), uom=line.uom)
+        dn.append("items", row)
+    if vat_account and bag_item and export_bags:
+        dn.append("taxes", {"charge_type": "On Net Total", "account_head": vat_account, "rate": 0,
+            "included_in_print_rate": 0, "description": "VAT 16% (export bags)"})
     if not dn.items:
         frappe.throw(_("No charge items - set the Milling / Handling service items in Coffee Settings."))
     dn.insert()
@@ -511,6 +527,28 @@ def _so_line(so, code, word):
     name mentions it (older orders used other item codes for the same charge)."""
     return next((i for i in so.items if i.item_code == code), None) or next(
         (i for i in so.items if word in f"{i.item_name} {i.item_code}".lower()), None)
+
+
+def _fullest_bin(item_code, company):
+    rows = frappe.db.sql(
+        """SELECT b.warehouse FROM `tabBin` b JOIN `tabWarehouse` w ON w.name = b.warehouse
+        WHERE b.item_code = %s AND b.actual_qty > 0 AND w.company = %s
+        ORDER BY b.actual_qty DESC LIMIT 1""",
+        (item_code, company),
+    )
+    return rows[0][0] if rows else None
+
+
+def _vat_16(company):
+    """The company's active 16% Item Tax Template and its account. Only the bag
+    line carries it, so the On Net Total row at 0% taxes nothing else."""
+    rows = frappe.db.sql(
+        """SELECT d.parent, d.tax_type FROM `tabItem Tax Template Detail` d
+        JOIN `tabItem Tax Template` t ON t.name = d.parent
+        WHERE t.company = %s AND d.tax_rate = 16 AND t.disabled = 0 LIMIT 1""",
+        company,
+    )
+    return (rows[0][0], rows[0][1]) if rows else (None, None)
 
 
 def _get_warehouse_stock(item_code, warehouse):
