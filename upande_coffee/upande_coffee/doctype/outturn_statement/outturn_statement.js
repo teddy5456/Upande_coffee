@@ -71,47 +71,35 @@ frappe.ui.form.on("Outturn Statement", {
 		// (e.g. created via a list-view action) before the user touches anything.
 		if (frm.doc.__islocal) outturn_fetch_from_so(frm);
 	},
+	// Create > Delivery Note bills an EXTERNAL grower for what was actually
+	// milled, received and transported, at their Sales Order rates; jute bags
+	// added to the note leave the store. Estate (internal) outturns get no button.
 	refresh(frm) {
-		if (frm.doc.docstatus === 1) {
-			frm.add_custom_button(__("Outgrower Invoice"), function () {
-				frappe.call({
-					method: "upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement.create_outgrower_invoice",
-					args: { outturn_name: frm.doc.name },
-					freeze: true,
-					callback(r) {
-						if (r.message) {
-							frm.reload_doc();
-							frappe.set_route("Form", "Sales Invoice", r.message);
-						}
-					},
-				});
-			}, __("Create"));
-		}
-
-		if (frm.doc.docstatus === 1 && !frm.doc.linked_delivery_note) {
-			const label =
-				frm.doc._booking_is_internal
-					? __("Create Delivery Note")
-					: __("Create Delivery Note");
-
-			frm.add_custom_button(
-				__("Delivery Note"),
-				function () {
+		if (frm.doc.docstatus !== 1 || !frm.doc.custom_source_sales_order) return;
+		const dn = frm.doc.linked_delivery_note;
+		Promise.all([
+			frappe.db.get_value("Sales Order", frm.doc.custom_source_sales_order, "customer"),
+			dn ? frappe.db.get_value("Delivery Note", dn, "docstatus") : Promise.resolve(null),
+		]).then(([so, d]) => {
+			const customer = so && so.message && so.message.customer;
+			if (d && d.message && d.message.docstatus < 2) {
+				frm.add_custom_button(__("Delivery Note"), () => frappe.set_route("Form", "Delivery Note", dn), __("View"));
+				return;
+			}
+			if (!customer) return;
+			frappe.db.get_value("Customer", customer, "is_internal_customer").then((c) => {
+				if (c && c.message && c.message.is_internal_customer) return;
+				frm.add_custom_button(__("Delivery Note"), () => {
 					frappe.call({
 						method: "upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement.create_delivery_note",
 						args: { outturn_name: frm.doc.name },
 						freeze: true,
 						freeze_message: __("Creating Delivery Note..."),
-						callback(r) {
-							if (r.message) {
-								frm.reload_doc();
-								frappe.set_route("Form", "Delivery Note", r.message);
-							}
-						},
+					}).then((r) => {
+						if (r.message) frappe.set_route("Form", "Delivery Note", r.message);
 					});
-				},
-				__("Create")
-			);
-		}
+				}, __("Create"));
+			});
+		});
 	},
 });

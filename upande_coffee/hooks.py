@@ -36,6 +36,8 @@ fixtures = [
 		"filters": [["name", "in", ["Coffee Cherry Intake", "Coffee Drying", "Coffee Outturn",
 			"Coffee Parchment (Pre-Mill)", "Coffee Dispatch", "Coffee Cupping"]]],
 	},
+	# The Coffee workspace is this one block (same design as Roses Production).
+	{"doctype": "Custom HTML Block", "filters": [["name", "=", "Coffee Navigation"]]},
 ]
 
 # Installation / migration
@@ -50,7 +52,6 @@ after_install = "upande_coffee.setup.after_install"
 after_migrate = [
 	"upande_coffee.custom_fields.create_coffee_custom_fields",
 	"upande_coffee.custom_fields.relax_foreign_mandatory_fields",
-	"upande_coffee.setup.set_coffee_desktop_icon",
 ]
 
 # DocType JS shipped from the app (no site Client Scripts).

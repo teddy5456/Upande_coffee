@@ -2,7 +2,6 @@ import frappe
 from frappe.utils import flt
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint
 
 
 def _settings():
@@ -431,248 +430,87 @@ def on_cancel_reverse_milled_stock(doc, method):
 
 @frappe.whitelist()
 def create_delivery_note(outturn_name):
-    """Create a draft Delivery Note from a submitted Outturn Statement.
+    """Draft Delivery Note billing an EXTERNAL grower for what actually happened,
+    at the rates on their Sales Order:
 
-    Outgrowers: service charges only (no stock movement).
-    Endebess (internal): Coffee Dispatch header — user adds grade items manually.
-    """
+      Milling   = parchment actually milled (outturn parchment weight) / 1000 -> tonnes
+      Handling  = parchment actually received (submitted Coffee Intakes) / bag kg -> bags
+      Transport = same bags, only when the Sales Order has Include Transport ticked
+
+    A Delivery Note rather than an invoice so jute bags added to it leave the
+    store; the Sales Invoice is then made from the DN. Estate (internal)
+    outturns are not charged."""
     doc = frappe.get_doc("Outturn Statement", outturn_name)
-    if doc.linked_delivery_note:
-        frappe.throw(_("Delivery Note already created: {0}").format(doc.linked_delivery_note))
     if doc.docstatus != 1:
-        frappe.throw(_("Outturn Statement must be submitted before creating a Delivery Note."))
+        frappe.throw(_("Submit the Outturn Statement before creating its Delivery Note."))
+    if doc.linked_delivery_note and frappe.db.get_value(
+        "Delivery Note", doc.linked_delivery_note, "docstatus"
+    ) in (0, 1):
+        frappe.throw(_("Delivery Note {0} already exists for this outturn.").format(doc.linked_delivery_note))
+    if not doc.get("custom_source_sales_order"):
+        frappe.throw(_("Set the Source Sales Order on this outturn first - the charges and rates come from it."))
 
-    # Determine customer and is_internal.
-    # Preferred source (current): the linked Sales Order on custom_source_sales_order.
-    # Legacy fallback: read grower/is_internal from Booking if it's still present.
-    booking = None
-    if doc.get("custom_source_sales_order"):
-        so_row = frappe.db.get_value(
-            "Sales Order", doc.custom_source_sales_order,
-            ["customer as grower"], as_dict=True,
-        )
-        if so_row and so_row.grower:
-            is_internal_flag = frappe.db.get_value(
-                "Customer", so_row.grower, "is_internal_customer"
-            )
-            booking = frappe._dict({"grower": so_row.grower, "is_internal": is_internal_flag or 0})
+    so = frappe.get_doc("Sales Order", doc.custom_source_sales_order)
+    if frappe.db.get_value("Customer", so.customer, "is_internal_customer"):
+        frappe.throw(_("{0} is an internal customer - estate coffee is not charged for milling.").format(so.customer))
 
-    if not booking and _booking_exists():
-        if doc.outturn_type == "Super Outturn":
-            first = doc.component_bookings[0] if doc.component_bookings else None
-            if not first:
-                frappe.throw(_("No component bookings found on this Super Outturn."))
-            booking = frappe.get_value(
-                "Booking", first.booking_outturn, ["grower", "is_internal"], as_dict=True
-            )
-        else:
-            booking = frappe.get_value(
-                "Booking", doc.outturn_number, ["grower", "is_internal"], as_dict=True
-            )
+    settings = frappe.get_cached_doc("Coffee Settings")
+    bag_kg = flt(settings.bag_weight_kg) or 60
+    arrived = flt(frappe.db.sql(
+        """SELECT COALESCE(SUM(i.qty_kg), 0) FROM `tabCoffee Intake Item` i
+        JOIN `tabCoffee Intake` c ON c.name = i.parent
+        WHERE c.sales_order = %s AND c.docstatus = 1""",
+        so.name,
+    )[0][0])
+    arrived_from = "received on Coffee Intake"
+    milled = flt(doc.parchment_weight)
+    if not arrived:
+        arrived, arrived_from = milled, "no submitted Coffee Intake, so the outturn parchment weight"
 
-    if not booking or not booking.grower:
-        frappe.throw(_(
-            "No grower could be resolved for this outturn — link a Sales Order via "
-            "<b>Source Sales Order</b> or (legacy) a Booking."
-        ))
-
-    is_internal = cint(booking.is_internal)
+    specs = [
+        (settings.endebess_milling_item, "milling", milled / 1000, f"Milling - {milled} kg parchment milled"),
+        (settings.endebess_handling_item, "handling", arrived / bag_kg,
+            f"Handling - {arrived} kg {arrived_from} / {bag_kg} kg bags"),
+    ]
+    if so.get("custom_transport_expenses"):
+        specs.append((settings.endebess_transport_item, "transport", arrived / bag_kg,
+            f"Transport - {arrived} kg / {bag_kg} kg bags"))
 
     dn = frappe.new_doc("Delivery Note")
-    dn.customer = booking.grower
-    dn.company = COMPANY
-    dn.currency = "USD"
-    dn.posting_date = frappe.utils.today()
-    dn.custom_outturn_references = doc.outturn_number or doc.name
-
-    # Both internal and outgrower invoices are processed at Endebess mill
-    dn.custom_farm = "Endebess"
-    dn.custom_business_unit = "Endebess Coffee"
-    dn.custom_location = "Endebess"
-    dn.custom_delivery_type = "Coffee Dispatch"
-
-    # Override the fetch_from on set_warehouse — the Coffee Dispatch delivery type
-    # record has the wrong source_warehouse ("Yogurt Coldroom - KR")
-    dn.set_warehouse = MILLED_STORE_WH
-
-    if is_internal:
-        # Endebess: Coffee Dispatch header — items added manually via the DN form
-        pass
-    else:
-        # Ensure service charge item UOMs allow decimals before inserting
-        _ensure_service_item_uoms()
-        # Outgrower: service charges only — no stock items, no warehouse
-        _add_outgrower_charge_items(dn, doc)
-
-    dn.insert(ignore_permissions=True)
-    frappe.db.set_value(
-        "Outturn Statement", outturn_name, "linked_delivery_note", dn.name, update_modified=False
-    )
+    dn.update({
+        "customer": so.customer, "company": so.company, "currency": so.currency,
+        "conversion_rate": so.conversion_rate or 1, "selling_price_list": so.selling_price_list,
+        "price_list_currency": so.price_list_currency, "plc_conversion_rate": so.plc_conversion_rate or 1,
+        "posting_date": frappe.utils.nowdate(),
+        "instructions": f"Milling charges for outturn {doc.outturn_number or doc.name} ({so.name}). "
+            "Add the jute bags issued to the grower as extra rows - they leave the store with this note.",
+    })
+    for code, word, qty, description in specs:
+        line = _so_line(so, code, word)
+        code = line.item_code if line else code
+        if not code:
+            continue
+        rate = flt(line.rate) if line else 0
+        if not rate and so.selling_price_list:
+            rate = flt(frappe.db.get_value(
+                "Item Price", {"item_code": code, "price_list": so.selling_price_list}, "price_list_rate"))
+        dn.append("items", {
+            "item_code": code, "qty": flt(qty, 3), "conversion_factor": 1, "rate": rate,
+            "uom": (line.uom if line else None) or frappe.db.get_value("Item", code, "stock_uom"),
+            "description": description,
+        })
+    if not dn.items:
+        frappe.throw(_("No charge items - set the Milling / Handling service items in Coffee Settings."))
+    dn.insert()
+    frappe.db.set_value("Outturn Statement", doc.name, "linked_delivery_note", dn.name, update_modified=False)
     return dn.name
 
 
-def _add_outgrower_charge_items(dn, outturn_doc):
-    """Append service charge items to an outgrower Delivery Note.
-
-    Quantities and rates mirror the Outturn Statement print format:
-      Milling:      parchment_weight / 1000 tonnes  × $45/tonne
-      Handling:     parchment_weight / 60   bags    × $1.50/bag
-      Export Bags:  export_qty              bags    × $3.50/bag + 16% VAT
-      Transport:    output_weight / 60      bags    × $3.00/bag
-    """
-    parchment = outturn_doc.parchment_weight or 0
-    output = outturn_doc.output_weight or 0
-    outturn_ref = outturn_doc.outturn_number or outturn_doc.name
-
-    # Export bag qty: each grade row = no_of_bags + 1 if it has a pocket
-    export_qty = sum(
-        (row.no_of_bags or 0) + (1 if (row.no_of_pockets or 0) > 0 else 0)
-        for row in outturn_doc.table_cyvh
-    )
-
-    charges = [
-        (
-            "COFFEE-MILLING",
-            "Milling Charges",
-            round(parchment / 1000, 3),
-            45.00,
-            "Tonne",
-        ),
-        (
-            "COFFEE-HANDLING",
-            "Handling Charges",
-            round(parchment / 60, 2),
-            1.50,
-            "Bags",
-        ),
-        (
-            "COFFEE-EXPORT-BAGS",
-            "Export Bags + VAT (16%)",
-            export_qty,
-            3.50,
-            "Bags",
-        ),
-    ]
-
-    if outturn_doc.transport_expenses:
-        charges.append((
-            "COFFEE-TRANSPORT",
-            "Transport",
-            round(output / 60, 2),
-            3.00,
-            "Bags",
-        ))
-
-    for item_code, label, qty, rate, uom in charges:
-        dn.append(
-            "items",
-            {
-                "item_code": item_code,
-                "item_name": label,
-                "qty": qty,
-                "uom": uom,
-                "rate": rate,
-                "description": f"{label} — outturn {outturn_ref} ({outturn_doc.grower})",
-            },
-        )
-
-
-_SERVICE_ITEM_UOMS = {
-    "COFFEE-MILLING": "Tonne",
-    "COFFEE-HANDLING": "Bags",
-    "COFFEE-EXPORT-BAGS": "Bags",
-    "COFFEE-TRANSPORT": "Bags",
-}
-
-
-def _ensure_service_item_uoms():
-    """Ensure service charge items have a UOM that allows decimal quantities.
-    Run inline at DN creation so it doesn't depend on migrate having been run.
-    """
-    for uom_name in ("Tonne", "Bags"):
-        if not frappe.db.exists("UOM", uom_name):
-            frappe.get_doc({
-                "doctype": "UOM",
-                "uom_name": uom_name,
-                "must_be_whole_number": 0,
-            }).insert(ignore_permissions=True)
-        else:
-            frappe.db.set_value("UOM", uom_name, "must_be_whole_number", 0, update_modified=False)
-
-    for item_code, target_uom in _SERVICE_ITEM_UOMS.items():
-        if not frappe.db.exists("Item", item_code):
-            continue
-        frappe.db.set_value("Item", item_code, {
-            "stock_uom": target_uom,
-            "disabled": 0,
-            "is_stock_item": 0,
-        }, update_modified=False)
-        if not frappe.db.exists("UOM Conversion Detail", {"parent": item_code, "uom": target_uom}):
-            item = frappe.get_doc("Item", item_code)
-            item.append("uoms", {"uom": target_uom, "conversion_factor": 1})
-            item.save(ignore_permissions=True)
-
-    frappe.db.commit()
-
-
-@frappe.whitelist()
-def create_outgrower_invoice(outturn_name):
-    """Create a draft Sales Invoice with outgrower charge items (Milling, Handling, etc.)."""
-    doc = frappe.get_doc("Outturn Statement", outturn_name)
-    if doc.docstatus != 1:
-        frappe.throw(_("Outturn Statement must be submitted first."))
-
-    # Preferred source (current): the linked Sales Order. Legacy fallback: Booking.
-    booking = None
-    if doc.get("custom_source_sales_order"):
-        so_row = frappe.db.get_value(
-            "Sales Order", doc.custom_source_sales_order, ["customer as grower"], as_dict=True,
-        )
-        if so_row and so_row.grower:
-            is_internal_flag = frappe.db.get_value(
-                "Customer", so_row.grower, "is_internal_customer"
-            )
-            booking = frappe._dict({"grower": so_row.grower, "is_internal": is_internal_flag or 0})
-    if not booking and _booking_exists() and doc.outturn_number:
-        booking = frappe.get_value(
-            "Booking", doc.outturn_number, ["grower", "is_internal"], as_dict=True,
-        )
-    if not booking or not booking.grower:
-        frappe.throw(_(
-            "No grower could be resolved for this outturn — link a Sales Order via "
-            "<b>Source Sales Order</b> or (legacy) a Booking."
-        ))
-
-    # Ensure customer has default_currency = USD so ERPNext initialises the SI in USD.
-    # Outgrowers always transact in USD; set this once if missing.
-    if not frappe.db.get_value("Customer", booking.grower, "default_currency"):
-        frappe.db.set_value("Customer", booking.grower, "default_currency", "USD", update_modified=False)
-
-    si = frappe.new_doc("Sales Invoice")
-    si.customer = booking.grower
-    si.company = COMPANY
-    si.currency = "USD"
-    si.selling_price_list = "USD Price List"
-    si.party_account_currency = "USD"
-    si.posting_date = frappe.utils.today()
-    si.custom_farm = "Endebess"
-    si.custom_business_unit = "Endebess Coffee"
-    si.update_stock = 0
-    si.custom_outturn_number = doc.outturn_number
-
-    _add_outgrower_charge_items(si, doc)
-
-    # Explicitly set USD debit_to account so set_missing_values doesn't pick up KES default
-    usd_receivable = frappe.db.get_value(
-        "Party Account",
-        {"parent": booking.grower, "parenttype": "Customer", "company": COMPANY},
-        "account",
-    )
-    if usd_receivable:
-        si.debit_to = usd_receivable
-
-    si.insert(ignore_permissions=True, ignore_mandatory=True)
-    return si.name
+def _so_line(so, code, word):
+    """The Sales Order's charge line for this service: same item, else one whose
+    name mentions it (older orders used other item codes for the same charge)."""
+    return next((i for i in so.items if i.item_code == code), None) or next(
+        (i for i in so.items if word in f"{i.item_name} {i.item_code}".lower()), None)
 
 
 def _get_warehouse_stock(item_code, warehouse):
