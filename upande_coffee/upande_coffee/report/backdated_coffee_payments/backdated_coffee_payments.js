@@ -8,7 +8,7 @@ frappe.query_reports["Backdated Coffee Payments"] = {
 		{ fieldname: "to_date", label: __("To Date"), fieldtype: "Date", reqd: 1,
 			default: frappe.datetime.get_today() },
 		{ fieldname: "view", label: __("View"), fieldtype: "Select", reqd: 1,
-			options: "Backdated Payments\nBy Pay Day", default: "Backdated Payments" },
+			options: "Backdated Payments\nBy Pay Day\nDuplicate Payments\nHarvester Summary", default: "Backdated Payments" },
 		{ fieldname: "harvester", label: __("Harvester"), fieldtype: "Link", options: "Harvester" },
 	],
 };
