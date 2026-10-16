@@ -3,6 +3,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import getdate
 
 
 class CoffeePayment(Document):
@@ -38,7 +39,7 @@ class CoffeePayment(Document):
         rows = frappe.get_all(
             "Harvest Log",
             filters={"name": ["in", names]},
-            fields=["name", "harvester_id", "paid"],
+            fields=["name", "harvester_id", "paid", "date"],
         )
         found = {r.name for r in rows}
         missing = set(names) - found
@@ -49,6 +50,13 @@ class CoffeePayment(Document):
                 frappe.throw(_("Harvest Log {0} does not belong to {1}.").format(r.name, self.harvester_id))
             if r.paid:
                 frappe.throw(_("Harvest Log {0} is already paid.").format(r.name))
+            # A payment covers its own date's buckets only; older unpaid days
+            # are settled separately, never bundled into today's payment.
+            if getdate(r.date) != getdate(self.date):
+                frappe.throw(
+                    _("Harvest Log {0} is from {1}; this payment is for {2}.").format(r.name, r.date, self.date),
+                    title=_("Today only"),
+                )
 
     def validate_duplicate_payment(self):
         """One payment per harvester per date. Every creation path (desk form,
