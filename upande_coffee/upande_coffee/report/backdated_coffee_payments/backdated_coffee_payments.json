@@ -1,0 +1,23 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2026-10-16 15:00:00.000000",
+ "disabled": 0,
+ "doctype": "Report",
+ "filters": [],
+ "is_standard": "Yes",
+ "modified": "2026-10-16 15:00:00.000000",
+ "module": "Upande Coffee",
+ "name": "Backdated Coffee Payments",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "",
+ "ref_doctype": "Coffee Payment",
+ "report_name": "Backdated Coffee Payments",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Coffee Harvest Manager"},
+  {"role": "Accounts Manager"}
+ ]
+}
