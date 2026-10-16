@@ -71,22 +71,29 @@ upande_coffee.endebess = {
 		// set on the row; the price_list itself already carries selling=1.
 		const rows = await frappe.db.get_list("Item Price", {
 			filters: { item_code, price_list },
-			fields:  ["price_list_rate"],
+			fields:  ["price_list_rate", "currency"],
 			limit:   1,
 		});
 		if (rows && rows.length && rows[0].price_list_rate != null) {
-			return parseFloat(rows[0].price_list_rate);
+			return { rate: parseFloat(rows[0].price_list_rate), currency: rows[0].currency };
 		}
 		return null;
 	},
 
+	/** Rate in the ORDER's currency. The charges list is in USD; a KES order
+	 *  used to get the dollar figure as shillings (45 instead of ~5,840). */
 	async _resolve_rate(frm, item_code, fallback_list) {
-		const preferred = frm.doc.selling_price_list;
-		if (preferred) {
-			const r = await this._get_rate(item_code, preferred);
-			if (r != null) return r;
-		}
-		return await this._get_rate(item_code, fallback_list);
+		let hit = null;
+		if (frm.doc.selling_price_list) hit = await this._get_rate(item_code, frm.doc.selling_price_list);
+		if (!hit) hit = await this._get_rate(item_code, fallback_list);
+		if (!hit) return null;
+		if (!hit.currency || !frm.doc.currency || hit.currency === frm.doc.currency) return hit.rate;
+		const r = await frappe.call({
+			method: "erpnext.setup.utils.get_exchange_rate",
+			args: { from_currency: hit.currency, to_currency: frm.doc.currency,
+				transaction_date: frm.doc.transaction_date || frappe.datetime.get_today() },
+		});
+		return flt(hit.rate * flt(r.message || 0), 4) || null;
 	},
 
 	async _item_meta(item_code) {
