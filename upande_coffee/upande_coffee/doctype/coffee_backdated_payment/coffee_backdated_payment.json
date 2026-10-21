@@ -1,0 +1,163 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-10-21 15:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-21 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Coffee Backdated Payment",
+ "owner": "Administrator",
+ "title_field": "harvester_id",
+ "sort_field": "date",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "description": "Pay a picker for days they worked but did not collect their money on that day.",
+ "field_order": [
+  "naming_series",
+  "harvester_id",
+  "date",
+  "rate",
+  "column_break_1",
+  "total_buckets",
+  "total_payment",
+  "journal_entry",
+  "section_days",
+  "items",
+  "remark",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "CBP-.YYYY.-",
+   "default": "CBP-.YYYY.-"
+  },
+  {
+   "fieldname": "harvester_id",
+   "fieldtype": "Link",
+   "label": "Harvester",
+   "options": "Harvester",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Payment Date",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "The day the money is handed over. Only buckets picked before this date can be paid here; the day's own buckets are paid from the app."
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate per Bucket",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_buckets",
+   "fieldtype": "Int",
+   "label": "Total Buckets",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_payment",
+   "fieldtype": "Currency",
+   "label": "Total Payment",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "The daily Journal Entry that posted this payment out of the week's float account."
+  },
+  {
+   "fieldname": "section_days",
+   "fieldtype": "Section Break",
+   "label": "Unpaid Days"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Buckets",
+   "options": "Coffee Backdated Payment Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Small Text",
+   "label": "Remark"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Coffee Backdated Payment",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1,
+   "delete": 1
+  },
+  {
+   "role": "Coffee Harvest Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  }
+ ]
+}

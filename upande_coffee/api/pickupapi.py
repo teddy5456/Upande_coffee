@@ -148,7 +148,7 @@ def recent_received_pickups(limit=10):
 		filters={"docstatus": 1, "received": 1},
 		fields=[
 			"name", "date", "tractor", "total_buckets", "total_weight_kg", "workflow_state",
-			"received", "received_by", "received_at", "received_weight_kg", "received_bag_count",
+			"received", "received_by", "received_at", "received_weight_kg", "received_bag_count", "received_bucket_count",
 			"weight_variance_kg",
 		],
 		order_by="received_at desc",
@@ -160,13 +160,12 @@ def recent_received_pickups(limit=10):
 def receive_pickup(name, reported_bucket_count):
 	"""Confirm cherry has physically arrived at the wet mill.
 
-	The receiver's whole job is to count buckets as they unload and report
-	the number — they never see the field's recorded count or weight
-	beforehand (see receivable_pickups), so this is an independent check, not
-	a rubber stamp. It must match the pickup's real total exactly or
-	receiving is refused outright. Once it matches, the field weight is used
-	as-is (no re-weigh) and the "Receive" workflow transition submits the
-	document and moves stock, same as before."""
+	The receiver counts buckets as they unload without seeing the field's
+	recorded count (see receivable_pickups). Fewer than were loaded is
+	accepted -- buckets do go missing between block and mill, and the shortfall
+	is exactly what the dashboard's harvested-vs-received view is for. The
+	weight moved into stock is scaled to the buckets that arrived. More than
+	were loaded can only be a miscount, so that is refused."""
 	doc = frappe.get_doc("Harvest Pickup", name)
 	if doc.workflow_state != "Weighed":
 		frappe.throw(_("Pickup {0} must be Weighed before it can be received.").format(name))
@@ -174,15 +173,16 @@ def receive_pickup(name, reported_bucket_count):
 		frappe.throw(_("Pickup {0} has already been received.").format(name))
 
 	reported = cint(reported_bucket_count)
+	expected = cint(doc.total_buckets)
 	if reported <= 0:
 		frappe.throw(_("Enter the number of buckets received."))
-	if reported != cint(doc.total_buckets):
-		frappe.throw(
-			_("Bucket count does not match this pickup's record. Recount, or contact the field team if buckets are missing.")
-		)
+	if expected and reported > expected:
+		frappe.throw(_("That is more buckets than were loaded on this pickup. Recount."))
 
-	doc.db_set("received_weight_kg", flt(doc.total_weight_kg), update_modified=False)
-	doc.db_set("weight_variance_kg", 0, update_modified=False)
+	weight = flt(doc.total_weight_kg) * reported / expected if expected else flt(doc.total_weight_kg)
+	doc.db_set("received_bucket_count", reported, update_modified=False)
+	doc.db_set("received_weight_kg", flt(weight, 2), update_modified=False)
+	doc.db_set("weight_variance_kg", flt(flt(doc.total_weight_kg) - weight, 2), update_modified=False)
 	doc.db_set("received_by", frappe.session.user, update_modified=False)
 	doc.db_set("received_at", now_datetime(), update_modified=False)
 	doc.db_set("received", 1, update_modified=False)
@@ -200,6 +200,8 @@ def receive_pickup(name, reported_bucket_count):
 		"received_at": doc.received_at,
 		"received_by": doc.received_by,
 		"received_weight_kg": doc.received_weight_kg,
+		"received_bucket_count": reported,
+		"short_buckets": expected - reported if expected else 0,
 		"stock_entry": stock_entry,
 	}
 

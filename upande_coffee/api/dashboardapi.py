@@ -110,7 +110,9 @@ def get_overview(from_date=None, to_date=None, season=None):
 	)
 	active_name = frappe.db.get_value("Coffee Season", season_key, "season_name") if season_key else None
 	target_cherry_kg = resolve_season_target_kg(season_key)
-	yield_pct = flt(frappe.db.get_single_value("Coffee Settings", "expected_yield_pct")) or 20
+	# cherry -> clean coffee at 8:1 unless Coffee Settings says otherwise
+	yield_pct = flt(frappe.db.get_single_value("Coffee Settings", "expected_yield_pct")) or 12.5
+	received = _received(from_date, to_date)
 
 	return {
 		"estimate": {
@@ -127,6 +129,11 @@ def get_overview(from_date=None, to_date=None, season=None):
 			"today_buckets": today_buckets,
 			"today_weight_kg": today_weight,
 			"daily_buckets": daily,
+			# buckets that actually arrived at the wet mill vs what was logged in the field
+			"received_buckets": received.buckets,
+			"received_weight_kg": received.weight,
+			"short_buckets": received.short,
+			"estimated_clean_kg": total_weight * yield_pct / 100,
 		},
 		"drying": {
 			"total_debes": total_debes,
@@ -142,6 +149,29 @@ def get_overview(from_date=None, to_date=None, season=None):
 		"dispatch": {"total_weight_kg": dispatch_kg, "shipments": shipments},
 		"invoices": {"total_billed": billed, "outstanding": outstanding},
 	}
+
+
+def _received(from_date, to_date):
+	"""Buckets and kg received at the wet mill in the range (by pickup date).
+	received_bucket_count is set when the receiver counted fewer than were
+	loaded; older receipts had to match, so their total_buckets stands."""
+	cond, params = ["received = 1", "docstatus = 1"], {}
+	if from_date:
+		cond.append("date >= %(f)s")
+		params["f"] = from_date
+	if to_date:
+		cond.append("date <= %(t)s")
+		params["t"] = to_date
+	counted = "COALESCE(NULLIF(received_bucket_count, 0), total_buckets)" if frappe.db.has_column(
+		"Harvest Pickup", "received_bucket_count") else "total_buckets"
+	r = frappe.db.sql(
+		f"""SELECT COALESCE(SUM({counted}), 0) AS buckets,
+			COALESCE(SUM(COALESCE(NULLIF(received_weight_kg, 0), total_weight_kg)), 0) AS weight,
+			COALESCE(SUM(total_buckets - {counted}), 0) AS short
+		FROM `tabHarvest Pickup` WHERE {" AND ".join(cond)}""",
+		params, as_dict=True,
+	)[0]
+	return frappe._dict(buckets=flt(r.buckets), weight=flt(r.weight), short=flt(r.short))
 
 
 def _latest_moisture():
@@ -548,7 +578,8 @@ def get_payments(from_date=None, to_date=None, season=None):
 
 	return {
 		"kpis": {
-			"total_paid": flt(agg.total),
+			"total_paid": flt(agg.total) + split["form_paid"],
+			"backdated_form_paid": split["form_paid"],
 			"day_paid": split["day_paid"],
 			"backdated_paid": split["backdated_paid"],
 			"backdated_count": split["backdated_count"],
@@ -593,6 +624,13 @@ def _backdated_split(from_date, to_date):
 		params,
 		as_dict=True,
 	)
+	# Coffee Backdated Payment: days a picker didn't collect, paid later from the desk form
+	form_rows = frappe.db.sql(
+		f"""SELECT cp.name, cp.date, cp.total_buckets, cp.rate, cp.total_payment, 0 AS day_b
+		FROM `tabCoffee Backdated Payment` cp WHERE {" AND ".join(cond)}""",
+		params, as_dict=True,
+	) if frappe.db.table_exists("Coffee Backdated Payment") else []
+	rows += form_rows
 	by_payment, by_day = {}, {}
 	day_paid = backdated_paid = 0.0
 	for r in rows:
@@ -612,6 +650,7 @@ def _backdated_split(from_date, to_date):
 	return {
 		"day_paid": day_paid,
 		"backdated_paid": backdated_paid,
+		"form_paid": sum(flt(r.total_payment) for r in form_rows),
 		"backdated_count": len(by_payment),
 		"by_payment": by_payment,
 		"by_day": sorted(by_day.values(), key=lambda x: x["date"], reverse=True),
@@ -678,6 +717,7 @@ def get_stock():
 		clean_by_wh[b.warehouse] = clean_by_wh.get(b.warehouse, 0) + q
 
 	return {
+		"ownership": _stock_by_owner(settings, list(pt_item.keys()) + list(grade_of.keys()), pt_item, grade_of),
 		"parchment": {
 			"total_kg": parchment_total,
 			"by_type": [{"type": k, "kg": v} for k, v in sorted(by_type.items(), key=lambda x: -x[1])],
@@ -689,3 +729,58 @@ def get_stock():
 			"by_warehouse": [{"warehouse": k, "kg": v} for k, v in sorted(clean_by_wh.items(), key=lambda x: -x[1])],
 		},
 	}
+
+
+def _stock_by_owner(settings, item_codes, pt_item, grade_of):
+	"""Coffee at the dry mill and in the clean store, by owner.
+
+	Worked out from the documents, so it holds whether or not parchment is
+	batched: per outgrower order (non-internal customer), parchment received
+	on submitted Coffee Intakes minus parchment milled on their Outturn
+	Statements is still in the dry mill; clean coffee their outturns produced
+	minus what has left on Delivery Notes (batches {outturn}-{grade}) is in the
+	clean store. Whatever else sits in each place is the estate's own."""
+	locations = {settings.dry_mill_warehouse: "Dry Mill", settings.milled_store_warehouse: "Clean Store"}
+	locations.pop(None, None)
+	if not (locations and item_codes):
+		return {"rows": [], "totals": {}}
+	on_hand = {}
+	for b in frappe.get_all("Bin", filters={"item_code": ["in", item_codes], "warehouse": ["in", list(locations)],
+			"actual_qty": [">", 0]}, fields=["warehouse", "actual_qty"]):
+		loc = locations[b.warehouse]
+		on_hand[loc] = on_hand.get(loc, 0) + flt(b.actual_qty)
+
+	grades = [i for i in item_codes if i in grade_of]
+	rows = []
+	for so in frappe.db.sql(
+		"""SELECT so.name, so.customer, so.custom_outturn_number AS outturn
+		FROM `tabSales Order` so JOIN `tabCustomer` c ON c.name = so.customer
+		WHERE so.docstatus = 1 AND c.is_internal_customer = 0 AND IFNULL(so.custom_outturn_number, '') != ''""",
+		as_dict=True,
+	):
+		received = flt(frappe.db.sql(
+			"""SELECT SUM(i.qty_kg) FROM `tabCoffee Intake Item` i JOIN `tabCoffee Intake` c ON c.name = i.parent
+			WHERE c.sales_order = %s AND c.docstatus = 1""", so.name)[0][0])
+		milled, clean = frappe.db.sql(
+			"""SELECT COALESCE(SUM(parchment_weight), 0), COALESCE(SUM(output_weight), 0)
+			FROM `tabOutturn Statement` WHERE custom_source_sales_order = %s AND docstatus = 1""", so.name)[0]
+		dispatched = flt(frappe.db.sql(
+			"""SELECT -SUM(sbe.qty) FROM `tabStock Ledger Entry` sle
+			JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sle.serial_and_batch_bundle
+			WHERE sle.item_code IN %(g)s AND sle.voucher_type = 'Delivery Note' AND sle.is_cancelled = 0
+			  AND sbe.batch_no LIKE %(b)s""", {"g": tuple(grades) or ("",), "b": so.outturn + "-%"})[0][0]) if grades else 0
+		for location, kg in (("Dry Mill", received - flt(milled)), ("Clean Store", flt(clean) - dispatched)):
+			if kg > 0.001:
+				rows.append({"owner": so.customer, "outgrower": True, "location": location,
+					"order": so.name, "outturn": so.outturn, "kg": kg})
+	totals = {}
+	for loc in ("Dry Mill", "Clean Store"):
+		theirs = sum(r["kg"] for r in rows if r["location"] == loc)
+		ours = flt(on_hand.get(loc)) - theirs
+		if theirs:
+			totals["Outgrower - " + loc] = theirs
+		if ours > 0.001:
+			totals["Estate - " + loc] = ours
+			rows.append({"owner": "Endebess Estate", "outgrower": False, "location": loc, "order": None, "outturn": None, "kg": ours})
+	rows.sort(key=lambda x: (not x["outgrower"], x["owner"], x["location"]))
+	return {"rows": rows, "totals": totals}

@@ -123,10 +123,21 @@ def _endebess_rate(item_code, price_list):
 
 
 def _resolve_endebess_rate(doc, item_code, fallback_price_list):
-	rate = _endebess_rate(item_code, doc.get("selling_price_list"))
-	if rate is not None:
-		return rate
-	return _endebess_rate(item_code, fallback_price_list) or 0
+	"""The charge rate in the ORDER's currency. The Endebess charges list is in
+	USD; without converting, a KES order billed 45 shillings for a $45 tonne."""
+	price_list = doc.get("selling_price_list")
+	rate = _endebess_rate(item_code, price_list)
+	if rate is None:
+		price_list = fallback_price_list
+		rate = _endebess_rate(item_code, price_list)
+	if not rate:
+		return 0
+	pl_currency = frappe.db.get_value("Price List", price_list, "currency") if price_list else None
+	if pl_currency and doc.get("currency") and pl_currency != doc.currency:
+		from erpnext.setup.utils import get_exchange_rate
+
+		rate = flt(rate) * flt(get_exchange_rate(pl_currency, doc.currency, doc.get("transaction_date")) or 1)
+	return flt(rate, 4)
 
 
 def _item_stock_uom(item_code, default="Nos"):

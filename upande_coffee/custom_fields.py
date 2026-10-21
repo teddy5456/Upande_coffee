@@ -347,6 +347,22 @@ def create_coffee_custom_fields():
 					"module": "Upande Coffee",
 				},
 			],
+			# ── Harvest Pickup: what actually arrived at the wet mill ─────
+			# The receiver counts blind; fewer buckets than the field loaded
+			# is accepted and recorded here so the dashboard can show
+			# harvested vs received (see pickupapi.receive_pickup).
+			"Harvest Pickup": [
+				{
+					"fieldname": "received_bucket_count",
+					"fieldtype": "Int",
+					"label": "Buckets Received",
+					"insert_after": "received_weight_kg",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"no_copy": 1,
+					"module": "Upande Coffee",
+				},
+			],
 		},
 		ignore_validate=True,
 	)

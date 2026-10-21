@@ -17,7 +17,7 @@ Endpoint map:
 
 import frappe
 from frappe import _
-from frappe.utils import flt, nowdate
+from frappe.utils import cint, flt, nowdate
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -168,15 +168,13 @@ def list_bookings(limit=50):
 @frappe.whitelist(methods=["POST"])
 def create_booking(parchment_type, no_of_bags, gross_weight,
 					grower=None, bag_weight=0.6, booking_date=None,
-					source_bin=None, outturn_number=None):
-	"""Create a Draft Sales Order for a coffee booking.
-
-	Args mirror the legacy Booking create — bag_weight is the empty-bag
-	tare, so net_weight = gross - bags × tare. On the new SO we store net
-	weight as `custom_expected_parchment_weight_kg` and #bags as
-	`custom_expected_bags`, plus one parchment-types row with the given
-	parchment_type + source_bin. The `custom_outturn_number` auto-fills
-	via the SO's before_validate hook (WWEM##### series)."""
+					source_bin=None, outturn_number=None, include_transport=0):
+	"""Create a Draft Sales Order for a coffee booking -- the same order the
+	desk form builds, so a booking from the dashboard can be submitted,
+	received, milled and billed like any other: coffee order type, the grower's
+	own currency, the Coffee Settings charges price list and, if asked for,
+	transport. net_weight = gross - bags x empty-bag tare; the charge lines and
+	the outturn number come from the Sales Order's before_validate hook."""
 	no_of_bags = int(no_of_bags or 0)
 	gross_weight = flt(gross_weight)
 	bag_weight = flt(bag_weight)
@@ -186,11 +184,23 @@ def create_booking(parchment_type, no_of_bags, gross_weight,
 		frappe.throw(_("Grower (Customer) is required."))
 	if not parchment_type:
 		frappe.throw(_("Parchment Type is required."))
+	if net_weight <= 0:
+		frappe.throw(_("Net weight must be above zero - check the gross weight and bag count."))
 
+	settings = frappe.get_cached_doc("Coffee Settings")
 	so = frappe.new_doc("Sales Order")
 	so.customer = grower
 	so.transaction_date = booking_date or nowdate()
 	so.delivery_date = booking_date or nowdate()
+	so.company = frappe.db.get_value("Warehouse", settings.dry_mill_warehouse, "company") or frappe.defaults.get_user_default("Company")
+	# the grower's receivable account fixes the order currency (outgrowers mostly bill in USD)
+	from erpnext.accounts.party import get_party_account_currency
+	so.currency = get_party_account_currency("Customer", grower, so.company) or so.currency
+	so.custom_sales_order_type = "Coffee"
+	if frappe.db.exists("Farm", "Endebess"):
+		so.custom_farm = "Endebess"
+	if settings.endebess_price_list:
+		so.selling_price_list = settings.endebess_price_list
 
 	# Business unit — force Endebess so the Coffee tab is enabled + the
 	# before_validate hook stamps the outturn number.
@@ -207,6 +217,7 @@ def create_booking(parchment_type, no_of_bags, gross_weight,
 
 	so.custom_expected_bags = no_of_bags
 	so.custom_expected_parchment_weight_kg = net_weight
+	so.custom_transport_expenses = cint(include_transport)
 	if outturn_number:
 		so.custom_outturn_number = outturn_number  # explicit override
 
@@ -217,6 +228,9 @@ def create_booking(parchment_type, no_of_bags, gross_weight,
 		"source_warehouse":   source_bin or None,
 	})
 
+	# The milling / handling / transport lines are added by the Sales Order's own
+	# before_validate hook (selling_hooks.sync_endebess_service_items) from the
+	# weight and transport flag above, priced in the order's currency.
 	so.insert()
 	return {
 		"name":       so.name,
@@ -224,6 +238,8 @@ def create_booking(parchment_type, no_of_bags, gross_weight,
 			"docstatus": so.docstatus, "has_intake": False, "has_outturn": False,
 		}),
 		"net_weight": net_weight,
+		"grand_total": so.grand_total,
+		"currency": so.currency,
 	}
 
 

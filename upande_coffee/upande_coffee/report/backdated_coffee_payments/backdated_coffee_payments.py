@@ -4,6 +4,8 @@
 # Backdated Coffee Payments + duplicate-payment audit.
 #   Backdated Payments / By Pay Day: a payment is backdated when it pays more buckets than
 #     the harvester logged on the pay date (picker collected late).
+#   Coffee Backdated Payment (the desk form for days a picker didn't collect) counts as
+#     fully backdated and replays as an exact-log payment.
 #   Duplicate Payments / Harvester Summary: replays every payment in order; buckets paid
 #     beyond everything logged by then were paid twice. Cause: before 2026-10-14 a backdated
 #     payment marked only its own day's logs paid, so the older logs were offered again.
@@ -39,10 +41,25 @@ def execute(filters=None):
 				cp.harvest_log_names, cp.creation
 			from `tabCoffee Payment` cp where cp.docstatus = 1""" + extra + """
 			order by cp.harvester_id, cp.creation""", params, as_dict=True)
+		# Coffee Backdated Payments name their exact logs, so they replay like app payments with names
+		bp_rows = frappe.db.sql("""select cp.name, cp.harvester_id, cp.date, cp.total_buckets, cp.rate, cp.creation
+			from `tabCoffee Backdated Payment` cp where cp.docstatus = 1""" + extra, params, as_dict=True)
+		if bp_rows:
+			items = {}
+			for it in frappe.db.sql("select parent, harvest_log from `tabCoffee Backdated Payment Item` where parent in %(b)s",
+					{"b": tuple([b.name for b in bp_rows])}, as_dict=True):
+				if it.parent not in items:
+					items[it.parent] = []
+				items[it.parent].append(it.harvest_log)
+			for b in bp_rows:
+				b.harvest_log_names = json.dumps(items.get(b.name) or [])
+				pays.append(b)
+			pays = sorted(pays, key=lambda x: (x.harvester_id, str(x.creation)))
 		logs = frappe.db.sql("""select l.name, l.harvester_id, l.date, l.bucket_count, l.creation, l.paid
 			from `tabHarvest Log` l
-			where l.date >= %(s)s and l.harvester_id in (select distinct cp.harvester_id from `tabCoffee Payment` cp
-				where cp.docstatus = 1""" + extra + """)
+			where l.date >= %(s)s and (l.harvester_id in (select distinct cp.harvester_id from `tabCoffee Payment` cp
+				where cp.docstatus = 1""" + extra + """) or l.harvester_id in (select distinct cp.harvester_id
+				from `tabCoffee Backdated Payment` cp where cp.docstatus = 1""" + extra + """))
 			order by l.creation""", params, as_dict=True)
 		logs_by = {}
 		for l in logs:
@@ -203,6 +220,15 @@ def execute(filters=None):
 				on d.harvester_id = cp.harvester_id and d.date = cp.date
 			where cp.docstatus = 1 and cp.date between %(f)s and %(t)s""" + extra + """
 			order by cp.date desc, cp.harvester_id""", params, as_dict=True)
+		for r in rows:
+			r.doctype = "Coffee Payment"
+		for b in frappe.db.sql("""select cp.name, cp.date, cp.harvester_id, cp.total_buckets, cp.rate, cp.total_payment
+				from `tabCoffee Backdated Payment` cp
+				where cp.docstatus = 1 and cp.date between %(f)s and %(t)s""" + extra, params, as_dict=True):
+			b.doctype = "Coffee Backdated Payment"
+			b.day_b = 0
+			b.harvest_log_names = json.dumps(frappe.get_all("Coffee Backdated Payment Item", filters={"parent": b.name}, pluck="harvest_log"))
+			rows.append(b)
 
 		total_paid = 0
 		back_paid = 0
@@ -274,7 +300,7 @@ def execute(filters=None):
 			for r in back:
 				earlier = sorted(set([logd[n] for n in r.logs if n in logd and logd[n] < r.date]))
 				result.append({
-					"date": r.date, "payment": r.name, "harvester": r.harvester_id,
+					"date": r.date, "payment_type": r.doctype, "payment": r.name, "harvester": r.harvester_id,
 					"total_buckets": r.total_buckets, "day_b": r.day_paid_b, "back_b": r.back_b, "rate": r.rate,
 					"total_payment": r.total_payment, "back_amt": r.back_amt,
 					"harvested_on": ", ".join([frappe.utils.formatdate(x, "dd MMM") for x in earlier]) if earlier else "not recorded",
@@ -282,7 +308,8 @@ def execute(filters=None):
 				})
 			columns = [
 				{"fieldname": "date", "label": "Paid On", "fieldtype": "Date", "width": 105},
-				{"fieldname": "payment", "label": "Coffee Payment", "fieldtype": "Link", "options": "Coffee Payment", "width": 130},
+				{"fieldname": "payment_type", "label": "Paid With", "fieldtype": "Link", "options": "DocType", "width": 170},
+				{"fieldname": "payment", "label": "Payment", "fieldtype": "Dynamic Link", "options": "payment_type", "width": 130},
 				{"fieldname": "harvester", "label": "Harvester", "fieldtype": "Link", "options": "Harvester", "width": 140},
 				{"fieldname": "total_buckets", "label": "Buckets Paid", "fieldtype": "Int", "width": 110},
 				{"fieldname": "day_b", "label": "Picked on Pay Day", "fieldtype": "Int", "width": 140},

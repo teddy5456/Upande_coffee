@@ -6,8 +6,9 @@
 # A submitted Coffee Harvest Plan raises a Payment Request for the week's
 # estimated picking cash; accounts settle it with an Internal Transfer Payment
 # Entry from the bank into a float account (M-Pesa / petty cash). Pickers are
-# then paid out of that float all week as Coffee Payments. This posts each
-# pay day's Coffee Payments as ONE Journal Entry: credit the float, debit the
+# then paid out of that float all week as Coffee Payments (and Coffee Backdated
+# Payments for days they didn't collect). This posts each pay day's payments
+# as ONE Journal Entry: credit the float, debit the
 # plan's picking-wages account split by block cost centre.
 #
 # Journal Entry, not Payment Entry: a Pay-type Payment Entry needs a party, and
@@ -26,11 +27,14 @@ def post_daily(upto=None):
 	"""Scheduler entry point: post every pay day up to `upto` (default today)
 	that still has unposted payments. Catches up missed days by itself."""
 	out = []
-	for day in frappe.get_all(
-		"Coffee Payment",
-		filters={"docstatus": 1, "journal_entry": ["is", "not set"], "date": ["<=", upto or nowdate()]},
-		pluck="date", distinct=True, order_by="date asc",
-	):
+	days = set()
+	for doctype in PAYMENT_DOCTYPES:
+		days.update(frappe.get_all(
+			doctype,
+			filters={"docstatus": 1, "journal_entry": ["is", "not set"], "date": ["<=", upto or nowdate()]},
+			pluck="date", distinct=True,
+		))
+	for day in sorted(days):
 		try:
 			out.append(post_day(day))
 			frappe.db.commit()
@@ -46,24 +50,51 @@ def post_daily_payments(upto=None):
 	return post_daily(upto)
 
 
-def post_day(day):
-	day = getdate(day)
+# Coffee Payment = the day's own buckets, paid from the app; Coffee Backdated
+# Payment = earlier days a picker didn't collect. Both come out of the same float.
+PAYMENT_DOCTYPES = ("Coffee Payment", "Coffee Backdated Payment")
+
+
+def _unposted(day):
 	payments = frappe.get_all(
 		"Coffee Payment",
 		filters={"docstatus": 1, "journal_entry": ["is", "not set"], "date": day},
 		fields=["name", "harvester_id", "date", "rate", "total_payment", "total_buckets", "harvest_log_names"],
 	)
+	for p in payments:
+		p.doctype = "Coffee Payment"
+	for b in frappe.get_all(
+		"Coffee Backdated Payment",
+		filters={"docstatus": 1, "journal_entry": ["is", "not set"], "date": day},
+		fields=["name", "harvester_id", "date", "rate", "total_payment", "total_buckets"],
+	):
+		b.doctype = "Coffee Backdated Payment"
+		b.harvest_log_names = json.dumps(frappe.get_all(
+			"Coffee Backdated Payment Item", filters={"parent": b.name}, pluck="harvest_log"))
+		payments.append(b)
+	return payments
+
+
+def post_day(day):
+	day = getdate(day)
+	payments = _unposted(day)
 	if not payments:
 		return {"date": str(day), "skipped": "nothing to post"}
 
 	plan = frappe.db.get_value(
 		"Coffee Harvest Plan",
 		{"docstatus": 1, "from_date": ["<=", day], "to_date": [">=", day], "payment_request": ["is", "set"]},
-		["name", "company", "payment_request", "expense_account"],
+		["name", "company", "payment_request", "expense_account", "expense_claim_type"],
 		as_dict=True,
 	)
 	if not plan:
 		return {"date": str(day), "skipped": "no approved harvest plan with a payment request covers this day"}
+	# plans saved without one fall back to the picking-wages account of their Expense Claim Type
+	plan.expense_account = plan.expense_account or frappe.db.get_value(
+		"Expense Claim Account",
+		{"parent": plan.expense_claim_type or "Coffee Harvesting Labour", "company": plan.company},
+		"default_account",
+	)
 	float_account = frappe.db.get_value(
 		"Payment Entry",
 		{"payment_request": plan.payment_request, "payment_type": "Internal Transfer", "docstatus": 1},
@@ -96,7 +127,7 @@ def post_day(day):
 	je.submit()
 
 	for p in payments:
-		frappe.db.set_value("Coffee Payment", p.name, "journal_entry", je.name, update_modified=False)
+		frappe.db.set_value(p.doctype, p.name, "journal_entry", je.name, update_modified=False)
 	return {"date": str(day), "journal_entry": je.name, "amount": total, "payments": len(payments)}
 
 

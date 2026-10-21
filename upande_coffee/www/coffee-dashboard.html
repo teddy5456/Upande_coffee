@@ -798,7 +798,7 @@ body.sb-collapsed{--sbw:64px}
     <div class="card card--padded">
       <div class="card__head"><h3>New Booking</h3></div>
       <div class="field"><label>Outturn Number (blank = auto, e.g. 15EM0001)</label><input type="text" id="bk-outturn" placeholder="auto-generated from season week"></div>
-      <div class="field"><label>Grower (blank = Estate / Endebess)</label><select id="bk-grower"></select></div>
+      <div class="field"><label>Grower</label><select id="bk-grower"></select></div>
       <div class="field"><label>Parchment Type</label><select id="bk-type"></select></div>
       <div class="formgrid">
         <div class="field"><label>No of Bags</label><input type="number" id="bk-bags" min="1" value="1"></div>
@@ -812,6 +812,7 @@ body.sb-collapsed{--sbw:64px}
         <div class="field"><label>Date</label><input type="date" id="bk-date"></div>
         <div class="field"><label>Source Bin</label><select id="bk-bin"><option value=""></option></select></div>
       </div>
+      <label style="display:flex;align-items:center;gap:8px;font:500 13px var(--sans);margin:4px 0 14px"><input type="checkbox" id="bk-transport"> Grower wants transport (charged per bag)</label>
       <button class="btn" id="bk-create">Create Booking</button>
     </div>
   </div>
@@ -942,6 +943,10 @@ body.sb-collapsed{--sbw:64px}
       <div class="card__head"><h3>Clean Coffee by Store</h3><div class="meta">kg per warehouse</div></div>
       <div class="tblwrap"><table class="tbl"><thead><tr><th>Warehouse</th><th class="num">kg</th></tr></thead><tbody id="st-cwh"></tbody></table></div>
     </div>
+  </div>
+  <div class="card card--padded">
+    <div class="card__head"><h3>Whose Coffee Is Where</h3><div class="meta">dry mill and clean store · an outgrower's coffee = received on their intakes, less milled, less dispatched</div></div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>Owner</th><th>Location</th><th>Order</th><th>Outturn</th><th class="num">kg</th></tr></thead><tbody id="st-owner"></tbody></table></div>
   </div>
 </div>
 
@@ -1193,12 +1198,16 @@ function loadOverview() {
   $("ov-err").innerHTML = "";
   api("get_overview", ranges()).then(function (d) {
     var h = d.harvest, dr = d.drying, est = d.estimate;
+    // clean coffee estimates are cherry ÷ 8 (Coffee Settings yield, 12.5 %)
     var estCleanSuffix = d.clean.estimated_kg ? " <small>· est. " + n(d.clean.estimated_kg) + " kg clean</small>" : "";
+    var harvestedClean = h.estimated_clean_kg ? " <small>· est. " + n(h.estimated_clean_kg) + " kg clean</small>" : "";
+    var short = h.short_buckets ? " <small>· " + n(h.short_buckets) + " short at mill</small>" : "";
     $("ov-kpis").innerHTML =
       kpiCard("Season Target", n(est.target_cherry_kg), "kg cherry · " + (est.season_name || "no active season"),
         est.blocks + " blocks" + estCleanSuffix, "flat") +
-      kpiCard("Harvested", n(h.total_weight_kg), "kg · " + n(h.total_buckets) + " buckets received",
-        "↑ " + n(h.today_buckets) + " <small>buckets today</small>" + estCleanSuffix, "up",
+      kpiCard("Harvested", n(h.total_weight_kg), "kg · " + n(h.total_buckets) + " buckets harvested · " +
+        n(h.received_buckets) + " received" + short,
+        "↑ " + n(h.today_buckets) + " <small>buckets today</small>" + harvestedClean, "up",
         (h.daily_buckets || []).map(function (r) { return r.count || 0; })) +
       kpiCard("On Drying Tables", n(dr.total_debes), "debes across types",
         (dr.readiness.ready || 0) + " tables ready", dr.readiness.ready ? "up" : "flat") +
@@ -1210,7 +1219,8 @@ function loadOverview() {
     areaChart($("ov-line"), (h.daily_buckets || []).map(function (r) { return fd(r.date); }),
       (h.daily_buckets || []).map(function (r) { return r.count || 0; }));
     funnel($("ov-funnel"), [
-      { label: "Cherry", value: n(h.total_weight_kg) + " kg", sub: "received at wet mill" },
+      { label: "Harvested", value: n(h.total_buckets) + " buckets", sub: "logged in the field" },
+      { label: "Received", value: n(h.received_buckets) + " buckets", sub: n(h.received_weight_kg) + " kg at the wet mill" },
       { label: "Drying", value: n(dr.total_debes), sub: "debes on tables" },
       { label: "Clean", value: n(d.clean.output_kg) + " kg", sub: "milled output" },
     ]);
@@ -2392,7 +2402,11 @@ $("bk-create").addEventListener("click", function () {
     no_of_bags: $("bk-bags").value, bag_weight: $("bk-bagwt").value,
     gross_weight: $("bk-gross").value,
     booking_date: $("bk-date").value, source_bin: $("bk-bin").value,
-  }).then(function (r) { toast("Booking " + r.name + " created — net " + n(r.net_weight, 1) + " kg."); refreshBookings(); })
+    include_transport: $("bk-transport").checked ? 1 : 0,
+  }).then(function (r) {
+    toast("Booking " + r.name + " created — net " + n(r.net_weight, 1) + " kg · charges " + (r.currency || "") + " " + n(r.grand_total, 2) + ".");
+    refreshBookings();
+  })
     .catch(function (e) { toast(e.message); });
 });
 function _bkNet() {
@@ -2643,12 +2657,20 @@ function _stBars(el, rows, key) {
 function loadStock() {
   $("st-err").innerHTML = "";
   api("dashboardapi.get_stock").then(function (d) {
-    var p = d.parchment || {}, c = d.clean || {};
+    var p = d.parchment || {}, c = d.clean || {}, own = d.ownership || {}, tot = own.totals || {};
+    var t = function (k) { return tot[k] || 0; };
     $("st-kpis").innerHTML =
       kpiCard("Parchment on Hand", n(p.total_kg), "kg · " + (p.by_type || []).length + " types", null) +
-      kpiCard("Clean Coffee", n(c.total_kg), "kg · " + (c.by_grade || []).length + " grades", null) +
-      kpiCard("Parchment Stores", n((p.by_warehouse || []).length), "bins/warehouses holding parchment", null) +
-      kpiCard("Clean Stores", n((c.by_warehouse || []).length), "warehouses holding clean coffee", null);
+      kpiCard("In the Dry Mill", n(t("Estate - Dry Mill") + t("Outgrower - Dry Mill")), "kg parchment waiting to be milled",
+        n(t("Outgrower - Dry Mill")) + " <small>kg outgrowers'</small>", "flat") +
+      kpiCard("Clean Coffee", n(c.total_kg), "kg · " + (c.by_grade || []).length + " grades",
+        n(t("Outgrower - Clean Store")) + " <small>kg outgrowers' in the clean store</small>", "flat") +
+      kpiCard("Estate Coffee", n(t("Estate - Dry Mill") + t("Estate - Clean Store")), "kg ours · dry mill + clean store", null) +
+      kpiCard("Outgrower Coffee", n(t("Outgrower - Dry Mill") + t("Outgrower - Clean Store")), "kg held for outgrowers", null);
+    $("st-owner").innerHTML = (own.rows || []).map(function (r) {
+      return "<tr><td>" + (r.outgrower ? esc(r.owner) : chip("", "Endebess Estate")) + "</td><td>" + chip(r.location === "Dry Mill" ? "warn" : "", r.location) +
+        "</td><td>" + esc(r.order || "—") + "</td><td>" + esc(r.outturn || "—") + '</td><td class="num">' + n(r.kg, 1) + "</td></tr>";
+    }).join("") || '<tr><td colspan="5"><div class="emptybox">No coffee in the dry mill or the clean store.</div></td></tr>';
     _stBars($("st-ptype"), p.by_type, "type");
     _stBars($("st-grade"), c.by_grade, "grade");
     $("st-pwh").innerHTML = (p.by_warehouse || []).map(function (r) {

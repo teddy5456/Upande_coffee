@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "creation": "2026-10-21 15:00:00.000000",
+ "custom": 0,
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-21 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Coffee",
+ "name": "Coffee Backdated Payment Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "field_order": [
+  "harvest_log",
+  "log_date",
+  "block",
+  "bucket_count",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "harvest_log",
+   "fieldtype": "Link",
+   "label": "Harvest Log",
+   "options": "Harvest Log",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "log_date",
+   "fieldtype": "Date",
+   "label": "Picked On",
+   "read_only": 1,
+   "in_list_view": 1,
+   "fetch_from": "harvest_log.date"
+  },
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Block",
+   "options": "Warehouse",
+   "read_only": 1,
+   "in_list_view": 1,
+   "fetch_from": "harvest_log.block"
+  },
+  {
+   "fieldname": "bucket_count",
+   "fieldtype": "Int",
+   "label": "Buckets",
+   "read_only": 1,
+   "in_list_view": 1,
+   "fetch_from": "harvest_log.bucket_count"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "in_list_view": 1
+  }
+ ]
+}
