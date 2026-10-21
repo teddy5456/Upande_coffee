@@ -9,7 +9,7 @@
  "engine": "InnoDB",
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-21 15:00:00.000000",
+ "modified": "2026-10-21 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Upande Coffee",
  "name": "Coffee Backdated Payment",
@@ -28,6 +28,7 @@
   "total_buckets",
   "total_payment",
   "journal_entry",
+  "payment_entry",
   "section_days",
   "items",
   "remark",
@@ -92,7 +93,17 @@
    "read_only": 1,
    "allow_on_submit": 1,
    "no_copy": 1,
-   "description": "The daily Journal Entry that posted this payment out of the week's float account."
+   "description": "The day's accrual Journal Entry (picking wages against Coffee Pickers Payable)."
+  },
+  {
+   "fieldname": "payment_entry",
+   "fieldtype": "Link",
+   "options": "Payment Entry",
+   "label": "Payment Entry",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "The Payment Entry that paid this out of the week's float (party: the harvester)."
   },
   {
    "fieldname": "section_days",

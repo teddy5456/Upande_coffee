@@ -120,12 +120,12 @@ class CoffeePayment(Document):
         return names
 
     def before_cancel(self):
-        je = self.get("journal_entry")
-        if je and frappe.db.get_value("Journal Entry", je, "docstatus") == 1:
-            frappe.throw(
-                _("This payment is posted in Journal Entry {0}. Cancel that first.").format(je),
-                title=_("Already posted"),
-            )
+        for doctype, name in (("Payment Entry", self.get("payment_entry")), ("Journal Entry", self.get("journal_entry"))):
+            if name and frappe.db.get_value(doctype, name, "docstatus") == 1:
+                frappe.throw(
+                    _("This payment is posted in {0} {1}. Cancel that first.").format(doctype, name),
+                    title=_("Already posted"),
+                )
 
     def on_cancel(self):
         """Unmark exactly the logs this payment marked paid."""

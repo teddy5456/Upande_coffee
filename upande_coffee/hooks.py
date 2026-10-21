@@ -38,6 +38,8 @@ fixtures = [
 	},
 	# The Coffee workspace is this one block (same design as Roses Production).
 	{"doctype": "Custom HTML Block", "filters": [["name", "=", "Coffee Navigation"]]},
+	# pickers are paid by Payment Entry with the Harvester as the party
+	{"doctype": "Party Type", "filters": [["name", "=", "Harvester"]]},
 ]
 
 # Installation / migration
@@ -246,7 +248,8 @@ add_to_apps_screen = [
 
 scheduler_events = {
 	# after the day's paying is done: post it out of the week's float
-	"cron": {"0 20 * * *": ["upande_coffee.api.payoutapi.post_daily"]},
+	# hourly: accrue each pay day, then one Payment Entry per payment, in batches
+	"cron": {"15 * * * *": ["upande_coffee.api.payoutapi.post_daily"]},
 }
 
 # scheduler_events = {

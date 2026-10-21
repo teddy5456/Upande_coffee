@@ -57,9 +57,12 @@ class CoffeeBackdatedPayment(Document):
 			frappe.db.set_value("Harvest Log", i.harvest_log, "paid", 1, update_modified=False)
 
 	def before_cancel(self):
-		if self.journal_entry and frappe.db.get_value("Journal Entry", self.journal_entry, "docstatus") == 1:
-			frappe.throw(_("This payment is posted in Journal Entry {0}. Cancel that first.").format(self.journal_entry),
-				title=_("Already posted"))
+		for doctype, name in (("Payment Entry", self.get("payment_entry")), ("Journal Entry", self.get("journal_entry"))):
+			if name and frappe.db.get_value(doctype, name, "docstatus") == 1:
+				frappe.throw(
+					_("This payment is posted in {0} {1}. Cancel that first.").format(doctype, name),
+					title=_("Already posted"),
+				)
 
 	def on_cancel(self):
 		for i in self.items:
