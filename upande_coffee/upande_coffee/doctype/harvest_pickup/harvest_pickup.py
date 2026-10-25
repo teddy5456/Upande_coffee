@@ -6,6 +6,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from upande_coffee.stock import apply_coffee_defaults
+
 
 class HarvestPickup(Document):
 	def validate(self):
@@ -109,6 +111,7 @@ def on_submit_create_stock_entry(doc, method):
 			"allow_zero_valuation_rate": 1,
 		},
 	)
+	apply_coffee_defaults(se)
 	se.insert(ignore_permissions=True)
 	se.submit()
 

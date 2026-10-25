@@ -48,6 +48,55 @@ def _between(filters, field, from_date, to_date):
 	return filters
 
 
+def clean_ratio():
+	"""kg of cherry per kg of clean coffee (Coffee Settings, default 7):
+	expected clean = cherry kg / ratio. An estimate, never accounting."""
+	return flt(frappe.db.get_single_value("Coffee Settings", "cherry_to_clean_ratio")) or 7
+
+
+def _grade_items():
+	"""Clean-coffee grade items -> grade label. Live grades are the
+	"Coffee Grade AA" items (Coffee-Grades item group); older sites used the
+	bare codes of GRADE_ITEM_MAP."""
+	from upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement import GRADE_ITEM_MAP
+
+	items = set(frappe.get_all("Item", filters={"item_group": "Coffee-Grades"}, pluck="name"))
+	items |= set(frappe.get_all("Item", filters={"name": ["in", list(GRADE_ITEM_MAP.values())]}, pluck="name"))
+	return {i: i.replace("Coffee Grade ", "") for i in items}
+
+
+def _vs_estimate(from_date, to_date, actual_debes, actual_kg):
+	"""Harvest actual vs estimate, in debes and kg. The estimate is the
+	expected debes of submitted Coffee Harvest Plans, each prorated to the
+	days of the plan that fall in the range; kg converts it at the range's own
+	harvested kg per debe."""
+	f = {"docstatus": 1}
+	if to_date:
+		f["from_date"] = ["<=", to_date]
+	if from_date:
+		f["to_date"] = [">=", from_date]
+	est_debes = 0.0
+	plans = frappe.get_all("Coffee Harvest Plan", filters=f, fields=["name", "from_date", "to_date", "total_debes"])
+	for p in plans:
+		if not (p.from_date and p.to_date):
+			continue
+		start = max(getdate(p.from_date), getdate(from_date)) if from_date else getdate(p.from_date)
+		end = min(getdate(p.to_date), getdate(to_date)) if to_date else getdate(p.to_date)
+		days = (getdate(p.to_date) - getdate(p.from_date)).days + 1
+		overlap = (end - start).days + 1
+		if days > 0 and overlap > 0:
+			est_debes += flt(p.total_debes) * overlap / days
+	kg_per_debe = flt(actual_kg) / flt(actual_debes) if actual_debes else 0
+	return {
+		"estimate_debes": est_debes,
+		"actual_debes": flt(actual_debes),
+		"estimate_kg": est_debes * kg_per_debe,
+		"actual_kg": flt(actual_kg),
+		"kg_per_debe": kg_per_debe,
+		"plans": len(plans),
+	}
+
+
 @frappe.whitelist()
 def get_seasons():
 	return {
@@ -81,6 +130,15 @@ def get_overview(from_date=None, to_date=None, season=None):
 		[start, to_date] if to_date else [start],
 		as_dict=True,
 	)
+	ratio = clean_ratio()
+	kg_by_day = dict(frappe.db.sql(
+		"""SELECT date, SUM(total_weight_kg) FROM `tabHarvest Pickup`
+		WHERE docstatus = 1 AND date >= %s {} GROUP BY date""".format("AND date <= %s" if to_date else ""),
+		[start, to_date] if to_date else [start],
+	))
+	for r in daily:
+		r.kg = flt(kg_by_day.get(r.date))
+		r.clean_kg = r.kg / ratio
 
 	# drying snapshot
 	tables = frappe.get_all(
@@ -110,8 +168,6 @@ def get_overview(from_date=None, to_date=None, season=None):
 	)
 	active_name = frappe.db.get_value("Coffee Season", season_key, "season_name") if season_key else None
 	target_cherry_kg = resolve_season_target_kg(season_key)
-	# cherry -> clean coffee at 8:1 unless Coffee Settings says otherwise
-	yield_pct = flt(frappe.db.get_single_value("Coffee Settings", "expected_yield_pct")) or 12.5
 	received = _received(from_date, to_date)
 
 	return {
@@ -133,8 +189,11 @@ def get_overview(from_date=None, to_date=None, season=None):
 			"received_buckets": received.buckets,
 			"received_weight_kg": received.weight,
 			"short_buckets": received.short,
-			"estimated_clean_kg": total_weight * yield_pct / 100,
+			# cherry / Coffee Settings.cherry_to_clean_ratio (Collins: "divide by 7")
+			"estimated_clean_kg": total_weight / ratio,
+			"clean_ratio": ratio,
 		},
+		"vs_estimate": _vs_estimate(from_date, to_date, total_buckets, total_weight),
 		"drying": {
 			"total_debes": total_debes,
 			"by_type": [{"type": k, "debes": v} for k, v in sorted(by_type.items())],
@@ -143,8 +202,8 @@ def get_overview(from_date=None, to_date=None, season=None):
 		"clean": {
 			"output_kg": clean_kg,
 			# Forward-looking estimate from the season's forecast cherry, not a
-			# measured figure -- see Coffee Settings.expected_yield_pct.
-			"estimated_kg": target_cherry_kg * yield_pct / 100 if target_cherry_kg else 0,
+			# measured figure -- see Coffee Settings.cherry_to_clean_ratio.
+			"estimated_kg": target_cherry_kg / ratio if target_cherry_kg else 0,
 		},
 		"dispatch": {"total_weight_kg": dispatch_kg, "shipments": shipments},
 		"invoices": {"total_billed": billed, "outstanding": outstanding},
@@ -366,33 +425,30 @@ def get_drying(from_date=None, to_date=None, season=None):
 
 @frappe.whitelist()
 def get_milling(from_date=None, to_date=None, season=None, grower=None, parchment_type=None):
+	from upande_coffee.api.bookingapi import list_bookings
+
 	from_date, to_date = _dates(from_date, to_date, season)
-	b_f = _between({"docstatus": ["<", 2]}, "booking_date", from_date, to_date)
-	if grower:
-		b_f["grower"] = grower
-	if parchment_type:
-		b_f["parchment_type"] = parchment_type
-	# Booking is retired; dashboards now show an empty bookings list when
-	# the doctype isn't installed. Consumers should migrate to reading
-	# Sales Order.custom_outturn_number for equivalent data.
-	bookings = []
-	if frappe.db.exists("DocType", "Booking"):
-		bookings = frappe.get_all(
-			"Booking",
-			filters=b_f,
-			fields=["name", "outturn_number", "grower", "grower_code", "parchment_type",
-					"no_of_bags", "net_weight", "booking_date", "status"],
-			order_by="booking_date desc",
-			limit_page_length=150,
-		)
+
+	def in_range(d):
+		d = getdate(d) if d else None
+		return d and (not from_date or d >= getdate(from_date)) and (not to_date or d <= getdate(to_date))
+
+	# bookings are Coffee Sales Orders now (the Booking doctype is retired)
+	bookings = [b for b in list_bookings(limit=1000) if in_range(b["booking_date"])
+		and (not grower or b["grower"] == grower) and (not parchment_type or b["parchment_type"] == parchment_type)]
+
 	o_f = {"docstatus": 1}
+	if from_date:
+		o_f["creation"] = [">=", str(getdate(from_date))]
+	if to_date:
+		o_f["creation"] = ["between", [str(getdate(from_date or "2000-01-01")), str(getdate(to_date)) + " 23:59:59"]]
 	outturns = frappe.get_all(
 		"Outturn Statement",
 		filters=o_f,
 		fields=["name", "outturn_number", "outturn_type", "grower", "parchment_weight",
-				"output_weight", "milling_loss"],
-		order_by="modified desc",
-		limit_page_length=100,
+				"output_weight", "milling_loss", "creation"],
+		order_by="creation desc",
+		limit_page_length=0,
 	)
 	by_type, by_grower = {}, {}
 	for o in outturns:
@@ -401,19 +457,48 @@ def get_milling(from_date=None, to_date=None, season=None, grower=None, parchmen
 		g = o.grower or "—"
 		by_grower.setdefault(g, []).append(flt(o.milling_loss))
 
+	# milled / dispatched / in store, by grade
+	grades = _grade_items()
+	by_grade = {}
+
+	def g(item):
+		return by_grade.setdefault(grades.get(item, item), {"grade": grades.get(item, item), "milled_kg": 0.0,
+			"dispatched_kg": 0.0, "in_store_kg": 0.0})
+
+	if outturns:
+		for r in frappe.get_all("Outturn Details", filters={"parent": ["in", [o.name for o in outturns]],
+				"parenttype": "Outturn Statement"}, fields=["item_code", "grade", "net_weight"]):
+			g(r.item_code or r.grade)["milled_kg"] += flt(r.net_weight)
+	if grades:
+		dn_f = _between(_bu_filters("Delivery Note", {"docstatus": 1}), "posting_date", from_date, to_date)
+		dns = frappe.get_all("Delivery Note", filters=dn_f, pluck="name")
+		if dns:
+			for r in frappe.get_all("Delivery Note Item", filters={"parent": ["in", dns], "item_code": ["in", list(grades)]},
+					fields=["item_code", {"SUM": "stock_qty", "as": "qty"}], group_by="item_code"):
+				g(r.item_code)["dispatched_kg"] += flt(r.qty)
+		store = frappe.db.get_single_value("Coffee Settings", "milled_store_warehouse")
+		if store:
+			for b in frappe.get_all("Bin", filters={"warehouse": store, "item_code": ["in", list(grades)], "actual_qty": ["!=", 0]},
+					fields=["item_code", "actual_qty"]):
+				g(b.item_code)["in_store_kg"] += flt(b.actual_qty)
+	stock = sorted(by_grade.values(), key=lambda r: -(r["milled_kg"] + r["in_store_kg"]))
+
 	return {
 		"kpis": {
 			"total_bookings": len(bookings),
-			"growers": len({b.grower for b in bookings if b.grower}),
+			"growers": len({b["grower"] for b in bookings if b["grower"]}),
 			"parchment_kg": sum(flt(o.parchment_weight) for o in outturns),
 			"output_kg": sum(flt(o.output_weight) for o in outturns),
 			"avg_milling_loss": (
 				sum(flt(o.milling_loss) for o in outturns) / len(outturns) if outturns else 0
 			),
 			"outturns": len(outturns),
+			"dispatched_kg": sum(r["dispatched_kg"] for r in stock),
+			"in_store_kg": sum(r["in_store_kg"] for r in stock),
 		},
 		"bookings": bookings,
 		"outturns": outturns,
+		"stock_by_grade": stock,
 		"by_type": [{"type": k, "output_kg": v} for k, v in sorted(by_type.items())],
 		"by_grower": [
 			{"grower": g, "avg_loss": sum(v) / len(v)} for g, v in sorted(by_grower.items()) if v
@@ -675,13 +760,7 @@ def get_stock():
 	if settings.parchment_item:
 		pt_item.setdefault(settings.parchment_item, "Parchment")
 
-	# grade items
-	from upande_coffee.upande_coffee.doctype.outturn_statement.outturn_statement import (
-		GRADE_ITEM_MAP,
-	)
-	grade_of = {}
-	for grade, item in GRADE_ITEM_MAP.items():
-		grade_of[item] = grade
+	grade_of = _grade_items()
 
 	# balance per (item, warehouse) from the Bin table (fast, live)
 	def _balances(item_codes):

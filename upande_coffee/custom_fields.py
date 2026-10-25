@@ -363,6 +363,35 @@ def create_coffee_custom_fields():
 					"module": "Upande Coffee",
 				},
 			],
+			# ── Picker-pay float (payoutapi): the plan's Payment Request, and
+			# the Internal Transfer that settles it into the float account.
+			# ERPNext's Payment Entry has no header payment_request field, so
+			# without these the float is never found and nothing posts.
+			"Coffee Harvest Plan": [
+				{
+					"fieldname": "payment_request",
+					"fieldtype": "Link",
+					"options": "Payment Request",
+					"label": "Payment Request",
+					"insert_after": "expense_claim",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"no_copy": 1,
+					"module": "Upande Coffee",
+				},
+			],
+			"Payment Entry": [
+				{
+					"fieldname": "payment_request",
+					"fieldtype": "Link",
+					"options": "Payment Request",
+					"label": "Payment Request",
+					"insert_after": "reference_date",
+					"no_copy": 1,
+					"description": "For an Internal Transfer that funds a coffee picking float: the harvest plan's Payment Request.",
+					"module": "Upande Coffee",
+				},
+			],
 		},
 		ignore_validate=True,
 	)

@@ -3,6 +3,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from upande_coffee.stock import apply_coffee_defaults
+
 
 CHERRY_ITEM = "Coffee-Cherry-Batched"
 PARCHMENT_ITEM = "COFFEE-PARCHMENT"
@@ -326,6 +328,7 @@ def on_submit_create_repack(doc, method):
         )
 
     try:
+        apply_coffee_defaults(se)
         se.insert(ignore_permissions=True)
         se.submit()
     except Exception as e:

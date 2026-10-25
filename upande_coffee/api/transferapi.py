@@ -8,6 +8,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt, nowdate
 
+from upande_coffee.stock import apply_coffee_defaults
+
 
 @frappe.whitelist()
 def recent_transfers(limit=25):
@@ -36,6 +38,7 @@ def create_transfer(item_code, qty, from_warehouse, to_warehouse, batch_no=None)
 		"t_warehouse": to_warehouse, "batch_no": batch_no, "use_serial_batch_fields": 1,
 		"allow_zero_valuation_rate": 1,
 	})
+	apply_coffee_defaults(se)
 	se.insert()
 	se.submit()
 	return {"stock_entry": se.name}

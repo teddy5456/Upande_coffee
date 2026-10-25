@@ -534,6 +534,16 @@ body.sb-collapsed{--sbw:64px}
     </div>
     <div class="row-2-eq">
       <div class="card card--padded">
+        <div class="card__head"><h3>Actual vs Estimate</h3><div class="meta" id="ov-vsmeta">harvest plans in this range</div></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th></th><th class="num">Estimate</th><th class="num">Actual</th><th class="num">Variance</th></tr></thead><tbody id="ov-vs"></tbody></table></div>
+      </div>
+      <div class="card card--padded">
+        <div class="card__head"><h3>Daily Harvest &amp; Expected Clean</h3><div class="meta" id="ov-dailymeta"></div></div>
+        <div class="tblwrap"><table class="tbl"><thead><tr><th>Day</th><th class="num">Buckets</th><th class="num">Cherry kg</th><th class="num">Expected clean kg</th></tr></thead><tbody id="ov-daily"></tbody></table></div>
+      </div>
+    </div>
+    <div class="row-2-eq">
+      <div class="card card--padded">
         <div class="card__head"><h3>Types in Drying</h3><div class="meta">debes on tables</div></div>
         <div id="ov-donut"></div>
       </div>
@@ -746,6 +756,10 @@ body.sb-collapsed{--sbw:64px}
         <div class="card__head"><h3>Output by Type</h3><div class="meta">kg clean</div></div>
         <div id="m-types"></div>
       </div>
+    </div>
+    <div class="card card--padded">
+      <div class="card__head"><h3>Milled &amp; Dispatched Stock</h3><div class="meta">by grade · milled and dispatched in this range, in store now</div></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Grade</th><th class="num">Milled kg</th><th class="num">Dispatched kg</th><th class="num">In clean store kg</th></tr></thead><tbody id="m-stock"></tbody></table></div>
     </div>
     <div class="card card--padded">
       <div class="card__head"><h3>Outturn Statements</h3><div class="meta" id="m-outcnt"></div></div>
@@ -1198,9 +1212,10 @@ function loadOverview() {
   $("ov-err").innerHTML = "";
   api("get_overview", ranges()).then(function (d) {
     var h = d.harvest, dr = d.drying, est = d.estimate;
-    // clean coffee estimates are cherry ÷ 8 (Coffee Settings yield, 12.5 %)
+    // clean coffee estimates are cherry ÷ Coffee Settings.cherry_to_clean_ratio (7)
+    var ratio = h.clean_ratio || 7;
     var estCleanSuffix = d.clean.estimated_kg ? " <small>· est. " + n(d.clean.estimated_kg) + " kg clean</small>" : "";
-    var harvestedClean = h.estimated_clean_kg ? " <small>· est. " + n(h.estimated_clean_kg) + " kg clean</small>" : "";
+    var harvestedClean = h.estimated_clean_kg ? " <small>· est. " + n(h.estimated_clean_kg) + " kg clean (÷ " + n(ratio, 1).replace(/\.0$/, "") + ")</small>" : "";
     var short = h.short_buckets ? " <small>· " + n(h.short_buckets) + " short at mill</small>" : "";
     $("ov-kpis").innerHTML =
       kpiCard("Season Target", n(est.target_cherry_kg), "kg cherry · " + (est.season_name || "no active season"),
@@ -1218,6 +1233,27 @@ function loadOverview() {
         d.invoices.outstanding > 0 ? "flat" : "up");
     areaChart($("ov-line"), (h.daily_buckets || []).map(function (r) { return fd(r.date); }),
       (h.daily_buckets || []).map(function (r) { return r.count || 0; }));
+    var vs = d.vs_estimate || {};
+    function variance(est, act) {
+      if (!est) return "—";
+      var pct = (act - est) / est * 100;
+      return '<span style="color:' + (pct >= 0 ? "#3f7d3a" : "#b4532a") + '">' + (pct >= 0 ? "+" : "") + n(pct, 1) + "%</span>";
+    }
+    $("ov-vsmeta").textContent = vs.plans ? vs.plans + " harvest plan" + (vs.plans === 1 ? "" : "s") + " · " + n(vs.kg_per_debe, 1) + " kg per debe" : "no submitted harvest plan in this range";
+    $("ov-vs").innerHTML =
+      "<tr><td>Debes</td><td class=\"num\">" + n(vs.estimate_debes) + '</td><td class="num">' + n(vs.actual_debes) +
+        '</td><td class="num">' + variance(vs.estimate_debes, vs.actual_debes) + "</td></tr>" +
+      "<tr><td>Cherry kg</td><td class=\"num\">" + n(vs.estimate_kg) + '</td><td class="num">' + n(vs.actual_kg) +
+        '</td><td class="num">' + variance(vs.estimate_kg, vs.actual_kg) + "</td></tr>" +
+      "<tr><td>Clean kg (÷ " + n(ratio, 1).replace(/\.0$/, "") + ")</td><td class=\"num\">" + n((vs.estimate_kg || 0) / ratio) +
+        '</td><td class="num">' + n((vs.actual_kg || 0) / ratio) + '</td><td class="num">' +
+        variance(vs.estimate_kg, vs.actual_kg) + "</td></tr>";
+    var days = (h.daily_buckets || []).slice().reverse();
+    $("ov-dailymeta").textContent = "cherry kg ÷ " + n(ratio, 1).replace(/\.0$/, "");
+    $("ov-daily").innerHTML = days.map(function (r) {
+      return "<tr><td>" + fd(r.date) + '</td><td class="num">' + n(r.count) + '</td><td class="num">' + n(r.kg) +
+        '</td><td class="num">' + n(r.clean_kg) + "</td></tr>";
+    }).join("") || '<tr><td colspan="4"><div class="emptybox">No harvest in this range.</div></td></tr>';
     funnel($("ov-funnel"), [
       { label: "Harvested", value: n(h.total_buckets) + " buckets", sub: "logged in the field" },
       { label: "Received", value: n(h.received_buckets) + " buckets", sub: n(h.received_weight_kg) + " kg at the wet mill" },
@@ -1314,7 +1350,13 @@ function loadMilled() {
       kpiCard("Parchment In", n(k.parchment_kg), "kg received for milling", null) +
       kpiCard("Clean Output", n(k.output_kg), "kg after dry mill",
         "↓ " + n(k.avg_milling_loss, 1) + "% <small>avg loss</small>", k.avg_milling_loss > 20 ? "down" : "up") +
-      kpiCard("Outturns", n(k.outturns), "statements issued", null);
+      kpiCard("Outturns", n(k.outturns), "statements issued", null) +
+      kpiCard("Dispatched", n(k.dispatched_kg), "kg clean on delivery notes", null) +
+      kpiCard("In Clean Store", n(k.in_store_kg), "kg milled, not yet dispatched", null);
+    $("m-stock").innerHTML = (d.stock_by_grade || []).map(function (r) {
+      return "<tr><td>" + esc(r.grade) + '</td><td class="num">' + n(r.milled_kg) + '</td><td class="num">' +
+        n(r.dispatched_kg) + '</td><td class="num">' + n(r.in_store_kg) + "</td></tr>";
+    }).join("") || '<tr><td colspan="4"><div class="emptybox">No milled coffee.</div></td></tr>';
     $("m-bookcnt").textContent = (d.bookings || []).length + " bookings";
     $("m-book").innerHTML = (d.bookings || []).map(function (r) {
       return "<tr><td>" + esc(r.outturn_number || r.name) + "</td><td>" + esc(r.grower || "Endebess Coffee Estate") + "</td><td>" +

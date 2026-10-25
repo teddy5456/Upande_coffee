@@ -11,6 +11,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt, nowdate
 
+from upande_coffee.stock import apply_coffee_defaults
+
 
 @frappe.whitelist()
 def get_defaults():
@@ -200,6 +202,7 @@ def remove_from_drying(item_code, batch_no, qty, from_warehouse, outputs, to_war
 							"is_finished_item": 1, "set_basic_rate_manually": 1,
 							"basic_rate": out_rate, "allow_zero_valuation_rate": 1})
 
+	apply_coffee_defaults(se)
 	se.insert()
 	se.submit()
 	return {"stock_entry": se.name, "type": se.stock_entry_type,

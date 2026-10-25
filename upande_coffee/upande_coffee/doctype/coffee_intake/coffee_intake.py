@@ -18,6 +18,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, nowdate, nowtime
 
+from upande_coffee.stock import apply_coffee_defaults
+
 
 class CoffeeIntake(Document):
 	def validate(self):
@@ -137,6 +139,7 @@ class CoffeeIntake(Document):
 		if not se.get("items"):
 			frappe.throw(_("No positive-qty rows on this Coffee Intake — nothing to post."))
 
+		apply_coffee_defaults(se)
 		se.insert(ignore_permissions=True)
 		se.submit()
 

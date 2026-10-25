@@ -106,18 +106,6 @@ doc_events = {
 
 # required_apps = []
 
-# Coffee gets a launcher icon on the /apps screen; it opens the ops dashboard.
-# Same mark Upande Dev Tools uses, not a coffee-specific image -- the org's
-# internal apps share this brand mark rather than each inventing their own.
-add_to_apps_screen = [
-	{
-		"name": "upande_coffee",
-		"logo": "/assets/upande_coffee/images/upande-mark.png",
-		"title": "Coffee",
-		"route": "/coffee-dashboard",
-	}
-]
-
 # Includes in <head>
 # ------------------
 
@@ -249,7 +237,11 @@ add_to_apps_screen = [
 scheduler_events = {
 	# after the day's paying is done: post it out of the week's float
 	# hourly: accrue each pay day, then one Payment Entry per payment, in batches
-	"cron": {"15 * * * *": ["upande_coffee.api.payoutapi.post_daily"]},
+	# 19:00: the day's harvest, expected clean coffee and pay, emailed to Coffee Settings recipients
+	"cron": {
+		"15 * * * *": ["upande_coffee.api.payoutapi.post_daily"],
+		"0 19 * * *": ["upande_coffee.api.dailyreport.send_daily_report"],
+	},
 }
 
 # scheduler_events = {

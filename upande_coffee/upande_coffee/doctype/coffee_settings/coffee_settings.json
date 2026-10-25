@@ -10,18 +10,24 @@
   "column_break_hs",
   "milled_store_warehouse",
   "bag_weight_kg",
-  "expected_yield_pct",
+  "cherry_to_clean_ratio",
   "milling_section",
   "parchment_item",
   "column_break_ms",
   "dry_mill_warehouse",
+  "stock_section",
+  "stock_cost_center",
+  "column_break_stock",
+  "stock_adjustment_account",
   "endebess_section",
   "endebess_price_list",
   "endebess_milling_item",
   "endebess_handling_item",
   "column_break_endebess",
   "endebess_transport_item",
-  "endebess_og_suffix"
+  "endebess_og_suffix",
+  "report_section",
+  "daily_report_recipients"
  ],
  "fields": [
   {
@@ -63,11 +69,11 @@
    "non_negative": 1
   },
   {
-   "default": "20",
-   "description": "Expected clean coffee out of cherry in, as a percentage -- used only to show an estimated clean coffee figure on the dashboard (forecast cherry x this %), not for any accounting entry.",
-   "fieldname": "expected_yield_pct",
+   "default": "7",
+   "description": "Kilograms of cherry it takes to make one kilogram of clean coffee. The dashboard and the daily email divide cherry kg by this to show expected clean coffee (7 means cherry ÷ 7). An estimate only -- never used in an accounting entry.",
+   "fieldname": "cherry_to_clean_ratio",
    "fieldtype": "Float",
-   "label": "Expected Cherry-to-Clean Yield (%)",
+   "label": "Cherry to Clean Ratio (kg cherry per kg clean)",
    "non_negative": 1
   },
   {
@@ -92,6 +98,30 @@
    "fieldtype": "Link",
    "label": "Dry Mill Warehouse",
    "options": "Warehouse"
+  },
+  {
+   "fieldname": "stock_section",
+   "fieldtype": "Section Break",
+   "label": "Coffee Stock Entries",
+   "description": "Kaitet Ltd. has no company default cost centre or stock adjustment account, so every coffee stock entry (cherry received, drying to bins, milling, transfers) takes them from here."
+  },
+  {
+   "fieldname": "stock_cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Centre",
+   "options": "Cost Center",
+   "description": "Cost centre on every row of coffee stock entries."
+  },
+  {
+   "fieldname": "column_break_stock",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stock_adjustment_account",
+   "fieldtype": "Link",
+   "label": "Stock Adjustment Account",
+   "options": "Account",
+   "description": "Difference account on every row of coffee stock entries."
   },
   {
    "fieldname": "endebess_section",
@@ -137,11 +167,22 @@
    "fieldname": "endebess_og_suffix",
    "fieldtype": "Data",
    "label": "Outgrower Variant Suffix"
+  },
+  {
+   "fieldname": "report_section",
+   "fieldtype": "Section Break",
+   "label": "Daily Report"
+  },
+  {
+   "fieldname": "daily_report_recipients",
+   "fieldtype": "Small Text",
+   "label": "Daily Report Recipients",
+   "description": "Email addresses, one per line or comma-separated. Each evening they get the day's cherry harvested (buckets and kg), expected clean coffee and the pickers paid."
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-07-15 18:00:00.000000",
+ "modified": "2026-10-25 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Upande Coffee",
  "name": "Coffee Settings",

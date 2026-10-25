@@ -3,6 +3,8 @@ from frappe.utils import flt
 from frappe import _
 from frappe.model.document import Document
 
+from upande_coffee.stock import apply_coffee_defaults
+
 
 def _settings():
     s = frappe.get_cached_doc("Coffee Settings")
@@ -367,6 +369,7 @@ def on_submit_create_milled_stock(doc, method):
                 },
             )
 
+    apply_coffee_defaults(se)
     se.insert(ignore_permissions=True)
     se.submit()
 

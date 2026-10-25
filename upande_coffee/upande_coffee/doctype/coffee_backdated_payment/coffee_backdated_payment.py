@@ -30,6 +30,7 @@ class CoffeeBackdatedPayment(Document):
 			)
 		}
 		taken = _logs_in_other_payments([i.harvest_log for i in self.items], self.name)
+		pays_from = _pays_from()
 		seen = set()
 		for i in self.items:
 			log = logs.get(i.harvest_log)
@@ -42,6 +43,9 @@ class CoffeeBackdatedPayment(Document):
 				frappe.throw(_("Row {0}: {1} belongs to {2}, not {3}.").format(i.idx, log.name, log.harvester_id, self.harvester_id))
 			if log.paid:
 				frappe.throw(_("Row {0}: {1} ({2}) is already paid.").format(i.idx, log.name, log.date))
+			if getdate(log.date) < getdate(pays_from):
+				frappe.throw(_("Row {0}: {1} was picked on {2}, before pickers were paid in the system ({3}); that day was paid outside it.").format(
+					i.idx, log.name, log.date, pays_from))
 			if getdate(log.date) >= getdate(self.date):
 				frappe.throw(_("Row {0}: {1} was picked on {2}. Only days before {3} are paid here; the day's own buckets are paid from the app.").format(
 					i.idx, log.name, log.date, self.date))
@@ -82,15 +86,24 @@ def _logs_in_other_payments(names, current):
 	return dict(rows)
 
 
+def _pays_from():
+	"""First day a log can be owed: the season start, or the first Coffee Payment
+	of the season if later. Days before pickers were paid in the system were paid
+	outside it (cash), but their logs were never ticked paid - without this the
+	whole of September 2026 shows as owed."""
+	season = str(frappe.db.get_value("Coffee Season", {"is_active": 1}, "start_date") or "2000-01-01")
+	first = frappe.db.get_value("Coffee Payment", {"docstatus": 1, "date": [">=", season]}, "date", order_by="date asc")
+	return max(season, str(first)) if first else season
+
+
 @frappe.whitelist()
 def get_unpaid_logs(harvester_id, date=None):
 	"""The harvester's unpaid buckets from days before `date` - only days they
 	actually worked, since a log exists only for a day they brought in buckets."""
 	date = date or frappe.utils.nowdate()
-	season = frappe.db.get_value("Coffee Season", {"is_active": 1}, "start_date") or "2000-01-01"
 	logs = frappe.get_all(
 		"Harvest Log",
-		filters={"harvester_id": harvester_id, "paid": 0, "date": ["between", [season, frappe.utils.add_days(date, -1)]]},
+		filters={"harvester_id": harvester_id, "paid": 0, "date": ["between", [_pays_from(), frappe.utils.add_days(date, -1)]]},
 		fields=["name", "date", "block", "bucket_count"],
 		order_by="date asc, creation asc",
 		limit_page_length=0,
