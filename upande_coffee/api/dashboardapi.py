@@ -445,7 +445,9 @@ def get_milling(from_date=None, to_date=None, season=None, grower=None, parchmen
 	bookings = [b for b in list_bookings(limit=1000) if in_range(b["booking_date"])
 		and (not grower or b["grower"] == grower) and (not parchment_type or b["parchment_type"] == parchment_type)]
 
-	o_f = {"docstatus": 1}
+	# drafts are listed too (with their status) so a statement nobody has
+	# submitted yet is visible; figures below count submitted milling only
+	o_f = {"docstatus": ["<", 2]}
 	if from_date:
 		o_f["creation"] = [">=", str(getdate(from_date))]
 	if to_date:
@@ -454,10 +456,12 @@ def get_milling(from_date=None, to_date=None, season=None, grower=None, parchmen
 		"Outturn Statement",
 		filters=o_f,
 		fields=["name", "outturn_number", "outturn_type", "grower", "parchment_weight",
-				"output_weight", "milling_loss", "creation"],
+				"output_weight", "milling_loss", "creation", "docstatus"],
 		order_by="creation desc",
 		limit_page_length=0,
 	)
+	drafts = [o for o in outturns if o.docstatus == 0]
+	all_outturns, outturns = outturns, [o for o in outturns if o.docstatus == 1]
 	by_type, by_grower = {}, {}
 	for o in outturns:
 		t = o.outturn_type or "—"
@@ -501,11 +505,12 @@ def get_milling(from_date=None, to_date=None, season=None, grower=None, parchmen
 				sum(flt(o.milling_loss) for o in outturns) / len(outturns) if outturns else 0
 			),
 			"outturns": len(outturns),
+			"draft_outturns": len(drafts),
 			"dispatched_kg": sum(r["dispatched_kg"] for r in stock),
 			"in_store_kg": sum(r["in_store_kg"] for r in stock),
 		},
 		"bookings": bookings,
-		"outturns": outturns,
+		"outturns": all_outturns,
 		"stock_by_grade": stock,
 		"by_type": [{"type": k, "output_kg": v} for k, v in sorted(by_type.items())],
 		"by_grower": [

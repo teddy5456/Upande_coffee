@@ -821,7 +821,7 @@ body.sb-collapsed{--sbw:64px}
     </div>
     <div class="card card--padded">
       <div class="card__head"><h3>Outturn Statements</h3><div class="meta" id="m-outcnt"></div></div>
-      <div class="tblwrap"><table class="tbl"><thead><tr><th>Outturn</th><th>Grower</th><th class="num">Parchment kg</th><th class="num">Output kg</th><th class="num">Loss %</th></tr></thead><tbody id="m-out"></tbody></table></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Outturn</th><th>Grower</th><th class="num">Parchment kg</th><th class="num">Output kg</th><th class="num">Loss %</th><th>Status</th></tr></thead><tbody id="m-out"></tbody></table></div>
     </div>
   </div>
 
@@ -1298,7 +1298,7 @@ function funnel(el, stages) {
 
 function chip(cls, text) { return '<span class="pill pill--' + (cls || "measured") + '">' + esc(text) + "</span>"; }
 function stChip(state) {
-  if (["Received", "Weighed", "Completed", "Paid", "Ready"].indexOf(state) !== -1) return chip("", state);
+  if (["Received", "Weighed", "Completed", "Paid", "Ready", "Submitted"].indexOf(state) !== -1) return chip("", state);
   if (["Cancelled", "Overdue", "High"].indexOf(state) !== -1) return chip("neg", state);
   return chip("warn", state || "Draft");
 }
@@ -1449,7 +1449,8 @@ function loadMilled() {
       kpiCard("Parchment In", n(k.parchment_kg), "kg received for milling", null) +
       kpiCard("Clean Output", n(k.output_kg), "kg after dry mill",
         "↓ " + n(k.avg_milling_loss, 1) + "% <small>avg loss</small>", k.avg_milling_loss > 20 ? "down" : "up") +
-      kpiCard("Outturns", n(k.outturns), "statements issued", null) +
+      kpiCard("Outturns", n(k.outturns), "statements submitted" + (k.draft_outturns ? " · " + k.draft_outturns + " draft" + (k.draft_outturns === 1 ? "" : "s") + " waiting" : ""),
+        k.draft_outturns ? k.draft_outturns + " <small>to submit</small>" : null, "flat") +
       kpiCard("Dispatched", n(k.dispatched_kg), "kg clean on delivery notes", null) +
       kpiCard("In Clean Store", n(k.in_store_kg), "kg milled, not yet dispatched", null);
     $("m-stock").innerHTML = (d.stock_by_grade || []).map(function (r) {
@@ -1467,8 +1468,9 @@ function loadMilled() {
     $("m-outcnt").textContent = (d.outturns || []).length + " statements";
     $("m-out").innerHTML = (d.outturns || []).map(function (r) {
       return "<tr><td>" + esc(r.name) + "</td><td>" + esc(r.grower) + '</td><td class="num">' + n(r.parchment_weight, 1) +
-        '</td><td class="num">' + n(r.output_weight, 1) + '</td><td class="num">' + n(r.milling_loss, 1) + "</td></tr>";
-    }).join("") || '<tr><td colspan="5"><div class="emptybox">No outturns.</div></td></tr>';
+        '</td><td class="num">' + n(r.output_weight, 1) + '</td><td class="num">' + n(r.milling_loss, 1) + "</td><td>" +
+        stChip(r.docstatus === 1 ? "Submitted" : "Draft") + "</td></tr>";
+    }).join("") || '<tr><td colspan="6"><div class="emptybox">No outturns.</div></td></tr>';
   }).catch(function (e) { $("m-err").innerHTML = '<div class="errbox">' + esc(e.message) + "</div>"; });
 }
 
