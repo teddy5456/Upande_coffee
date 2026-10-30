@@ -1275,7 +1275,8 @@ function loadHarvested() {
   $("h-err").innerHTML = "";
   api("get_harvest", ranges()).then(function (d) {
     var k = d.kpis;
-    var avgKgBucket = k.total_buckets ? k.total_weight_kg / k.total_buckets : 0;
+    // kg per bucket over the buckets that reached the wet mill, same basis as the weight
+    var avgKgBucket = k.received_buckets ? k.total_weight_kg / k.received_buckets : 0;
     $("h-kpis").innerHTML =
       kpiCard("Buckets", n(k.total_buckets), k.harvesters + " harvesters active", null) +
       kpiCard("Weight Received", n(k.total_weight_kg), "kg · " + k.pickup_count + " pickups", null) +

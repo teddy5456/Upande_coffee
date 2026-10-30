@@ -213,8 +213,12 @@ def get_overview(from_date=None, to_date=None, season=None):
 def _received(from_date, to_date):
 	"""Buckets and kg received at the wet mill in the range (by pickup date).
 	received_bucket_count is set when the receiver counted fewer than were
-	loaded; older receipts had to match, so their total_buckets stands."""
-	cond, params = ["received = 1", "docstatus = 1"], {}
+	loaded; older receipts had to match, so their total_buckets stands.
+	A received pickup is a submitted one in workflow state "Received": on
+	Kaitet the `received` check is never ticked (0 of 58 in October 2026), so
+	filtering on it alone made the overview show nothing received."""
+	state = " OR workflow_state = 'Received'" if frappe.db.has_column("Harvest Pickup", "workflow_state") else ""
+	cond, params = [f"(received = 1{state})", "docstatus = 1"], {}
 	if from_date:
 		cond.append("date >= %(f)s")
 		params["f"] = from_date
@@ -320,7 +324,10 @@ def get_harvest(days=30, from_date=None, to_date=None, season=None):
 		order_by="date desc",
 		limit_page_length=50,
 	)
-	weight = sum(flt(p.total_weight_kg) for p in pickups if p.workflow_state == "Received")
+	# Same full-range figure as the overview (_received), not the 50-row page
+	# above: summing the page undercounted any range with more than 50 pickups.
+	received = _received(from_date, to_date)
+	pickup_count = frappe.db.count("Harvest Pickup", pk_f)
 
 	pay_f = _between({}, "date", from_date, to_date)
 	payments = frappe.get_all(
@@ -351,13 +358,14 @@ def get_harvest(days=30, from_date=None, to_date=None, season=None):
 	return {
 		"kpis": {
 			"total_buckets": agg.buckets or 0,
-			"total_weight_kg": weight,
+			"total_weight_kg": received.weight,
+			"received_buckets": received.buckets,
 			"total_payments": pay_total,
 			"avg_rate": avg_rate,
 			"harvest_days": agg.days or 0,
 			"active_blocks": agg.blocks or 0,
 			"harvesters": agg.harvesters or 0,
-			"pickup_count": len(pickups),
+			"pickup_count": pickup_count,
 		},
 		"logs": logs,
 		"pickups": pickups,

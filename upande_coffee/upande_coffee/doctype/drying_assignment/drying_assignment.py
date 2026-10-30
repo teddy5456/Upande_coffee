@@ -301,12 +301,13 @@ def on_submit_create_repack(doc, method):
     se.company = COMPANY
     se.remarks = f"Auto-created from Drying Assignment {doc.name}: Cherry -> Parchment"
 
-    # Source item: cherry from wet mill
+    # Source item: cherry from wet mill -- this assignment's share of what is
+    # left of the batch, not all of it (see _cherry_share)
     se.append(
         "items",
         {
             "item_code": CHERRY_ITEM,
-            "qty": batch_stock,
+            "qty": _cherry_share(doc, batch_stock),
             "uom": "Kilogram",
             "s_warehouse": WET_MILL_WH,
             "batch_no": doc.batch,
@@ -352,6 +353,24 @@ def on_submit_create_repack(doc, method):
         indicator="green",
         title=_("Drying Complete"),
     )
+
+
+def _cherry_share(doc, batch_stock):
+    """One cherry batch is often dried as several assignments. Taking the whole
+    batch left the others with nothing to consume ("No stock available"), so
+    their parchment never reached the bins. Each takes the batch's remaining
+    cherry in proportion to its parchment out among the assignments on the
+    batch not yet repacked; the last one takes whatever is left."""
+    siblings = frappe.get_all(
+        "Drying Assignment",
+        filters={"batch": doc.batch, "docstatus": ["<", 2], "repack_created": 0},
+        fields=["name", "total_final_weight_kg"],
+    )
+    total = sum(flt(s.total_final_weight_kg) for s in siblings)
+    mine = flt(doc.total_final_weight_kg)
+    if len(siblings) <= 1 or total <= 0 or mine <= 0:
+        return batch_stock
+    return flt(batch_stock * mine / total, 3)
 
 
 def on_cancel_reverse_repack(doc, method):
