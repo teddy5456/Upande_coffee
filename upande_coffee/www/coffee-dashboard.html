@@ -57,7 +57,17 @@ a{color:inherit}
 .pagehead__title{margin:4px 0 0;font:600 32px/1.05 var(--sans);color:var(--ink);letter-spacing:-.6px}
 .pagehead__sub{margin:6px 0 0;font:400 12.5px var(--meta);color:var(--ink-mute)}
 .pagehead__tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.globaltools{margin-bottom:22px}
+/* Period toolbar: one inline row of icon pills */
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.tpill{position:relative;display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px 0 12px;background:var(--surface-2);border-radius:999px;box-shadow:var(--shadow-card);font:500 12px var(--sans);color:var(--ink);cursor:pointer;min-width:0}
+.tpill>svg{width:15px;height:15px;stroke:var(--acc-500);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tpill>svg.chev{width:12px;height:12px;stroke:var(--ink-mute);margin-left:-2px;pointer-events:none}
+.tpill:hover{background:#f6f4ee}
+.tsel{border:0;background:transparent;font:inherit;color:inherit;-webkit-appearance:none;appearance:none;padding:0;cursor:pointer;outline:none;min-width:0;max-width:170px;text-overflow:ellipsis}
+.tdate{border:0;background:transparent;font:inherit;color:inherit;outline:none;width:122px;min-width:0;cursor:pointer}
+.tsep{color:var(--ink-mute);font-size:12px}
+.toolbar__rail{border-radius:10px}
+.toolbar__rail svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* Toggle / pill controls */
 .datepill{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:999px;padding:8px 14px;font:500 12px var(--sans);color:var(--ink);box-shadow:var(--shadow-card)}
@@ -98,7 +108,15 @@ a{color:inherit}
 /* Columns */
 .row-2{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
 .row-2-eq{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
-.chart-sm{width:100%;height:260px;display:block}
+/* grid children may shrink below their content, so a wide table scrolls inside its card instead of pushing the card wider */
+.row-2>*,.row-2-eq>*,.kpi-grid>*{min-width:0}
+.chart-sm{width:100%;height:auto;display:block}
+.hbars{display:flex;flex-direction:column;gap:7px;max-height:460px;overflow-y:auto;padding-right:6px}
+.hbar{display:grid;grid-template-columns:minmax(56px,90px) 1fr auto;gap:12px;align-items:center;font:500 12px var(--sans);color:var(--ink-3)}
+.hbar__lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar__track{height:10px;background:rgba(10,10,10,.05);border-radius:99px;overflow:hidden}
+.hbar__track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#c9a878,#53381c)}
+.hbar__val{font:600 12.5px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums;text-align:right;min-width:44px}
 
 /* Legend */
 .legend{display:flex;gap:18px;font:400 11.5px var(--meta);color:var(--ink-mute)}
@@ -117,7 +135,7 @@ a{color:inherit}
 .piewrap__center small{font:500 9.5px var(--sans);text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-mute)}
 
 /* Trend chart — gradient fill */
-.chart{width:100%;height:240px}
+.chart{width:100%;height:auto;display:block}
 
 /* Lists */
 .list{display:flex;flex-direction:column}
@@ -160,6 +178,7 @@ a{color:inherit}
 .funnel__bar.s1{background:var(--grad-ink);width:100%}
 .funnel__bar.s2{background:linear-gradient(135deg,#3a2813,#6f4e29);width:68%}
 .funnel__bar.s3{background:linear-gradient(135deg,#6f4e29,#a8824d);width:38%}
+.funnel__bar.s4{background:linear-gradient(135deg,#a8824d,#c9a878);width:22%}
 .funnel__meta{font:500 11px var(--meta);color:var(--ink-mute);min-width:140px;text-align:right}
 .funnel__meta b{display:block;font:600 18px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
 
@@ -389,9 +408,18 @@ body.sb-collapsed{--sbw:64px}
 .sb-collapsed .sb-sec{display:none}
 .sb-collapsed .sidebar{padding:16px 8px}
 .sb-collapsed .snav{justify-content:center;padding:9px 0}
-.sidebar__foot{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--hairline);padding-top:10px}
-.sidebar__user{display:flex;align-items:center;gap:10px;padding:8px 10px;font:500 11.5px var(--sans);color:var(--ink-4);white-space:nowrap;overflow:hidden}
-.sb-collapsed .sidebar__user span{display:none}
+/* Footer = Upande Dev Tools sidebar footer: who is signed in, and the way back to the desk */
+.sidebar__foot{display:flex;align-items:center;gap:10px;border-top:1px solid var(--hairline);padding:12px 6px 2px}
+.sidebar__foot .avatar{width:27px;height:27px;font-size:11px;flex:none}
+.sidebar__who{min-width:0;flex:1}
+.sidebar__who .nm{font:600 11px var(--sans);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar__who .em{font:400 9px var(--sans);color:var(--ink-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deskbtn{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;flex:none;width:29px;height:29px;border:1px solid var(--hairline);border-radius:8px;color:var(--ink-mute);text-decoration:none;transition:background .12s,color .12s,border-color .12s}
+.deskbtn:hover{background:rgba(10,10,10,.045);color:var(--ink);border-color:rgba(10,10,10,.12)}
+.deskbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sb-collapsed .sidebar__foot{flex-direction:column;gap:8px;padding:12px 0 2px}
+.sb-collapsed .sidebar__who{display:none}
+.sb-collapsed .deskbtn{margin-left:0}
 .sidebar__resizer{position:absolute;top:0;right:-6px;width:12px;height:100%;cursor:ew-resize}
 .page{max-width:1480px;margin:0;padding:30px 36px 72px}
 /* form controls in the design language */
@@ -416,12 +444,42 @@ body.sb-collapsed{--sbw:64px}
   .snav span{display:none}
   .sidebar{padding:16px 8px}
   .snav{justify-content:center;padding:9px 0}
+  .sidebar__foot{flex-direction:column;gap:8px;padding:12px 0 2px}
+  .sidebar__who{display:none}
+  .deskbtn{margin-left:0}
+  .toolbar__rail{display:none}
 }
+/* Phone: the rail becomes a bottom bar, cards go two-up / full width */
 @media (max-width:700px){
-  .page{padding:22px 16px 60px}
-  .card{padding:18px 16px}
-  .card__head{flex-direction:column;gap:6px}
+  body{padding-left:0;padding-bottom:86px}
+  .sidebar{top:auto;left:8px;right:8px;bottom:8px;width:auto;height:62px;flex-direction:row;align-items:center;padding:6px 8px;gap:6px}
+  .sidebar__logo,.sb-sec,.sidebar__resizer,.sidebar__foot .avatar{display:none}
+  .sidebar__nav{flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:4px;scrollbar-width:none}
+  .sidebar__nav::-webkit-scrollbar{display:none}
+  .snav{width:auto;flex:none;padding:12px}
+  .sidebar__foot{border-top:0;border-left:1px solid var(--hairline);padding:0 0 0 8px;flex-direction:row}
+  .page{padding:18px 12px 24px}
+  .pagehead__title{font-size:26px}
+  .toolbar{gap:6px}
+  .toolbar .tpill{flex:1 1 auto}
+  .toolbar .tpill--range{flex:1 1 100%;justify-content:center}
+  .tsel{max-width:none;flex:1}
+  .tdate{width:auto;flex:1}
+  .tabs{display:flex;width:100%}
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .kpi{padding:14px 14px 16px}
+  .kpi__value{font-size:22px;letter-spacing:-.5px}
+  .kpi__spark{display:none}
+  .kpi__trend{flex-wrap:wrap}
+  .card{padding:16px 14px}
+  .card__head{flex-direction:column;gap:4px}
   .card__head .meta{max-width:none}
+  .funnel__stage{grid-template-columns:1fr;gap:6px}
+  .funnel__bar{min-width:0!important;height:42px}
+  .funnel__meta{text-align:left;min-width:0}
+  .hb{grid-template-columns:72px 1fr 48px;gap:10px}
+  .tbl{font-size:12px}
+  .legend{flex-wrap:wrap;gap:8px 14px}
 }
 
 /* card-cell grid — table without borders: each cell a shaded block + shadow */
@@ -471,9 +529,9 @@ body.sb-collapsed{--sbw:64px}
     <a class="snav" href="/app/greenhouse"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-7h6v7"/></svg><span>Greenhouses</span></a>
   </nav>
   <div class="sidebar__foot">
-    <a class="snav" href="/app"><svg viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg><span>Back to Desk</span></a>
-    <div class="sidebar__user"><svg style="display:none" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><div class="avatar" style="width:26px;height:26px;font-size:10px" id="sb-avatar">·</div><span id="sb-user"></span></div>
-    <button class="snav" id="sb-collapse"><svg viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg><span>Collapse</span></button>
+    <div class="avatar" id="sb-avatar">·</div>
+    <div class="sidebar__who"><div class="nm" id="sb-name"></div><div class="em" id="sb-user"></div></div>
+    <a class="deskbtn" href="/app" title="Back to the desk" aria-label="Back to the desk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></a>
   </div>
   <div class="sidebar__resizer" id="sb-resizer"></div>
 </aside>
@@ -481,9 +539,10 @@ body.sb-collapsed{--sbw:64px}
 <div class="page">
 <!-- Global period toolbar — same control set on every sidebar view, not just
      the Dashboard tabs, so Weighbridge/Stock/etc. all have it available too. -->
-<div class="pagehead__tools globaltools" id="global-tools">
-  <select class="datepill" id="f-season"><option value="">All seasons</option></select>
-  <select class="datepill" id="f-presets">
+<div class="toolbar" id="global-tools">
+  <button class="iconbtn toolbar__rail" id="sb-collapse" type="button" title="Collapse sidebar" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/></svg></button>
+  <label class="tpill" title="Season"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg><select class="tsel" id="f-season"><option value="">All seasons</option></select><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></label>
+  <label class="tpill" title="Period"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><select class="tsel" id="f-presets">
     <option value="">Custom range</option>
     <option value="today">Today</option>
     <option value="yesterday">Yesterday</option>
@@ -492,10 +551,9 @@ body.sb-collapsed{--sbw:64px}
     <option value="lastseason">Last Season</option>
     <option value="year">This Year</option>
     <option value="lastyear">Last Year</option>
-  </select>
-  <input type="date" class="datepill" id="f-from" title="From date">
-  <input type="date" class="datepill" id="f-to" title="To date">
-  <button class="iconbtn" id="btn-refresh" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+  </select><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></label>
+  <div class="tpill tpill--range" title="Date range"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><input type="date" class="tdate" id="f-from" title="From date" aria-label="From date"><span class="tsep">→</span><input type="date" class="tdate" id="f-to" title="To date" aria-label="To date"></div>
+  <button class="iconbtn" id="btn-refresh" title="Refresh" aria-label="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
 </div>
 <div class="view on" id="v-dashboard">
   <div class="pagehead">
@@ -1107,59 +1165,97 @@ function smooth(p) {
 }
 
 /* area/line chart — exact grid, labels, gradient fill of the design */
+// Charts are drawn at the card's real pixel width (viewBox = width), so text never
+// stretches; they redraw when the window is resized (see the resize hook below).
+var DRAWN = [];
+function remember(el, fn, args) {
+  el._redraw = function () { fn.apply(null, args); };
+  if (DRAWN.indexOf(el) === -1) DRAWN.push(el);
+}
+window.addEventListener("resize", (function () {
+  var t;
+  return function () {
+    clearTimeout(t);
+    t = setTimeout(function () {
+      DRAWN = DRAWN.filter(function (el) { return document.body.contains(el); });
+      DRAWN.forEach(function (el) { if (el.offsetParent !== null && el._redraw) el._redraw(); });
+    }, 150);
+  };
+})());
+function chartWidth(el, fallback) {
+  var w = el.clientWidth || (el.parentNode && el.parentNode.clientWidth) || fallback;
+  return Math.max(260, Math.round(w));
+}
+
 function areaChart(el, labels, values) {
+  remember(el, areaChart, [el, labels, values]);
   if (!values.length) { el.innerHTML = '<div class="emptybox">No data in this range.</div>'; return; }
-  var W = 600, H = 280, L = 42, B = 240, T = 40;
+  var W = chartWidth(el, 600), H = 250, L = 46, R = 14, T = 16, B = H - 34;
   var mx = Math.max.apply(null, values.concat(1)) * 1.15;
-  var pts = values.map(function (v, i) {
-    return [L + i * ((W - L) / Math.max(values.length - 1, 1)), B - (v / mx) * (B - T)];
-  });
+  var span = (W - L - R) / Math.max(values.length - 1, 1);
+  var pts = values.map(function (v, i) { return [L + i * span, B - (v / mx) * (B - T)]; });
   var line = smooth(pts);
   var fid = "af" + (++uid), lid = "al" + (++uid);
   var ticks = [1, 2, 3].map(function (k) {
     var y = B - (k / 3) * (B - T), val = Math.round((mx * k) / 3);
-    return '<line x1="' + L + '" y1="' + y + '" x2="' + W + '" y2="' + y + '" stroke="rgba(10,10,10,0.05)"/>' +
-      '<text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-family="Poppins" font-size="10" fill="#9a9a92">' + val + "</text>";
+    return '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="rgba(10,10,10,0.06)"/>' +
+      '<text x="' + (L - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-family="Poppins" font-size="10.5" fill="#9a9a92">' + n(val) + "</text>";
   }).join("");
-  var xl = "";
-  var step = Math.max(1, Math.ceil(labels.length / 6));
+  var xl = "", fit = Math.max(2, Math.floor((W - L - R) / 64)), step = Math.max(1, Math.ceil(labels.length / fit));
   for (var i = 0; i < labels.length; i += step) {
-    xl += '<text x="' + pts[i][0] + '" y="266" text-anchor="middle" font-family="Poppins" font-size="11" fill="#9a9a92">' + labels[i] + "</text>";
+    var anchor = i === 0 ? "start" : (i >= labels.length - step ? "end" : "middle");
+    xl += '<text x="' + pts[i][0] + '" y="' + (H - 10) + '" text-anchor="' + anchor + '" font-family="Poppins" font-size="10.5" fill="#9a9a92">' + labels[i] + "</text>";
   }
-  el.innerHTML = '<svg class="chart" viewBox="0 0 600 280" preserveAspectRatio="none" role="img">' +
+  var dots = pts.map(function (p, i) {
+    return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + Math.max(3, Math.min(8, span / 2)).toFixed(1) +
+      '" fill="transparent"><title>' + labels[i] + ": " + n(values[i]) + "</title></circle>";
+  }).join("");
+  el.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" role="img" style="max-width:100%">' +
     '<defs><linearGradient id="' + fid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8a6437" stop-opacity=".26"/><stop offset="100%" stop-color="#8a6437" stop-opacity="0"/></linearGradient>' +
     '<linearGradient id="' + lid + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#a8824d"/><stop offset="100%" stop-color="#53381c"/></linearGradient></defs>' +
     ticks +
     '<path d="' + line + " L" + pts[pts.length - 1][0] + "," + B + " L" + L + "," + B + ' Z" fill="url(#' + fid + ')"/>' +
-    '<path d="' + line + '" fill="none" stroke="url(#' + lid + ')" stroke-width="3" stroke-linecap="round"/>' +
-    '<circle cx="' + pts[pts.length - 1][0] + '" cy="' + pts[pts.length - 1][1] + '" r="5" fill="#53381c" stroke="#fff" stroke-width="2"/>' +
-    xl + "</svg>";
+    '<path d="' + line + '" fill="none" stroke="url(#' + lid + ')" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<circle cx="' + pts[pts.length - 1][0] + '" cy="' + pts[pts.length - 1][1] + '" r="4.5" fill="#53381c" stroke="#fff" stroke-width="2"/>' +
+    xl + dots + "</svg>";
 }
 
 /* vertical rounded gradient bars — Weekly Packout style */
+// More than 8 categories (e.g. 71 blocks) cannot share one row of vertical bars:
+// they become a ranked horizontal list that scrolls, one row per category.
 function barChart(el, labels, values, height) {
+  remember(el, barChart, [el, labels, values, height]);
   if (!values.length) { el.innerHTML = '<div class="emptybox">No data in this range.</div>'; return; }
-  var W = 480, H = height || 300, T = 34, B = H - 80, XL = 40;
-  var mx = Math.max.apply(null, values.concat(1)) * 1.1;
+  if (values.length > 8) {
+    var top = Math.max.apply(null, values.concat(1));
+    el.innerHTML = '<div class="hbars">' + values.map(function (v, i) {
+      return '<div class="hbar" title="' + esc(labels[i]) + ": " + n(v) + '"><span class="hbar__lbl">' + esc(labels[i]) +
+        '</span><span class="hbar__track"><i style="width:' + Math.max(1, (v / top) * 100).toFixed(1) + '%"></i></span><b class="hbar__val">' +
+        n(v) + "</b></div>";
+    }).join("") + "</div>";
+    return;
+  }
+  var W = chartWidth(el, 480), H = height || 280, T = 30, B = H - 40, XL = 48;
+  var mx = Math.max.apply(null, values.concat(1)) * 1.12;
   var gid = "bg" + (++uid);
-  var bw = Math.min(38, ((W - XL) / values.length) * 0.6);
-  var gap = (W - XL) / values.length;
+  var gap = (W - XL - 8) / values.length;
+  var bw = Math.min(46, gap * 0.56);
   var bars = "", xl = "";
   values.forEach(function (v, i) {
     var h = (v / mx) * (B - T);
     var x = XL + i * gap + (gap - bw) / 2;
-    bars += '<rect x="' + x.toFixed(1) + '" y="' + (B - h).toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) +
+    bars += '<rect x="' + x.toFixed(1) + '" y="' + (B - h).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) +
       '" rx="6" fill="url(#' + gid + ')"><title>' + esc(labels[i]) + ": " + n(v) + "</title></rect>";
-    bars += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (B - h - 6).toFixed(1) +
-      '" text-anchor="middle" font-family="Poppins" font-size="9.5" font-weight="600" fill="#3a3a34">' + n(v) + "</text>";
-    xl += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (B + 18) + '" text-anchor="middle" font-family="Poppins" font-size="10" fill="#9a9a92">' + esc(labels[i]) + "</text>";
+    bars += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (B - h - 7).toFixed(1) +
+      '" text-anchor="middle" font-family="Poppins" font-size="10.5" font-weight="600" fill="#3a3a34">' + n(v) + "</text>";
+    xl += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (B + 20) + '" text-anchor="middle" font-family="Poppins" font-size="10.5" fill="#9a9a92">' + esc(labels[i]) + "</text>";
   });
   var ticks = [1, 2, 3].map(function (k) {
     var y = B - (k / 3) * (B - T);
-    return '<line x1="' + XL + '" y1="' + y + '" x2="' + (W - 10) + '" y2="' + y + '" stroke="rgba(10,10,10,0.05)"/>' +
-      '<text x="' + (XL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-family="Poppins" font-size="10" fill="#9a9a92">' + n(Math.round((mx * k) / 3)) + "</text>";
+    return '<line x1="' + XL + '" y1="' + y + '" x2="' + (W - 8) + '" y2="' + y + '" stroke="rgba(10,10,10,0.06)"/>' +
+      '<text x="' + (XL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-family="Poppins" font-size="10.5" fill="#9a9a92">' + n(Math.round((mx * k) / 3)) + "</text>";
   }).join("");
-  el.innerHTML = '<svg class="chart-sm" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="xMidYMid meet" role="img">' +
+  el.innerHTML = '<svg class="chart-sm" viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" role="img" style="max-width:100%">' +
     '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a8824d"/><stop offset="100%" stop-color="#53381c"/></linearGradient></defs>' +
     ticks + bars + xl + "</svg>";
 }
@@ -1218,11 +1314,13 @@ function loadOverview() {
     var harvestedClean = h.estimated_clean_kg ? " <small>· est. " + n(h.estimated_clean_kg) + " kg clean (÷ " + n(ratio, 1).replace(/\.0$/, "") + ")</small>" : "";
     var short = h.short_buckets ? " <small>· " + n(h.short_buckets) + " short at mill</small>" : "";
     $("ov-kpis").innerHTML =
-      kpiCard("Season Target", n(est.target_cherry_kg), "kg cherry · " + (est.season_name || "no active season"),
-        est.blocks + " blocks" + estCleanSuffix, "flat") +
+      kpiCard("Season Target", n(est.target_cherry_kg), "kg cherry · " + (est.season_name || "no active season") +
+        (d.clean.estimated_kg ? " · est. " + n(d.clean.estimated_kg) + " kg clean" : ""),
+        est.blocks + " blocks", "flat") +
       kpiCard("Harvested", n(h.total_weight_kg), "kg · " + n(h.total_buckets) + " buckets harvested · " +
-        n(h.received_buckets) + " received" + short,
-        "↑ " + n(h.today_buckets) + " <small>buckets today</small>" + harvestedClean, "up",
+        n(h.received_buckets) + " received" + short + (h.estimated_clean_kg ? " · est. " + n(h.estimated_clean_kg) +
+        " kg clean (÷ " + n(ratio, 1).replace(/\.0$/, "") + ")" : ""),
+        "↑ " + n(h.today_buckets) + " <small>buckets today</small>", "up",
         (h.daily_buckets || []).map(function (r) { return r.count || 0; })) +
       kpiCard("On Drying Tables", n(dr.total_debes), "debes across types",
         (dr.readiness.ready || 0) + " tables ready", dr.readiness.ready ? "up" : "flat") +
@@ -2200,6 +2298,8 @@ function switchTab(tab) {
   document.querySelectorAll(".panel").forEach(function (p) { p.classList.toggle("on", p.id === "p-" + tab); });
   active = tab;
   if (!loaded[tab]) { loaded[tab] = true; LOADERS[tab](); }
+  // charts drawn while their tab was hidden measured 0 px wide: redraw at the real width
+  else DRAWN.forEach(function (el) { if (el.offsetParent !== null && el._redraw) el._redraw(); });
 }
 document.querySelectorAll(".tab").forEach(function (t) {
   t.addEventListener("click", function () { switchTab(t.dataset.tab); });
@@ -2346,6 +2446,7 @@ function makeSearchable(sel) {
 }
 function upgradeSelects() {
   document.querySelectorAll("select").forEach(function (s) {
+    if (s.closest(".toolbar")) return;
     if (!s.dataset.combo) makeSearchable(s);
     else if (s._comboSync) s._comboSync();
   });
@@ -2793,7 +2894,16 @@ fetch("/api/method/frappe.auth.get_logged_user", { credentials: "same-origin", h
   .then(function (j) {
     var u = j.message || "";
     document.getElementById("sb-user").textContent = u;
+    document.getElementById("sb-name").textContent = u;
     document.getElementById("sb-avatar").textContent = (u[0] || "·").toUpperCase();
+    return fetch("/api/method/frappe.client.get_value?doctype=User&fieldname=full_name&filters=" + encodeURIComponent(JSON.stringify({ name: u })),
+      { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(function (k) {
+        var full = (k.message && k.message.full_name) || u;
+        document.getElementById("sb-name").textContent = full;
+        document.getElementById("sb-avatar").textContent = (full[0] || "·").toUpperCase();
+      });
   }).catch(function () {});
 
 })();
