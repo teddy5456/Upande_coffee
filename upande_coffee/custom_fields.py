@@ -380,15 +380,33 @@ def create_coffee_custom_fields():
 					"module": "Upande Coffee",
 				},
 			],
+			# The plan is the connection (Connections tab on the plan); the
+			# Payment Request follows from it, so a transfer can't be booked
+			# against last week's request by picking the wrong one by hand.
 			"Payment Entry": [
+				{
+					"fieldname": "coffee_harvest_plan",
+					"fieldtype": "Link",
+					"options": "Coffee Harvest Plan",
+					"label": "Coffee Harvest Plan",
+					"insert_after": "reference_date",
+					"allow_on_submit": 1,
+					"no_copy": 1,
+					"depends_on": "eval:doc.payment_type=='Internal Transfer'",
+					"description": "Picking float: the harvest plan this transfer funds. Fills the Payment Request.",
+					"module": "Upande Coffee",
+				},
 				{
 					"fieldname": "payment_request",
 					"fieldtype": "Link",
 					"options": "Payment Request",
 					"label": "Payment Request",
-					"insert_after": "reference_date",
+					"insert_after": "coffee_harvest_plan",
+					"fetch_from": "coffee_harvest_plan.payment_request",
+					"read_only_depends_on": "eval:doc.coffee_harvest_plan",
+					"allow_on_submit": 1,
 					"no_copy": 1,
-					"description": "For an Internal Transfer that funds a coffee picking float: the harvest plan's Payment Request.",
+					"description": "Filled from the Coffee Harvest Plan above.",
 					"module": "Upande Coffee",
 				},
 			],
