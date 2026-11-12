@@ -367,6 +367,20 @@ def create_coffee_custom_fields():
 			# the Internal Transfer that settles it into the float account.
 			# ERPNext's Payment Entry has no header payment_request field, so
 			# without these the float is never found and nothing posts.
+			# Harvester is a Party Type: ERPNext's Payment Entry reads
+			# `<party type>_name` (harvester_name) and crashes if the column is missing.
+			"Harvester": [
+				{
+					"fieldname": "harvester_name",
+					"fieldtype": "Data",
+					"label": "Harvester Name",
+					"insert_after": "harvester_id",
+					"fetch_from": "employee.employee_name",
+					"read_only": 1,
+					"in_list_view": 1,
+					"module": "Upande Coffee",
+				},
+			],
 			"Coffee Harvest Plan": [
 				{
 					"fieldname": "payment_request",
