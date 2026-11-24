@@ -504,6 +504,44 @@ _FIX_BUSINESS_UNIT_REF = [
 ]
 
 
+_NOT_COFFEE = "doc.business_unit!='Endebess Coffee'"
+
+
+def _exempt_coffee(doctype, fieldname):
+	"""Packhouse keeps re-shipping its own condition for these fields (2026-11-22:
+	order_type != 'Shopping Cart', also as a Property Setter, which wins over the
+	Custom Field). Keep whatever condition it ships and AND the coffee exemption
+	onto it -- mandatory_depends_on is only evaluated in the browser, so JS syntax."""
+	name = f"{doctype}-{fieldname}"
+	if not frappe.db.exists("Custom Field", name):
+		return
+	cf = frappe.db.get_value("Custom Field", name, ["reqd", "mandatory_depends_on"], as_dict=True)
+	ps = frappe.db.get_value("Property Setter", {"doc_type": doctype, "field_name": fieldname,
+		"property": "mandatory_depends_on"}, ["name", "value"], as_dict=True)
+	ps_reqd = frappe.db.get_value("Property Setter", {"doc_type": doctype, "field_name": fieldname,
+		"property": "reqd"}, ["name", "value"], as_dict=True)
+
+	def exempt(cond):
+		cond = (cond or "").strip()
+		if _NOT_COFFEE in cond:
+			return cond
+		if not cond:
+			return _ROSES_ONLY
+		body = cond[5:] if cond.startswith("eval:") else f"doc.{cond}"
+		return f"eval:({body.strip()}) && {_NOT_COFFEE}"
+
+	if ps:
+		new = exempt(ps.value)
+		if new != ps.value:
+			frappe.db.set_value("Property Setter", ps.name, "value", new, update_modified=False)
+	if ps_reqd and ps_reqd.value not in ("0", 0):
+		frappe.db.set_value("Property Setter", ps_reqd.name, "value", "0", update_modified=False)
+	new = exempt(cf.mandatory_depends_on) if (cf.reqd or cf.mandatory_depends_on) else cf.mandatory_depends_on
+	if cf.reqd or new != cf.mandatory_depends_on:
+		frappe.db.set_value("Custom Field", name, {"reqd": 0, "mandatory_depends_on": new}, update_modified=False)
+	frappe.clear_cache(doctype=doctype)
+
+
 def relax_foreign_mandatory_fields():
 	"""Scope another app's unconditional mandatory fields to Roses.
 
@@ -513,23 +551,7 @@ def relax_foreign_mandatory_fields():
 	"""
 	for doctype, fieldnames in _FOREIGN_MANDATORY.items():
 		for fieldname in fieldnames:
-			name = f"{doctype}-{fieldname}"
-			if not frappe.db.exists("Custom Field", name):
-				continue
-
-			current = frappe.db.get_value(
-				"Custom Field", name, ["reqd", "mandatory_depends_on"], as_dict=True
-			)
-			if not current.reqd or current.mandatory_depends_on:
-				continue
-
-			frappe.db.set_value(
-				"Custom Field",
-				name,
-				{"reqd": 0, "mandatory_depends_on": _ROSES_ONLY},
-				update_modified=False,
-			)
-			frappe.clear_cache(doctype=doctype)
+			_exempt_coffee(doctype, fieldname)
 
 	for doctype, fieldname in _FIX_BUSINESS_UNIT_REF:
 		name = f"{doctype}-{fieldname}"
