@@ -428,6 +428,7 @@ def create_coffee_custom_fields():
 		ignore_validate=True,
 	)
 	remove_legacy_fields()
+	add_app_indexes()
 
 
 def remove_legacy_fields():
@@ -540,6 +541,23 @@ def _exempt_coffee(doctype, fieldname):
 	if cf.reqd or new != cf.mandatory_depends_on:
 		frappe.db.set_value("Custom Field", name, {"reqd": 0, "mandatory_depends_on": new}, update_modified=False)
 	frappe.clear_cache(doctype=doctype)
+
+
+# What Kahawa Trail filters on: without these every pickup / payment lookup read
+# all of Harvest Log (152k rows on Kaitet by Nov 2026, +1.5k a day).
+APP_INDEXES = [
+	("Harvest Log", ["block", "date", "picked_up"]),
+	("Harvest Log", ["harvester_id", "paid"]),
+	("Harvest Log", ["date"]),
+	("Coffee Payment", ["harvester_id", "date"]),
+	("Coffee Payment", ["date"]),
+]
+
+
+def add_app_indexes():
+	for doctype, cols in APP_INDEXES:
+		if frappe.db.table_exists(doctype):
+			frappe.db.add_index(doctype, cols)  # no-op when it already exists
 
 
 def relax_foreign_mandatory_fields():
