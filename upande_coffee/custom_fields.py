@@ -556,8 +556,14 @@ APP_INDEXES = [
 
 def add_app_indexes():
 	for doctype, cols in APP_INDEXES:
-		if frappe.db.table_exists(doctype):
+		if not frappe.db.table_exists(doctype):
+			continue
+		try:
 			frappe.db.add_index(doctype, cols)  # no-op when it already exists
+		except Exception:
+			# a slow-query fix must never fail a migrate (Kaitet 2026-11-25: a
+			# duplicate payment_entry field made the meta invalid)
+			frappe.log_error(title=f"Coffee index {doctype} {cols} not added")
 
 
 def relax_foreign_mandatory_fields():
